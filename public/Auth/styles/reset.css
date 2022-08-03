@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Mulish:wght@200;300;400;500;600;700;800&display=swap");
+
+body {
+  margin: 0;
+  font-family: "Nunito", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #333333;
+  background: #f7f6f6 !important;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Mulish", sans-serif;
+}
+
+h1 {
+  font-size: 56px !important;
+}
+h2 {
+  font-size: 48px !important;
+}
+h3 {
+  font-size: 40px !important;
+}
+h4 {
+  font-size: 32px !important;
+}
+h5 {
+  font-size: 24px !important;
+}
+h6 {
+  font-size: 20px !important;
+}
+p {
+  font-size: 16px !important;
+}
+small {
+  font-size: 14px !important;
+}
+
+#nurse-image {
+  padding-top: 30px;
+}
+
+#nurse-card {
+  max-width: 610px;
+  min-height: 530px;
+  padding-top: 30px !important;
+}
+
+input,
+select {
+  box-sizing: border-box !important;
+  border-radius: 3px !important;
+  border: 0.7px solid #ced4da !important;
+  margin-bottom: 30px !important;
+}
+
+input,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+input::placeholder {
+  color: #c4c4c4 !important;
+}
+
+label {
+  font-family: "Mulish";
+}
+
+.reset-btn {
+  background-color: #215eaa;
+  color: #ffffff;
+}
+.reset-btn:hover {
+  background-color: #215eaa;
+  color: #ffffff;
+  font-weight: bold;
+}
+.success-btn {
+  background-color: #215eaa;
+  color: #ffffff;
+}
+.success-btn:hover {
+  background-color: #215eaa;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@media screen and (max-width: 768px) {
+  div.mid-md {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  select.border-light {
+    width: 100% !important;
+  }
+  p.pb-3.mb-4 {
+    padding: 0 !important;
+  }
+
+  #nurse-card {
+    padding-top: 0 !important;
+  }
+
+  #nurse-card div {
+    margin-top: 10px;
+    margin-left: 0 !important;
+  }
+
+  .pboard {
+    display: block !important;
+    color: #215eaa;
+  }
+
+  body div div:nth-child(2) {
+    padding-top: 0 !important;
+  }
+}

@@ -1,0 +1,26 @@
+0000000000000000000000000000000000000000 37ef68601800529f0fcf12ced6a91edcdf6a14a6 lumzys <sunday.ogedengbe@doftwerks.com> 1653825054 +0100	commit (initial): Auth with otp
+37ef68601800529f0fcf12ced6a91edcdf6a14a6 bad1e4ddb42c3fe06dfdebe6339d8ff516a2508d lumzys <sunday.ogedengbe@doftwerks.com> 1653825085 +0100	commit: Auth using otp
+bad1e4ddb42c3fe06dfdebe6339d8ff516a2508d e4e4d25ac53d8f781592065b4eb57665484cb365 lumzys <sunday.ogedengbe@doftwerks.com> 1653825350 +0100	commit: Auth features
+e4e4d25ac53d8f781592065b4eb57665484cb365 7b855a4bf78f6d0a04438ba02fc4a34e3e4080fb lumzys <sunday.ogedengbe@doftwerks.com> 1653825788 +0100	commit: otp mailing
+7b855a4bf78f6d0a04438ba02fc4a34e3e4080fb cfb08e71adc49348e5e51c623c626620154f5c6a lumzys <sunday.ogedengbe@doftwerks.com> 1654033663 +0100	commit: ammend user auth
+cfb08e71adc49348e5e51c623c626620154f5c6a 93d4dcec022a9b4b71f8cb8c3eefb3e82f13dc53 lumzys <sunday.ogedengbe@doftwerks.com> 1654047199 +0100	commit: expense module
+93d4dcec022a9b4b71f8cb8c3eefb3e82f13dc53 30cbd3c0de30d9c55f5da6efb4770e5d16400e4d lumzys <sunday.ogedengbe@doftwerks.com> 1654134718 +0100	commit: user-bank-expense module progress
+30cbd3c0de30d9c55f5da6efb4770e5d16400e4d a3428f2f9c01ed8466a9c2e104bf7a0403faede8 lumzys <sunday.ogedengbe@doftwerks.com> 1654167872 +0100	commit: expense features added
+a3428f2f9c01ed8466a9c2e104bf7a0403faede8 b9a7aa1ae2f5396d7a94532c69e957a4d1a914ab lumzys <sunday.ogedengbe@doftwerks.com> 1654168731 +0100	commit: handle validations
+b9a7aa1ae2f5396d7a94532c69e957a4d1a914ab aaa4f834697ced009deff04693be02858316fec8 lumzys <sunday.ogedengbe@doftwerks.com> 1654198977 +0100	commit: Expense-module clean up
+aaa4f834697ced009deff04693be02858316fec8 ab6729ab5825d3e8e17f0e9eb435800447ea3710 lumzys <sunday.ogedengbe@doftwerks.com> 1654199892 +0100	commit: procfile
+ab6729ab5825d3e8e17f0e9eb435800447ea3710 e33af0589a5629665b852357fea38394bba4bda2 lumzys <sunday.ogedengbe@doftwerks.com> 1654201064 +0100	commit: procfiles
+e33af0589a5629665b852357fea38394bba4bda2 17de63e2b4916919e3198ade5195d45089b8d37e lumzys <sunday.ogedengbe@doftwerks.com> 1654202141 +0100	commit: procfiless
+17de63e2b4916919e3198ade5195d45089b8d37e 0000000000000000000000000000000000000000 lumzys <sunday.ogedengbe@doftwerks.com> 1654216639 +0100	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 17de63e2b4916919e3198ade5195d45089b8d37e lumzys <sunday.ogedengbe@doftwerks.com> 1654216639 +0100	Branch: renamed refs/heads/master to refs/heads/main
+17de63e2b4916919e3198ade5195d45089b8d37e 17de63e2b4916919e3198ade5195d45089b8d37e lumzys <sunday.ogedengbe@doftwerks.com> 1654216941 +0100	checkout: moving from main to master
+17de63e2b4916919e3198ade5195d45089b8d37e 0000000000000000000000000000000000000000 lumzys <sunday.ogedengbe@doftwerks.com> 1654217428 +0100	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 17de63e2b4916919e3198ade5195d45089b8d37e lumzys <sunday.ogedengbe@doftwerks.com> 1654217428 +0100	Branch: renamed refs/heads/master to refs/heads/main
+17de63e2b4916919e3198ade5195d45089b8d37e 0e1fef029147fe2dab085e5017a38b3193175dfb lumzys <sunday.ogedengbe@doftwerks.com> 1654217457 +0100	commit: commit
+0e1fef029147fe2dab085e5017a38b3193175dfb a7ed9d4904e375bbccf15ce2044af193fe908e42 lumzys <sunday.ogedengbe@doftwerks.com> 1654234136 +0100	commit: committt
+a7ed9d4904e375bbccf15ce2044af193fe908e42 370079b2d5bcaaeced8581be15c9e8a697b46898 lumzys <sunday.ogedengbe@doftwerks.com> 1654234287 +0100	commit: committtt
+370079b2d5bcaaeced8581be15c9e8a697b46898 1b25953b5193d8cab7b896416c2e837b403310f5 lumzys <sunday.ogedengbe@doftwerks.com> 1654234623 +0100	commit: committttt
+1b25953b5193d8cab7b896416c2e837b403310f5 122d9e12ad75af28ae6d0926f44632de14753420 lumzys <sunday.ogedengbe@doftwerks.com> 1654235323 +0100	commit: committtttt
+122d9e12ad75af28ae6d0926f44632de14753420 7ed8fbf39c3ef25739b80e982cce8b7b8f49e932 lumzys <sunday.ogedengbe@doftwerks.com> 1654235992 +0100	commit: committttttt
+7ed8fbf39c3ef25739b80e982cce8b7b8f49e932 84bc50f4678115dc5c68dea7b0f6b01c67e71e28 lumzys <sunday.ogedengbe@doftwerks.com> 1654982091 +0100	commit: expense clean up
+84bc50f4678115dc5c68dea7b0f6b01c67e71e28 20179762b7ca5b8f882d762225ef9d8b8e40e20e unknown <sunday4oged@yahoo.com> 1659554558 -0700	commit: version 2

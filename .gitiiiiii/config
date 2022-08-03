@@ -1,0 +1,28 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/Pethahiah/AzatMe_app.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	push = HEAD
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+[remote "main"]
+	url = https://github.com/lumsys/ExpenseApp.git/
+	fetch = +refs/heads/*:refs/remotes/main/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/master
+	merge = refs/heads/main
+	merge = refs/heads/main
+	merge = refs/heads/main
+	merge = refs/heads/main
+	merge = refs/heads/main
+	merge = refs/heads/main
+	merge = refs/heads/main
+	merge = refs/heads/main
