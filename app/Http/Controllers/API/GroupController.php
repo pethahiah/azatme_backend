@@ -84,18 +84,26 @@ class GroupController extends Controller
         
         }
 
+
+        public function getRandomUserGroup($user_id)
+{
+// $getAuthUser = Auth::user();
+  $getUserGroup = UserGroup::where('user_id', $user_id)->get();
+  return response()->json($getUserGroup);
+
+}
+
+
         public function getOneGroupPerUser($id)
         {
 // $getAuthUser = Auth::user();
-  $get = Expense::find($id);
-  $getUserExpenses = UserGroup::where('expense_id', $get)->first();
-  return response()->json($getUserExpenses);
+        $get = userGroup::find($id);
+        $getUserGroup = UserGroup::where('expense_id', $get)->first();
+         return response()->json($getUserGroup);
 
         }
         
-        
-        
-        public function deleteExpense($id) 
+        public function deleteGroup($id) 
         {
         //$user = Auth()->user();
         $deleteExpense = Expense::findOrFail($id);

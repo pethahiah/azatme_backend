@@ -8,24 +8,6 @@ use Illuminate\Http\Request;
 class ReportingController extends Controller
 {
     //
-
-public function countAllGroupsPerUser()
-{
-$getAuthUser = Auth::user();
-$getUserGroups = UserGroup::where('reference_id', $getAuthUser->id)->count();
-return response()->json($getUserGroups);
-
-}
-
-public function getAllGroupsPerUser()
-{
-
-$getAuthUser = Auth::user();
-$countUserGroups = UserGroup::where('reference_id', $getAuthUser->id)->get();
-return response()->json($countUserGroups);
-
-}
-
 public function getUserExpenseWithDate(Request $request)
     {
        $start_date = Carbon::parse($request->from)

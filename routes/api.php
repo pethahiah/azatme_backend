@@ -43,13 +43,18 @@ Route::namespace('API')->group(function () {
     Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
     Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@getRandomUserExpense');
     Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
-    
+    Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
     
     
     
     //Group
-    Route::post('createGroup', 'ExpenseController@createGroup');
-    Route::post('inviteUsersToGroup/{groupId}', 'ExpenseController@inviteUsersToGroup');
+    Route::post('createGroup', 'GroupController@createGroup');
+    Route::post('inviteUsersToGroup/{groupId}', 'GroupController@inviteUsersToGroup');
+    Route::get('countAllGroupsPerUser', 'GroupController@countAllGroupsPerUser');
+    Route::get('getAllGroupsPerUser', 'GroupController@getAllGroupsPerUser');
+    Route::get('getRandomUserGroup/{user_id}', 'GroupController@getRandomUserGroup');
+    Route::delete('deleteInvitedGoupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
+    Route::delete('deleteGoup/{id}', 'GroupController@deleteGroup');
     
     //Bank
     Route::put('updateBank/{id}', 'BankController@updateBank');
@@ -74,8 +79,6 @@ Route::namespace('API')->group(function () {
     //Reporting
     Route::get('allExpensesPerUser', 'ExpenseController@allExpensesPerUser');
     Route::get('countExpensesPerUser', 'ExpenseController@countExpensesPerUser');
-    Route::get('countAllGroupsPerUser', 'ExpenseController@countAllGroupsPerUser');
-    Route::get('getAllGroupsPerUser', 'ExpenseController@getAllGroupsPerUser');
     Route::post('getUserExpenseWithDate', 'ExpenseController@getUserExpenseWithDate');
     Route::post('getUserGroupWithDate', 'ExpenseController@getUserGroupWithDate');
     
