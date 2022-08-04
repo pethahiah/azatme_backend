@@ -25,6 +25,7 @@ Route::namespace('API')->group(function () {
     Route::post('loginViaOtp', 'AuthController@loginViaOtp');
     Route::post('forgot', 'ForgotController@forgot');
     Route::post('reset', 'ForgotController@reset');
+   
     
 
    Route::middleware(['auth:api'])->group(function () {
@@ -40,6 +41,11 @@ Route::namespace('API')->group(function () {
     Route::post('userExpense/{expenseId}', 'ExpenseController@inviteUserToExpense');
     Route::put('updateExpense/{id}', 'ExpenseController@updateExpense');
     Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
+    Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@getRandomUserExpense');
+    Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
+    
+    
+    
     
     //Group
     Route::post('createGroup', 'ExpenseController@createGroup');

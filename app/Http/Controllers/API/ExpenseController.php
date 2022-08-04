@@ -36,7 +36,7 @@ public function createExpense(ExpenseRequest $request){
 public function inviteUserToExpense(Request $request, $expenseId)
     {           
      
-        $expense = expense::find($expenseId);
+        $expense = expense::findOrFail($expenseId);
         $input['expense_id'] = $expense->id;
         $input['principal_id'] = Auth::user()->id;
         $input['payable'] = $expense->amount;
@@ -53,8 +53,22 @@ public function inviteUserToExpense(Request $request, $expenseId)
             });
             
               }
-        $input['user_id'] = $request->user_id;
+          $input['user_id'] = $request->user_id;
+        // $availableUsers = $input['user_id'];
+       //  if(($availableUsers) > 0){
+         //    $CountAvailableUsers = count(explode(',', $availableUsers));
+          //   $n = strlen($CountAvailableUsers);
 
+            // return $n;
+            //    for($i = 0; $i <= $n; $i++)
+        //  {
+         //  $userArray = explode(',', $availableUsers);
+            //$input['expense_id'] = $expense->id[$i];
+            //$input['payable'] = $expense->amount[$i];
+           // $request->merge(['split_method_id' => $request->splitting_method_id[$i]]);
+           
+       //  }
+     //  }
         //Todo Gateway endpoints here...
 
         $info = userExpense::create($input);
@@ -72,11 +86,10 @@ public function allExpensesPerUser()
 
 }
 
-public function getOneExpensesPerUser($id)
+public function getRandomUserExpense($user_id)
 {
 // $getAuthUser = Auth::user();
-  $get = Expense::find($id);
-  $getUserExpenses = UserExpense::where('expense_id', $get)->first();
+  $getUserExpenses = UserExpense::where('user_id', $user_id)->get();
   return response()->json($getUserExpenses);
 
 }
@@ -111,6 +124,18 @@ public function updateExpense(Request $request, $id)
     $update->update($request->all());
     return response()->json($update);
 
+}
+
+public function deleteInvitedExpenseUser($user_id) 
+{
+//$user = Auth()->user();
+//return $user;
+$deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
+if($deleteInvitedExpenseUser)
+//$userDelete = Expense::where('user', $user)
+   $deleteInvitedExpenseUser->delete(); 
+else
+return response()->json(null); 
 }
 
     

@@ -3,14 +3,14 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use illuminate\Database\Eloquent\SoftDeletes;
-use illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+//use illuminate\Database\Eloquent\Factories\HasFactory;
 
 class userExpense extends Model
 {
     //
 
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
 
 
