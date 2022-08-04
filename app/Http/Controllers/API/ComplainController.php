@@ -11,19 +11,14 @@ class ComplainController extends Controller
     //
 Public function makeComplain()
 {
-        $complain = Expense::create([
+        $complain = Complain::create([
         'expense_name'=> $request->expense_name,
         'description' => $request->description,
         'complain_reference_code'=> $request->unique_code,
         'severity' => $request->severity, //high,medium,low
         'user_id' => Auth::user()->id,
              
-        ]);
-
-        //if(Auth::user())
-        
-       // $getUniqueCode = expense::->where('uique_code', Auth::user()->user_id->uique_code))->first();
-    
+        ]);  
         
         return response()->json($complain);
         
