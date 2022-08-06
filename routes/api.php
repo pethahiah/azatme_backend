@@ -18,15 +18,14 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 Route::namespace('API')->group(function () {
     Route::post('AttemptLogin', 'AuthController@AttemptLogin');
     Route::post('register', 'AuthController@register');
     Route::post('loginViaOtp', 'AuthController@loginViaOtp');
     Route::post('forgot', 'ForgotController@forgot');
     Route::post('reset', 'ForgotController@reset');
-   
-    
+    Route::get('ngn', 'BankController@ngnBanksApi');
+    Route::get('getAllUser', 'AuthController@getAllUser');
 
    Route::middleware(['auth:api'])->group(function () {
     // User Update
@@ -44,8 +43,6 @@ Route::namespace('API')->group(function () {
     Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@getRandomUserExpense');
     Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
     Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
-    
-    
     
     //Group
     Route::post('createGroup', 'GroupController@createGroup');
@@ -73,9 +70,7 @@ Route::namespace('API')->group(function () {
     Route::get('allCategoriesPerUser', 'ExpenseCategoryController@allCategoriesPerUser');
     Route::get('getCateList', 'ExpenseCategoryController@getCateList');
     Route::delete('deleteExpenseCategory/{id}', 'ExpenseCategoryController@deleteExpenseCategory');
-    
-
-    
+     
     //Reporting
     Route::get('allExpensesPerUser', 'ExpenseController@allExpensesPerUser');
     Route::get('countExpensesPerUser', 'ExpenseController@countExpensesPerUser');
@@ -89,6 +84,11 @@ Route::namespace('API')->group(function () {
     //Complain 
     Route::post('makeComplain', 'ComplainController@makeComplain');
     Route::get('getAllComplains', 'ComplainController@getAllComplains');
+
+    //Admin Routes
+    Route::get('admin', ['middleware' => 'admin', function () {
+        //
+    }]);
 
     
     

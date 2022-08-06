@@ -56,4 +56,23 @@ class BankController extends Controller
 }
 
 
+public function ngnBanksApi()
+{
+
+    $httpClient = new \GuzzleHttp\Client();
+    $request = $httpClient->get("https://ellevate-app.herokuapp.com/banks?affiliateCode=ENG");
+if ($request){
+        $clients =  json_decode($request->getBody()->getContents())->get();
+        return $clients;
+    }else{
+        //
+    }
+        
+
+    
+
+
+}
+
+
 }

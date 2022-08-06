@@ -158,6 +158,14 @@ class AuthController extends Controller
 
     }
 
+    public function getAllUser()
+    {
+      
+        $user = user::select('id', 'email')->get();
+        return response()->json($user);
+
+    }
+
     public function updateUsertype(Request $request)
     {
     $id = Auth::user();

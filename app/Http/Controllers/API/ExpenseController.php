@@ -42,34 +42,34 @@ public function inviteUserToExpense(Request $request, $expenseId)
         $input['payable'] = $expense->amount;
         $input['split_method_id'] = $request->splitting_method_id;
         $input['email'] = $request->input('email');
-        $email = $request->email;
-       if(User::where('email', $email)->doesntExist())
+        $emails = $request->email;
+
+        
+        $emailArray = (explode(';', $emails));
+        //return $emailArray;
+        foreach ($emailArray as $key => $user) {
+            //process each user here as each iteration gives you each email
+            if ((User::where('email', $user)->doesntExist()) )
+
+           
+              if (($user) > 0)
+               {
+                  return "Sorry, email already exisit";
+               }else
         {
             //send email
             $auth = auth()->user();
-            Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($email) {
-                $message->to($email);
+            Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
+                $message->to($user);
                 $message->subject('AzatMe: Send expense invite');
             });
-            
-              }
-          $input['user_id'] = $request->user_id;
-        // $availableUsers = $input['user_id'];
-       //  if(($availableUsers) > 0){
-         //    $CountAvailableUsers = count(explode(',', $availableUsers));
-          //   $n = strlen($CountAvailableUsers);
 
-            // return $n;
-            //    for($i = 0; $i <= $n; $i++)
-        //  {
-         //  $userArray = explode(',', $availableUsers);
-            //$input['expense_id'] = $expense->id[$i];
-            //$input['payable'] = $expense->amount[$i];
-           // $request->merge(['split_method_id' => $request->splitting_method_id[$i]]);
-           
-       //  }
-     //  }
-        //Todo Gateway endpoints here...
+          }
+        } 
+        
+          $input['user_id'] = $request->user_id;
+
+          //Todo Gateway endpoints here...
 
         $info = userExpense::create($input);
 
