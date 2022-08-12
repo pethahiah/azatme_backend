@@ -40,7 +40,7 @@ Route::namespace('API')->group(function () {
     Route::post('userExpense/{expenseId}', 'ExpenseController@inviteUserToExpense');
     Route::put('updateExpense/{id}', 'ExpenseController@updateExpense');
     Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
-    Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@getRandomUserExpense');
+    Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@ getRandomUserExpense');
     Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
     Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
     
@@ -50,8 +50,8 @@ Route::namespace('API')->group(function () {
     Route::get('countAllGroupsPerUser', 'GroupController@countAllGroupsPerUser');
     Route::get('getAllGroupsPerUser', 'GroupController@getAllGroupsPerUser');
     Route::get('getRandomUserGroup/{user_id}', 'GroupController@getRandomUserGroup');
-    Route::delete('deleteInvitedGoupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
-    Route::delete('deleteGoup/{id}', 'GroupController@deleteGroup');
+    Route::delete('deleteInvitedGroupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
+    Route::delete('deleteGroup/{id}', 'GroupController@deleteGroup');
     
     //Bank
     Route::put('updateBank/{id}', 'BankController@updateBank');
@@ -76,6 +76,9 @@ Route::namespace('API')->group(function () {
     Route::get('countExpensesPerUser', 'ExpenseController@countExpensesPerUser');
     Route::post('getUserExpenseWithDate', 'ExpenseController@getUserExpenseWithDate');
     Route::post('getUserGroupWithDate', 'ExpenseController@getUserGroupWithDate');
+    Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
+    Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
+    
     
     //Splitting Methods
     Route::post('splitingMethod', 'PaymentSplittingController@splitingMethod');
@@ -86,9 +89,9 @@ Route::namespace('API')->group(function () {
     Route::get('getAllComplains', 'ComplainController@getAllComplains');
 
     //Admin Routes
-    Route::get('admin', ['middleware' => 'admin', function () {
-        //
-    }]);
+    // Route::get('admin', ['middleware' => 'admin', function () {
+    //     //
+    // }]);
 
     
     

@@ -60,25 +60,10 @@ class AuthController extends Controller
         
         $email = request()->get('email');
         $password = request()->get('password');
-
-       //$this->validate($request, [
-       
-    //]);
-
-        $user = User::where('phone', $email)->orWhere('email', $email)->update(['otp' => $otp]);
-
-        // $user = User::where(['email','=',$request->email], ['password','=',$request->password])->update(['otp' => $otp]);
-        //if($user) 
-        
-        //return $user= $request->password;
-      if (is_null(($user) || ($password)))
-        {  
-            
-             return response(["status" => 401, 'message' => 'Invalid']); 
-       
-           
-        }else{
-
+        $uxer = User::where('email', '=', $email)->first();
+        if(Hash::check($request->password, $uxer->password))
+        {
+            $user = User::where('phone', $email)->orWhere('email', $email)->update(['otp' => $otp]);
             //send email
             $data =  ['otp' => $otp];
             $subject = 'AzatMe: ONE TIME PASSWORD';
@@ -86,10 +71,17 @@ class AuthController extends Controller
                 $message->to($request->email)->subject($subject);
             });
             return response(["status" => 200, "message" => "OTP sent successfully"]);
-         
+            
+    }else{   
+
+        return response()->json([
+            'message' => 'Record not found.'
+        ], 404);
+       // return response()->json(['status'=>'false','message'=>'password is not correct']);
+}        
         }
 
-    }
+  
 
     public function loginViaOtp(Request $request)
     {

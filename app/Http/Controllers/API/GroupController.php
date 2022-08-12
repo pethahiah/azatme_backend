@@ -5,6 +5,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\GroupRequest;
+use App\Expense;
+use Illuminate\Support\Str;
+use Auth;
+use App\User;
+use Mail;
+use App\userGroup;
 
 class GroupController extends Controller
 {
@@ -30,36 +36,36 @@ class GroupController extends Controller
         {               
         $expense = expense::find($groupId);
         $input['user_id'] = $request->user_id;
-        $input['email'] = $request->input('email');
         $input['group_id'] = $expense->id;
         $input['reference_id'] = Auth::user()->id;
         $input['split_method_id'] = $request->splitting_method_id;
         $input['amount_payable'] = $expense->amount;
-        $email = $request->email;
-        if(User::where('email', $email)->doesntExist())
+        $input['email'] = $request->input('email');
+        $emails = $request->email;
+
+        $emailArray = (explode(';', $emails));
+        //return $emailArray;
+        foreach ($emailArray as $key => $user) {
+            //process each user here as each iteration gives you each email
+            if ((User::where('email', $user)->doesntExist()) )
+
+           
+              if (($user) > 0)
+               {
+                  return "Sorry, email already exisit";
+               }else
         {
-        //send email
-        $auth = auth()->user();
-        $group = expense::where('id', $expense->id)->first();
-        $purpose = $group->name;
-       // if(($input['user_id'] || $input['email']) > 0 )
-       // {
-        //    foreach ($request->$input['user_id'] $$ $request->$input['email'] as $key)
-         //   {
-          //      $input['group_id'] = $expense->id;
-          //      $input['reference_id'] = Auth::user()->id;
-           //     $input['amount_payable'] = $expense->amount;
-          //  }
-       // }
-        $data =['name'=>$purpose];
-        //return $data;
-        Mail::send('Email.userGroup', $data, function ($message) use ($email) {
-        $message->to($email);
-        $message->subject('AzatMe: Send Group invite');
-        });
+            //send email
+            $auth = auth()->user();
+            Mail::send('Email.userGroup', ['user' => $auth], function ($message) use ($user) {
+                $message->to($user);
+                $message->subject('AzatMe: Send group invite');
+            });
+
+          }
+        } 
         
-        }
-        
+          $input['user_id'] = $request->user_id;
         //Todo Gateway endpoints here...
         
         $info = userGroup::create($input);
@@ -72,12 +78,10 @@ class GroupController extends Controller
         $getAuthUser = Auth::user();
         $getUserGroups = UserGroup::where('reference_id', $getAuthUser->id)->count();
         return response()->json($getUserGroups);
-        
         }
         
         public function getAllGroupsPerUser()
         {
-        
         $getAuthUser = Auth::user();
         $countUserGroups = UserGroup::where('reference_id', $getAuthUser->id)->get();
         return response()->json($countUserGroups);
@@ -87,9 +91,9 @@ class GroupController extends Controller
 
         public function getRandomUserGroup($user_id)
 {
-// $getAuthUser = Auth::user();
-  $getUserGroup = UserGroup::where('user_id', $user_id)->get();
-  return response()->json($getUserGroup);
+
+        $getUserGroup = userGroup::where('reference_id', Auth::user()->id)->where('user_id', $user_id)->first();
+        return response()->json($getUserGroup);
 
 }
 
@@ -102,11 +106,25 @@ class GroupController extends Controller
          return response()->json($getUserGroup);
 
         }
+
+        public function deleteInvitedGroupUser($user_id) 
+{
+
+        $deleteInvitedExpenseUser = userGroup::findOrFail($user_id);
+        $getDeleteUserGroup = userGroup::where('_id', Auth::user()->id)->where('user_id', $deleteInvitedExpenseUser)->first();
+        if($getDeleteUserGroup)
+         $getDeleteUserGroup->delete(); 
+        // return "done";
+        else
+        return response()->json(null); 
+}
+
         
         public function deleteGroup($id) 
         {
         //$user = Auth()->user();
-        $deleteExpense = Expense::findOrFail($id);
+        $deleteExpense = expense::findOrFail($id);
+        $getDeletedExpense = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
         if($deleteExpense)
         //$userDelete = Expense::where('user', $user)
         $deleteExpense->delete(); 
