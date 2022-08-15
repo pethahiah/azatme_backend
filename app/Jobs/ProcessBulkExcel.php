@@ -42,7 +42,6 @@ class ProcessBulkExcel implements ShouldQueue
         if (Storage::disk('local')->exists('excel import/'.$this->file_name)) {
             $import = new userExpense();
             $import->import('excel import/'.$this->file_name);
-            $company = $company = Company::where('name', 'Paramount Health System')->firstOrFail();
             $import_failures = collect();
             if(!empty($import->failures()->toArray()))
             {
@@ -55,22 +54,27 @@ class ProcessBulkExcel implements ShouldQueue
                     ];
                     $import_failures->push($data);
                 }
-                Notification::send($company, new AFIEWEN($company, $import_failures->toJson(), $import->errors()->toJson()));
+             //   Notification::send($company, new AFIEWEN($company, $import_failures->toJson(), $import->errors()->toJson()));
             }else {
-                Notification::send($company, new AFIEN($company));
+              //  Notification::send($company, new AFIEN($company));
             }
             return true;
         }
-        $company = $company = Company::where('name', 'Paramount Health System')->firstOrFail();
-        Notification::send($company, new AFIFNEN($company));
+       return false;
     }
 
 
     public function failed(Throwable $exception)
     {
         DB::rollback();
-        $company = Company::where('name', 'Paramount Health System')->firstOrFail();
-        Notification::send($company, new AFIJFN($company, $exception));
+        $user = Auth::user();
+        $expenseUser = userExpense::firstOrFail($user->id);
+         //send email
+         Mail::send('Email.userInvite', [], function ($message) use ($user) {
+             $message->to($user);
+             $message->subject('AzatMe: BULK UPLOADS FAILS');
+         });
+       
     }
     
 }
