@@ -13,29 +13,33 @@ use Auth;
 use Mail;
 use App\Http\Requests\ExpenseRequest;
 use Illuminate\Support\Str;
+use App\Jobs\ProcessBulkExcel;
+use Illuminate\Http\Response;
+use App\Helper\Reply;
 
 class ExpenseController extends Controller
 {
     //
-public function createExpense(ExpenseRequest $request){
-     
-            $expense = Expense::create([
-                    'name'=> $request->name,
-                    'description' => $request->description,
-                    'uique_code'=> Str::random(10),
-                    'category_id' => $request->category_id,
-                    'subcategory_id' => $request->subcategory_id,
-                    'amount' => $request->amount,
-                    'user_id' => Auth::user()->id
-            ]);
+    public function createExpense(ExpenseRequest $request)
+    {
 
-            return response()->json($expense);
+        $expense = Expense::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'uique_code' => Str::random(10),
+            'category_id' => $request->category_id,
+            'subcategory_id' => $request->subcategory_id,
+            'amount' => $request->amount,
+            'user_id' => Auth::user()->id
+        ]);
 
-}
+        return response()->json($expense);
 
-public function inviteUserToExpense(Request $request, $expenseId)
-    {           
-     
+    }
+
+    public function inviteUserToExpense(Request $request, $expenseId)
+    {
+
         $expense = expense::findOrFail($expenseId);
         $input['expense_id'] = $expense->id;
         $input['description'] = $request->description;
@@ -47,140 +51,130 @@ public function inviteUserToExpense(Request $request, $expenseId)
         $input['user_id'] = $request->user_id;
         $userids = $request->user_id;
         //if $request->user_id is comma separated i.e. 1,2,3 etc
-        if(($userids) > 0)
-        {
-        $useridArray = explode(';', $userids);
-        //return $useridArray;
-        foreach ($useridArray as $key => $user) {
-            //process each user here as each iteration gives you each user id
-            //i guess you want to fetch the user, insert into expense and send notification
+        if (($userids) > 0) {
+            $useridArray = explode(';', $userids);
+            //return $useridArray;
+            foreach ($useridArray as $key => $user) {
+                //process each user here as each iteration gives you each user id
+                //i guess you want to fetch the user, insert into expense and send notification
+                $info = userExpense::create($input);
+                return $info;
+
+            }
+
+        }
+        if ($emails) {
+            $emailArray = (explode(';', $emails));
+            //return $emailArray;
+            foreach ($emailArray as $key => $user) {
+                //process each user here as each iteration gives you each email
+                if ((User::where('email', $user)->doesntExist())) {
+                    //send email
+                    $auth = auth()->user();
+                    Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
+                        $message->to($user);
+                        $message->subject('AzatMe: Send expense invite');
+                    });
+
+                }
+
+            }
+        } else {
+            //Todo Gateway endpoints here...
             $info = userExpense::create($input);
-            return $info;
-           
+            return response()->json($info);
         }
 
-      }
-        if($emails)
-        {
-        $emailArray = (explode(';', $emails));
-        //return $emailArray;
-        foreach ($emailArray as $key => $user) {
-            //process each user here as each iteration gives you each email
-            if ((User::where('email', $user)->doesntExist()) ) 
-              
-        {
-            //send email
-            $auth = auth()->user();
-            Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
-                $message->to($user);
-                $message->subject('AzatMe: Send expense invite');
-            });
 
-          }
-
-        } 
-      }else{
-        //Todo Gateway endpoints here...
-        $info = userExpense::create($input);
-        return response()->json($info);
-      }
-
-       
-
-        
-
-         
     }
 
 
-public function allExpensesPerUser()
-{
-
-  $getAuthUser = Auth::user();
-  $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->get();
-  return response()->json($getUserExpenses);
-
-}
-
-public function getRandomUserExpense($user_id)
-{
-// $getAuthUser = Auth::user();
-$getUserExpense = userExpense::where('principal_id', Auth::user()->id)->where('user_id', $user_id)->first();
-return response()->json($getUserExpense);
-
-}
-
-public function getAllExpenses()
-{
-
-  $getAdmin = Auth::user();
-  $getAd = $getAdmin -> usertype;
-  //return $getAd;
-  
-  if($getAd === 'admin') 
-  {
-  $getAllExpenses = UserExpense::all();
-  return response()->json($getAllExpenses);
-}
-else{
-   return response()->json('Auth user is not an admin');
-}
-}
-
-public function countExpensesPerUser()
-{
-  $getAuthUser = Auth::user();
-  $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
-  return response()->json($getUserExpenses);
-}
-
-public function updateExpense(Request $request, $id)
-{
-    $update = Expense::find($id);
-    $update->update($request->all());
-    return response()->json($update);
-
-}
-
-public function deleteInvitedExpenseUser($user_id) 
-{
-
-$deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
-if($deleteInvitedExpenseUser)
-//$userDelete = Expense::where('user', $user)
-   $deleteInvitedExpenseUser->delete(); 
-else
-return response()->json(null); 
-}
-
-    
-    public function deleteExpense($id) 
+    public function allExpensesPerUser()
     {
-    //$user = Auth()->user();
-    $deleteExpense = Expense::findOrFail($id);
-    $deleteExpenses = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
-    if($deleteExpenses)
-    //$userDelete = Expense::where('user', $user)
-       $deleteExpenses->delete(); 
-    else
-    return response()->json(null); 
-}
 
-public function BulkUploadInviteUsersToExpense(Request $request)
+        $getAuthUser = Auth::user();
+        $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->get();
+        return response()->json($getUserExpenses);
 
+    }
+
+    public function getRandomUserExpense($user_id)
     {
-        try {
-            $file = $request->file('file_upload');
-            $extension = $file->extension();
-            $file_name = 'user_to_expense_' . time() . '.' . $extension;
-            $file->storeAs(
-                'excel bulk import', $file_name
-            );
-            ProcessBulkExcel::dispatchSync($file_name);
-            return response()->json(Reply::success(__('messages.import_excel_successful')), Response::HTTP_OK);
-        }catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            return response()->json(Reply::error(__('messages.import_failed'), [$e]), Response::HTTP_UNPROCESSABLE_ENTITY);
+        // $getAuthUser = Auth::user();
+        $getUserExpense = userExpense::where('principal_id', Auth::user()->id)->where('user_id', $user_id)->first();
+        return response()->json($getUserExpense);
+
+    }
+
+    public function getAllExpenses()
+    {
+
+        $getAdmin = Auth::user();
+        $getAd = $getAdmin->usertype;
+        //return $getAd;
+
+        if ($getAd === 'admin') {
+            $getAllExpenses = UserExpense::all();
+            return response()->json($getAllExpenses);
+        } else {
+            return response()->json('Auth user is not an admin');
         }
     }
 
-  }
+    public function countExpensesPerUser()
+    {
+        $getAuthUser = Auth::user();
+        $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
+        return response()->json($getUserExpenses);
+    }
+
+    public function updateExpense(Request $request, $id)
+    {
+        $update = Expense::find($id);
+        $update->update($request->all());
+        return response()->json($update);
+
+    }
+
+    public function deleteInvitedExpenseUser($user_id)
+    {
+
+        $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
+        if ($deleteInvitedExpenseUser)
+            //$userDelete = Expense::where('user', $user)
+            $deleteInvitedExpenseUser->delete();
+        else
+            return response()->json(null);
+    }
+
+
+    public function deleteExpense($id)
+    {
+        //$user = Auth()->user();
+        $deleteExpense = Expense::findOrFail($id);
+        $deleteExpenses = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
+        if ($deleteExpenses)
+            //$userDelete = Expense::where('user', $user)
+            $deleteExpenses->delete();
+        else
+            return response()->json(null);
+    }
+
+    public function BulkUploadInviteUsersToExpense(Request $request)
+    {
+        $file = $request->file('file_upload');
+        $extension = $file->extension();
+        $file_name = 'user_to_expense_' . time() . '.' . $extension;
+        $file->storeAs(
+            'excel bulk import', $file_name
+        );
+        $result = ProcessBulkExcel::dispatchNow($file_name);
+        if ($result) {
+            $message = "Excel record is been uploaded";
+            return response()->json($message,HTTP_OK);
+        } else {
+            $message = "Try file upload again";
+            return response()->json($message, HTTP_OK);
+        }
+    }
+}
