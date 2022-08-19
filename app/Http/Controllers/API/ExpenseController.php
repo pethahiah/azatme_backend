@@ -13,29 +13,33 @@ use Auth;
 use Mail;
 use App\Http\Requests\ExpenseRequest;
 use Illuminate\Support\Str;
+use App\Jobs\ProcessBulkExcel;
+use Illuminate\Http\Response;
+use App\Helper\Reply;
 
 class ExpenseController extends Controller
 {
     //
-public function createExpense(ExpenseRequest $request){
-     
-            $expense = Expense::create([
-                    'name'=> $request->name,
-                    'description' => $request->description,
-                    'uique_code'=> Str::random(10),
-                    'category_id' => $request->category_id,
-                    'subcategory_id' => $request->subcategory_id,
-                    'amount' => $request->amount,
-                    'user_id' => Auth::user()->id
-            ]);
+    public function createExpense(ExpenseRequest $request)
+    {
 
-            return response()->json($expense);
+        $expense = Expense::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'uique_code' => Str::random(10),
+            'category_id' => $request->category_id,
+            'subcategory_id' => $request->subcategory_id,
+            'amount' => $request->amount,
+            'user_id' => Auth::user()->id
+        ]);
 
-}
+        return response()->json($expense);
 
-public function inviteUserToExpense(Request $request, $expenseId)
-    {           
-     
+    }
+
+    public function inviteUserToExpense(Request $request, $expenseId)
+    {
+
         $expense = expense::findOrFail($expenseId);
         $input['expense_id'] = $expense->id;
         $input['principal_id'] = Auth::user()->id;
@@ -62,7 +66,7 @@ public function inviteUserToExpense(Request $request, $expenseId)
             });
 
           }
-        } 
+        }
         }
         $userIds = $request->user_id;
         if($userIds)
@@ -71,16 +75,16 @@ public function inviteUserToExpense(Request $request, $expenseId)
 
           foreach($userIdArray as $keys => $Id)
           {
-            
+
           }
         }
-            
+
         //Todo Gateway endpoints here...
 
         $info = userExpense::create($input);
         return response()->json($info);
-            
-        
+
+
     }
 
 public function allExpensesPerUser()
@@ -106,8 +110,8 @@ public function getAllExpenses()
   $getAdmin = Auth::user();
   $getAd = $getAdmin -> usertype;
   //return $getAd;
-  
-  if($getAd === 'admin') 
+
+  if($getAd === 'admin')
   {
   $getAllExpenses = UserExpense::all();
   return response()->json($getAllExpenses);
@@ -132,27 +136,83 @@ public function updateExpense(Request $request, $id)
 
 }
 
-public function deleteInvitedExpenseUser($user_id) 
+public function deleteInvitedExpenseUser($user_id)
 {
 
 $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
-if($deleteInvitedExpenseUser) 
+if($deleteInvitedExpenseUser)
 //$userDelete = Expense::where('user', $user)
 
-   $deleteInvitedExpenseUser->delete(); 
+   $deleteInvitedExpenseUser->delete();
 else
-return response()->json(null); 
+return response()->json(null);
 }
 
- public function deleteExpense($id) 
+ public function deleteExpense($id)
         {
         $deleteExpense = expense::findOrFail($id);
         $getDeletedExpense = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
         if($deleteExpense)
-        $deleteExpense->delete(); 
+        $deleteExpense->delete();
         else
-        return response()->json(null); 
+        return response()->json(null);
         }
-    
 
-  }
+
+    public function countExpensesPerUser()
+    {
+        $getAuthUser = Auth::user();
+        $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
+        return response()->json($getUserExpenses);
+    }
+
+    public function updateExpense(Request $request, $id)
+    {
+        $update = Expense::find($id);
+        $update->update($request->all());
+        return response()->json($update);
+
+    }
+
+    public function deleteInvitedExpenseUser($user_id)
+    {
+
+        $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
+        if ($deleteInvitedExpenseUser)
+            //$userDelete = Expense::where('user', $user)
+            $deleteInvitedExpenseUser->delete();
+        else
+            return response()->json(null);
+    }
+
+
+    public function deleteExpense($id)
+    {
+        //$user = Auth()->user();
+        $deleteExpense = Expense::findOrFail($id);
+        $deleteExpenses = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
+        if ($deleteExpenses)
+            //$userDelete = Expense::where('user', $user)
+            $deleteExpenses->delete();
+        else
+            return response()->json(null);
+    }
+
+    public function BulkUploadInviteUsersToExpense(Request $request)
+    {
+        $file = $request->file('file_upload');
+        $extension = $file->extension();
+        $file_name = 'user_to_expense_' . time() . '.' . $extension;
+        $file->storeAs(
+            'excel bulk import', $file_name
+        );
+        $result = ProcessBulkExcel::dispatchNow($file_name);
+        if ($result) {
+            $message = "Excel record is been uploaded";
+            return response()->json($message,HTTP_OK);
+        } else {
+            $message = "Try file upload again";
+            return response()->json($message, HTTP_OK);
+        }
+    }
+}

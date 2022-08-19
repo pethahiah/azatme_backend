@@ -10,35 +10,21 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\userExpense;
+use Illuminate\Support\Facades\Mail;
 
 class ProcessBulkExcel implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-   
-
     protected $file_name;
+
     public function __construct($file_name)
     {
         $this->file_name = $file_name;
     }
 
-    
-
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle(): bool
+    public function handle()
     {
-        //
-
         if (Storage::disk('local')->exists('excel import/'.$this->file_name)) {
             $import = new userExpense();
             $import->import('excel import/'.$this->file_name);
@@ -54,27 +40,23 @@ class ProcessBulkExcel implements ShouldQueue
                     ];
                     $import_failures->push($data);
                 }
-             //   Notification::send($company, new AFIEWEN($company, $import_failures->toJson(), $import->errors()->toJson()));
+                // send Error Email notification
             }else {
-              //  Notification::send($company, new AFIEN($company));
+                //send Success Email notification
             }
             return true;
         }
-       return false;
+        return false;
     }
-
 
     public function failed(Throwable $exception)
     {
         DB::rollback();
+        //send failed Email Notification if entire process fails
         $user = Auth::user();
-        $expenseUser = userExpense::firstOrFail($user->id);
-         //send email
-         Mail::send('Email.userInvite', [], function ($message) use ($user) {
-             $message->to($user);
-             $message->subject('AzatMe: BULK UPLOADS FAILS');
-         });
-       
+        Mail::send('Email.userInvite', [], function ($message) use ($user) {
+            $message->to($user);
+            $message->subject('AzatMe: BULK UPLOADS FAILS');
+        });
     }
-    
 }
