@@ -38,9 +38,10 @@ Route::namespace('API')->group(function () {
     //Expense
     Route::post('createExpense', 'ExpenseController@createExpense');
     Route::post('userExpense/{expenseId}', 'ExpenseController@inviteUserToExpense');
+    Route::post('bulkUserExpense/{expenseId}', 'ExpenseController@BulkUploadInviteUsersToExpense');
     Route::put('updateExpense/{id}', 'ExpenseController@updateExpense');
     Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
-    Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@ getRandomUserExpense');
+    Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@getRandomUserExpense');
     Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
     Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
     

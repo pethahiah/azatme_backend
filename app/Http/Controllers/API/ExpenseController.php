@@ -159,54 +159,60 @@ return response()->json(null);
         }
 
 
-    public function countExpensesPerUser()
+    // public function countExpensesPerUser()
+    // {
+    //     $getAuthUser = Auth::user();
+    //     $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
+    //     return response()->json($getUserExpenses);
+    // }
+
+    // public function updateExpense(Request $request, $id)
+    // {
+    //     $update = Expense::find($id);
+    //     $update->update($request->all());
+    //     return response()->json($update);
+
+    // }
+
+    // public function deleteInvitedExpenseUser($user_id)
+    // {
+
+    //     $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
+    //     if ($deleteInvitedExpenseUser)
+    //         //$userDelete = Expense::where('user', $user)
+    //         $deleteInvitedExpenseUser->delete();
+    //     else
+    //         return response()->json(null);
+    // }
+
+
+    // public function deleteExpense($id)
+    // {
+    //     //$user = Auth()->user();
+    //     $deleteExpense = Expense::findOrFail($id);
+    //     $deleteExpenses = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
+    //     if ($deleteExpenses)
+    //         //$userDelete = Expense::where('user', $user)
+    //         $deleteExpenses->delete();
+    //     else
+    //         return response()->json(null);
+    // }
+
+    public function BulkUploadInviteUsersToExpense(Request $request, $expenseId)
     {
-        $getAuthUser = Auth::user();
-        $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
-        return response()->json($getUserExpenses);
-    }
-
-    public function updateExpense(Request $request, $id)
-    {
-        $update = Expense::find($id);
-        $update->update($request->all());
-        return response()->json($update);
-
-    }
-
-    public function deleteInvitedExpenseUser($user_id)
-    {
-
-        $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
-        if ($deleteInvitedExpenseUser)
-            //$userDelete = Expense::where('user', $user)
-            $deleteInvitedExpenseUser->delete();
-        else
-            return response()->json(null);
-    }
-
-
-    public function deleteExpense($id)
-    {
-        //$user = Auth()->user();
-        $deleteExpense = Expense::findOrFail($id);
-        $deleteExpenses = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
-        if ($deleteExpenses)
-            //$userDelete = Expense::where('user', $user)
-            $deleteExpenses->delete();
-        else
-            return response()->json(null);
-    }
-
-    public function BulkUploadInviteUsersToExpense(Request $request)
-    {
+      
+        $expense = expense::findOrFail($expenseId);
+        $request->validate([
+          'file' => 'required|file'
+        ]);
         $file = $request->file('file_upload');
         $extension = $file->extension();
         $file_name = 'user_to_expense_' . time() . '.' . $extension;
         $file->storeAs(
             'excel bulk import', $file_name
         );
-        $result = ProcessBulkExcel::dispatchNow($file_name);
+        $auth_user_id = Auth::user()->id;
+        $result = ProcessBulkExcel::dispatchNow($file_name, $expense, $auth_user_id);
         if ($result) {
             $message = "Excel record is been uploaded";
             return response()->json($message,HTTP_OK);

@@ -20,16 +20,24 @@ class UserExpenseImport implements ToModel, WithUpserts, WithHeadingRow, WithVal
 {
     use Importable, SkipsFailures, SkipsErrors;
 
+    protected $expense, $auth_user_id;
+
+    public function __construct($expense, $auth_user_id)
+    {
+        $this->expense = $expense;
+        $this->auth_user_id = $auth_user_id;
+    }
+
     public function model(array $row)
     {
         return new userExpense([
-            'expense_id' => $row['expense_id'],
-            'description' => $row['description'],
-            'principal_id' => $row['principal_id'],
-            'payable' => $row['payable'],
+            'name' => $this->$this->expense->name,
+            'expense_id' => $this->expense->id,
+            'description' =>$this->expense->description,
+            'principal_id' => $this->auth_user_id,
+            'payable' => $this->expense->amount,
             'split_method_id' => $row['split_method_id'],
-            'email' => $this->userEmailToId($row['email']),
-            'user_id' => $row['user_id']
+            'user_id' => $this->userEmailToId($row['email']),
         ]);
     }
 

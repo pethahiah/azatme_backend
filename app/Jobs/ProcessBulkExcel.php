@@ -16,18 +16,20 @@ class ProcessBulkExcel implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $file_name;
+    protected $file_name, $expense, $auth_user_id;
 
-    public function __construct($file_name)
+    public function __construct($file_name, $expense, $auth_user_id)
     {
         $this->file_name = $file_name;
+        $this->expense = $expense;
+        $this->auth_user_id = $auth_user_id;
     }
 
     public function handle()
     {
         if (Storage::disk('local')->exists('excel import/'.$this->file_name)) {
-            $import = new userExpense();
-            $import->import('excel import/'.$this->file_name);
+            $import = new userExpense($this->expense, $this->auth_user_id);
+            $import->import('excel import/'.$this->file_name );
             $import_failures = collect();
             if(!empty($import->failures()->toArray()))
             {
