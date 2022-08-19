@@ -95,7 +95,7 @@ public function allExpensesPerUser()
 
 public function getRandomUserExpense($user_id)
 {
-$getUserExpense = userExpense::where('principal_id', Auth::user()->id)->where('user_id', $user_id);
+$getUserExpense = userExpense::where('principal_id', Auth::user()->id)->where('user_id', $user_id)->get();
 return response()->json($getUserExpense);
 
 }
