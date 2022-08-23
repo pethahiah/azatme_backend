@@ -9,7 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\userExpense;
+use App\bulkImport\userExpenseImport;
 use Illuminate\Support\Facades\Mail;
 
 class ProcessBulkExcel implements ShouldQueue
@@ -27,25 +27,25 @@ class ProcessBulkExcel implements ShouldQueue
 
     public function handle()
     {
-        if (Storage::disk('local')->exists('excel import/'.$this->file_name)) {
-            $import = new userExpense($this->expense, $this->auth_user_id);
-            $import->import('excel import/'.$this->file_name );
+        if (Storage::disk('local')->exists('excel bulk import/'.$this->file_name)) {
+            $import = new userExpenseImport($this->expense, $this->auth_user_id);
+            $import->import('excel bulk import/'.$this->file_name );
             $import_failures = collect();
-            if(!empty($import->failures()->toArray()))
-            {
-                foreach ($import->failures() as $failure) {
-                    $data = [
-                        'row' => $failure->row(),
-                        'attribute' => $failure->attribute(),
-                        'errors' => $failure->errors(),
-                        'values' => $failure->values(),
-                    ];
-                    $import_failures->push($data);
-                }
-                // send Error Email notification
-            }else {
-                //send Success Email notification
-            }
+            // if(!empty($import->failures()->toArray()))
+            // {
+            //     foreach ($import->failures() as $failure) {
+            //         $data = [
+            //             'row' => $failure->row(),
+            //             'attribute' => $failure->attribute(),
+            //             'errors' => $failure->errors(),
+            //             'values' => $failure->values(),
+            //         ];
+            //         $import_failures->push($data);
+            //     }
+            //     // send Error Email notification
+            // }else {
+            //     //send Success Email notification
+            // }
             return true;
         }
         return false;

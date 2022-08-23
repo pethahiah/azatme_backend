@@ -4,6 +4,7 @@ namespace App\bulkImport;
 
 use App\User;
 use App\userExpense;
+use App\splittingMethod;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -16,9 +17,9 @@ use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
 
-class UserExpenseImport implements ToModel, WithUpserts, WithHeadingRow, WithValidation, SkipsEmptyRows, SkipsOnFailure, SkipsOnError
+class UserExpenseImport implements ToModel, WithHeadingRow, WithValidation, SkipsEmptyRows
 {
-    use Importable, SkipsFailures, SkipsErrors;
+    use Importable;
 
     protected $expense, $auth_user_id;
 
@@ -31,37 +32,24 @@ class UserExpenseImport implements ToModel, WithUpserts, WithHeadingRow, WithVal
     public function model(array $row)
     {
         return new userExpense([
-            'name' => $this->$this->expense->name,
+            'name' => $this->expense->name,
             'expense_id' => $this->expense->id,
             'description' =>$this->expense->description,
             'principal_id' => $this->auth_user_id,
             'payable' => $this->expense->amount,
-            'split_method_id' => $row['split_method_id'],
+            'split_method_id' => $this->splitMethodToSplitId($row['split_method']),
             'user_id' => $this->userEmailToId($row['email']),
         ]);
     }
 
-    public function uniqueBy()
-    {
-        return 'email';
-    }
+    // public function uniqueBy()
+    // {
+    //     return 'email';
+    // }
 
     public function rules(): array
     {
         return [
-            'expense_id' => [
-                'required',
-                'integer'
-            ],
-            'description' => [
-                'string'
-            ],
-            'principal_id' => [
-                'integer'
-            ],
-            'payable' => [
-                'boolean'
-            ],
             'split_method_id' => [
                 'integer'
             ],
@@ -69,14 +57,28 @@ class UserExpenseImport implements ToModel, WithUpserts, WithHeadingRow, WithVal
                 'email',
                 'exists:users,email',
             ],
-            'user_id' => [
-                'nullable',
-                'integer'
-            ],
+            // 'email' => function($attribute, $value, $onFailure) {
+            //     if ($value !== User::select('email')->where('email',$value)->first()->value('email')) {
+            //          $onFailure($this->sendEmail($value));
+            //     }
+            // }
         ];
     }
 
     private function userEmailToId($email){
-        return User::select('id')->where('email',$email)->first()->value('id');
+        return User::select('id')->where('email',$email)->first()->value('id');  
+    }
+
+    private function splitMethodToSplitId($split_method){
+        return splittingMethod::select('id')->where('split',$split_method)->first()->value('id');
+    }
+
+    private function sendEmail($email)
+    {
+        //send email
+            Mail::send('Email.userInvite', [], function ($message) use ($email) {
+                $message->to($email);
+                $message->subject('AzatMe: Send expense invite');
+            });
     }
 }

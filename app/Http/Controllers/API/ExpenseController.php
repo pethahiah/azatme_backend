@@ -40,15 +40,15 @@ class ExpenseController extends Controller
     public function inviteUserToExpense(Request $request, $expenseId)
     {
 
-        $expense = expense::findOrFail($expenseId);
-        $input['expense_id'] = $expense->id;
-        $input['principal_id'] = Auth::user()->id;
-        $input['name'] = $expense->name;
-        $input['description'] = $expense->description;
-        $input['payable'] = $expense->amount;
-        $input['split_method_id'] = $request->splitting_method_id;
-        $input['user_id'] = $request->user_id;
-        $input['email'] = $request->input('email');
+      $expense = expense::findOrFail($expenseId);
+      $Id['expense_id'] = $expense->id;
+      $Id['principal_id'] = Auth::user()->id;
+      $Id['name'] = $expense->name;
+      $Id['description'] = $expense->description;
+      $Id['split_method_id'] = $request->splitting_method_id;
+      $Id['user_id'] = $request->user_id;
+      $Id['payable'] = $expense->amount;
+      $input['email'] = $request->input('email');
         $emails = $request->email;
         if($emails)
         {
@@ -59,29 +59,35 @@ class ExpenseController extends Controller
             if ((User::where('email', $user)->doesntExist()) )
         {
             //send email
-            $auth = auth()->user();
-            Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
-                $message->to($user);
-                $message->subject('AzatMe: Send expense invite');
-            });
+            // $auth = auth()->user();
+            // Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
+            //     $message->to($user);
+            //     $message->subject('AzatMe: Send expense invite');
+            // });
 
           }
         }
         }
+        $input['user_id'] = $request->user_id;
         $userIds = $request->user_id;
+
         if($userIds)
         {
           $userIdArray = (explode(';', $userIds));
-
+         // return $userIdArray;
           foreach($userIdArray as $keys => $Id)
           {
-
+            
+        
           }
-        }
+          }
+        
 
         //Todo Gateway endpoints here...
 
-        $info = userExpense::create($input);
+       
+       
+        $info = userExpense::create($Id);
         return response()->json($info);
 
 
@@ -205,7 +211,7 @@ return response()->json(null);
         $request->validate([
           'file' => 'required|file'
         ]);
-        $file = $request->file('file_upload');
+        $file = $request->file('file');
         $extension = $file->extension();
         $file_name = 'user_to_expense_' . time() . '.' . $extension;
         $file->storeAs(
@@ -213,12 +219,13 @@ return response()->json(null);
         );
         $auth_user_id = Auth::user()->id;
         $result = ProcessBulkExcel::dispatchNow($file_name, $expense, $auth_user_id);
+        dd($result);
         if ($result) {
             $message = "Excel record is been uploaded";
-            return response()->json($message,HTTP_OK);
+            return response()->json($message);
         } else {
             $message = "Try file upload again";
-            return response()->json($message, HTTP_OK);
+            return response()->json($message);
         }
     }
 }
