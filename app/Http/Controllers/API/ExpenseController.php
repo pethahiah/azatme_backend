@@ -39,7 +39,6 @@ class ExpenseController extends Controller
 
     public function inviteUserToExpense(Request $request, $expenseId)
     {
-
       $expense = expense::findOrFail($expenseId);
       $Id['expense_id'] = $expense->id;
       $Id['principal_id'] = Auth::user()->id;
@@ -59,39 +58,23 @@ class ExpenseController extends Controller
             if ((User::where('email', $user)->doesntExist()) )
         {
             //send email
-            // $auth = auth()->user();
-            // Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
-            //     $message->to($user);
-            //     $message->subject('AzatMe: Send expense invite');
-            // });
-
+            $auth = auth()->user();
+            Mail::send('Email.userInvite', ['user' => $auth], function ($message) use ($user) {
+                $message->to($user);
+                $message->subject('AzatMe: Send expense invite');
+            });
           }
         }
         }
-        $input['user_id'] = $request->user_id;
-        $userIds = $request->user_id;
-
-        if($userIds)
-        {
-          $userIdArray = (explode(';', $userIds));
-         // return $userIdArray;
-          foreach($userIdArray as $keys => $Id)
-          {
-            
+  //Todo Gateway endpoints here...
+  $info = userExpense::create($Id);
+  return response()->json($info);
         
-          }
-          }
-        
-
-        //Todo Gateway endpoints here...
-
-       
-       
-        $info = userExpense::create($Id);
-        return response()->json($info);
-
-
     }
+
+    private function userEmailToId($email){
+      return User::select('id')->where('email',$email)->first()->value('id');  
+  }
 
 public function allExpensesPerUser()
 {
@@ -112,11 +95,8 @@ return response()->json($getUserExpense);
 
 public function getAllExpenses()
 {
-
   $getAdmin = Auth::user();
   $getAd = $getAdmin -> usertype;
-  //return $getAd;
-
   if($getAd === 'admin')
   {
   $getAllExpenses = UserExpense::all();

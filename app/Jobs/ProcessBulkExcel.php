@@ -46,7 +46,7 @@ class ProcessBulkExcel implements ShouldQueue
             // }else {
             //     //send Success Email notification
             // }
-            return true;
+            return response()->json(['message' => 'Data imported successfully'], 200);    
         }
         return false;
     }

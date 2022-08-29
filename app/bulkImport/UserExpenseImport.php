@@ -5,6 +5,7 @@ namespace App\bulkImport;
 use App\User;
 use App\userExpense;
 use App\splittingMethod;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -36,17 +37,13 @@ class UserExpenseImport implements ToModel, WithHeadingRow, WithValidation, Skip
             'expense_id' => $this->expense->id,
             'description' =>$this->expense->description,
             'principal_id' => $this->auth_user_id,
+            'user_id' => $this->userEmailToId($row['email']),
             'payable' => $this->expense->amount,
             'split_method_id' => $this->splitMethodToSplitId($row['split_method']),
-            'user_id' => $this->userEmailToId($row['email']),
+            
         ]);
-    }
-
-    // public function uniqueBy()
-    // {
-    //     return 'email';
-    // }
-
+        }
+            
     public function rules(): array
     {
         return [
@@ -73,12 +70,12 @@ class UserExpenseImport implements ToModel, WithHeadingRow, WithValidation, Skip
         return splittingMethod::select('id')->where('split',$split_method)->first()->value('id');
     }
 
-    private function sendEmail($email)
-    {
-        //send email
-            Mail::send('Email.userInvite', [], function ($message) use ($email) {
-                $message->to($email);
-                $message->subject('AzatMe: Send expense invite');
-            });
-    }
+    // private function sendEmail($email)
+    // {
+    //     //send email
+    //         Mail::send('Email.userInvite', [], function ($message) use ($email) {
+    //             $message->to($email);
+    //             $message->subject('AzatMe: Send expense invite');
+    //         });
+    // }
 }
