@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use App\Jobs\ProcessBulkExcel;
 use Illuminate\Http\Response;
 use App\Helper\Reply;
+use illuminate\Support\Facades\Http;
 
 class ExpenseController extends Controller
 {
@@ -52,9 +53,8 @@ class ExpenseController extends Controller
         if($emails)
         {
         $emailArray = (explode(';', $emails));
-        //return $emailArray;
         foreach ($emailArray as $key => $user) {
-            //process each user here as each iteration gives you each email
+            //Each user is process in iteration to have single email
             if ((User::where('email', $user)->doesntExist()) )
         {
             //send email
@@ -66,13 +66,52 @@ class ExpenseController extends Controller
           }
         }
         }
-  //Todo Gateway endpoints here...
-  $info = userExpense::create($Id);
-  return response()->json($info);
+      //Gateway integration
+      $ProductId = env('PayThru_ProductId');
+      $BaseTestUrl = env('PayThru_Base_Test_Url');
+      $BaseLiveUrl = env('PayThru_Base_Live_Url');
+
+      $resp = Http::acceptJson()->post($BaseTestUrl.'transaction/create', [
+      'amount' => $expense->amount,
+      'productId' => $ProductId,
+      'transactionReference' => $expense->id,
+      'paymentDescription' => $expense->description,
+      'sign' => "",
+      'paymentType' => $request->splitting_method_id,
+      'displaySummary' => true
+      ]);
+
+      if($resp->ok())
+      {
+        $transaction = json_decode($resp->body(), true);
+        $info = userExpense::create($Id);
+      }
+      return response()->json($info, $transaction);
         
     }
 
-    private function userEmailToId($email){
+
+    //Calling gateway for transaction response updates
+    public function webhookResponse()
+    {
+        $response = file_get_contents('https://azatme.eduland.ng/api/updateStatus');
+        $data = json_decode($response->getBody());
+        if($data->status == 1) {
+            $statusUpdate = userExpense::where('expense_id', $data->transactionReference)->update([
+            'transactionDate' => $data->transactionDate,
+            'fiName' => $data->fiName,
+            'status' => $data->status,
+            'amount' => $data->amount,
+            'customerName' => $data->customerName,
+            'paymentReference' => $data->paymentReference,
+            'payThruReference' => $data->payThruReference,
+            'paymentReference' => $data->paymentReference,
+            'merchantReference' => $data->merchantReference,
+        ]);
+        }     
+    }
+
+  private function userEmailToId($email){
       return User::select('id')->where('email',$email)->first()->value('id');  
   }
 
@@ -127,8 +166,6 @@ public function deleteInvitedExpenseUser($user_id)
 
 $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
 if($deleteInvitedExpenseUser)
-//$userDelete = Expense::where('user', $user)
-
    $deleteInvitedExpenseUser->delete();
 else
 return response()->json(null);
@@ -143,46 +180,6 @@ return response()->json(null);
         else
         return response()->json(null);
         }
-
-
-    // public function countExpensesPerUser()
-    // {
-    //     $getAuthUser = Auth::user();
-    //     $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
-    //     return response()->json($getUserExpenses);
-    // }
-
-    // public function updateExpense(Request $request, $id)
-    // {
-    //     $update = Expense::find($id);
-    //     $update->update($request->all());
-    //     return response()->json($update);
-
-    // }
-
-    // public function deleteInvitedExpenseUser($user_id)
-    // {
-
-    //     $deleteInvitedExpenseUser = userExpense::findOrFail($user_id);
-    //     if ($deleteInvitedExpenseUser)
-    //         //$userDelete = Expense::where('user', $user)
-    //         $deleteInvitedExpenseUser->delete();
-    //     else
-    //         return response()->json(null);
-    // }
-
-
-    // public function deleteExpense($id)
-    // {
-    //     //$user = Auth()->user();
-    //     $deleteExpense = Expense::findOrFail($id);
-    //     $deleteExpenses = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
-    //     if ($deleteExpenses)
-    //         //$userDelete = Expense::where('user', $user)
-    //         $deleteExpenses->delete();
-    //     else
-    //         return response()->json(null);
-    // }
 
     public function BulkUploadInviteUsersToExpense(Request $request, $expenseId)
     {
@@ -199,7 +196,7 @@ return response()->json(null);
         );
         $auth_user_id = Auth::user()->id;
         $result = ProcessBulkExcel::dispatchNow($file_name, $expense, $auth_user_id);
-        dd($result);
+       // dd($result);
         if ($result) {
             $message = "Excel record is been uploaded";
             return response()->json($message);

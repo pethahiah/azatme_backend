@@ -17,9 +17,7 @@ class CreateUsersTable extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('email')->unique();
-            //$table->string('usertype')->nullable();
             $table->enum('usertype', array('admin','merchant','user'));
-            //$table->enum('usertype', ['admin', 'merchant', 'user'])->default(unknown);
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('address')->nullable();

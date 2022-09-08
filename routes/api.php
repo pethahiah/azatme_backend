@@ -80,7 +80,6 @@ Route::namespace('API')->group(function () {
     Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
     Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
     
-    
     //Splitting Methods
     Route::post('splitingMethod', 'PaymentSplittingController@splitingMethod');
     Route::get('getSplittingMethods', 'PaymentSplittingController@getSplittingMethods');
@@ -89,19 +88,8 @@ Route::namespace('API')->group(function () {
     Route::post('makeComplain', 'ComplainController@makeComplain');
     Route::get('getAllComplains', 'ComplainController@getAllComplains');
 
-    //Admin Routes
-    // Route::get('admin', ['middleware' => 'admin', function () {
-    //     //
-    // }]);
-
+    //Webhook Routes
+    Route::post('/webhook', 'ExpenseController@webhookResponse');
     
-    
-    
-    
-   
-    
-    
-    
-    //Route::get('listusergroup', 'ExpenseController@listGroupWithDatePerUser');
        });
    });       
