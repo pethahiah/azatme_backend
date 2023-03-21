@@ -20,13 +20,30 @@ class UserGroup extends Model
         'amount_payed',
         'payed_date',
         'status',
-        'split_method_id'
+        'split_method_id',
+        'bankName',
+        'bankCode',
+        'account_number',
+        'percentage',
+        'percentage_per_user',
+        'actualAmount',
+        'email',
+        'uique_code',
+        'payThruReference',
+        'fiName',
+        'amount',
+        'paymentReference',
+        'paymentMethod',
+        'commission',
+        'residualAmount',
+        'resultCode',
+        'responseDescription',
 
         
     ];
 
 
-    public function Uxergroup()
+    public function expense()
     {
         return $this->belongsTo(Expense::class, 'group_id');
     }

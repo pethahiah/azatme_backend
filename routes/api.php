@@ -14,9 +14,39 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::group(['prefix' => 'admin'], function () {
+   // Route::get('users', function ()    {
+        // Matches The "/admin/users" URL
+        Route::post('register', 'AdminController@register');
+    //});
 });
+
+
+
+Route::middleware('auth:admin-api')->group(function () {
+    // Admin-only routes
+    
+    
+    Route::post('admin/login', 'AdminController@login');
+    
+});
+
+
+
+
+
+// Route::post('/webhook', 'GroupController@webhookGroupResponse');
+
+//  Route::post('/test', function(Request $request) {
+//         return response()->json($request->all());
+//     });
+
+
+
+
+
+
+    
 
 Route::namespace('API')->group(function () {
     Route::post('AttemptLogin', 'AuthController@AttemptLogin');
@@ -24,41 +54,143 @@ Route::namespace('API')->group(function () {
     Route::post('loginViaOtp', 'AuthController@loginViaOtp');
     Route::post('forgot', 'ForgotController@forgot');
     Route::post('reset', 'ForgotController@reset');
-    Route::get('ngn', 'BankController@ngnBanksApi');
     Route::get('getAllUser', 'AuthController@getAllUser');
+    Route::get('getBanks', 'BankController@ngnBanksApiList');
+    Route::get('getToken', 'AuthController@signin');
+    Route::get('token', 'SettingController@returnToken');
+    Route::post('/updateStatus', 'ExpenseController@webhookExpenseResponse');
+    Route::post('/kontributewebhook', 'GroupController@webhookGroupResponse');
+    Route::post('/businesswebhook', 'BusinessTransactionController@webhookBusinessResponse');
+    Route::post('/kontributewebhook', 'GroupController@groupSettlementWebhookResponse');
+    Route::post('/businesswebhook', 'BusinessTransactionController@businessSettlementWebhookResponse');
+    Route::post('/updateStatus', 'ExpenseController@refundmeSettlementWebhookResponse');
+    
+    
+    
+     //NQR Services
+    Route::post('nqr-merchant-registration', 'NQRController@NqrMerchantRegistration');
+    
+  
 
-   Route::middleware(['auth:api'])->group(function () {
+Route::middleware(['auth:api'])->group(function () {
+    
+    
     // User Update
     Route::get('getProfile', 'AuthController@getProfile');
     Route::get('logout', 'AuthController@logout');
     Route::put('updateProfile', 'AuthController@updateProfile');
+    Route::post('image', 'AuthController@uploadImage');
     Route::put('updateUsertype', 'AuthController@updateUsertype');
     Route::post('category', 'ExpenseCategoryController@category');
     
+    
+     //Mobile Verification
+    Route::post('verify-phone-number', 'MobileVerificationController@verifyPhone');
+    Route::post('check-mobile-number', 'MobileVerificationController@checkOtp');
+    Route::post('send-otp', 'MobileVerificationController@EmailVerification');
+    Route::put('confirm-email', 'MobileVerificationController@ConfirmEmailViaOtp');
+    Route::get('send-otp-mobile/{username}', 'ExpenseController@sendSmsMessage');
+    
+    
+    
+    
+     //Buisness
+    Route::post('createBusiness', 'BusinessController@createBusiness');
+    Route::get('list-all-business-users', 'AuthController@listAllBusinessUsers');
+    Route::put('update-business/{id}', 'BusinessController@updateBusiness');
+    Route::post('create-business', 'BusinessController@createBusiness');
+    Route::get('get-business-under-a-owner/{owner_id}', 'BusinessController@getAllBusiness');
+    Route::get('get-a-single-business-under-owner/{business_code}', 'BusinessController@getABusiness');
+    Route::delete('delete-a-business/{id}', 'BusinessController@deleteABusiness');
+    Route::get('gac-under-a-specific-business/{customer_code}', 'BusinessController@getAllCustomersUnderABusiness');
+    
+    
+    
+
+    //B2B Transactions
+    Route::post('create-product', 'BusinessTransactionController@creatProduct');
+     Route::get('all-product', 'BusinessTransactionController@getAllProductsPerBusiness');
+    Route::post('initiate-business-transaction/{product_id}', 'BusinessTransactionController@startBusinessTransaction');
+    Route::post('create-option', 'MotoController@moto');
+    Route::get('get-option', 'MotoController@getMotoMethod');
+    Route::post('create-vat', 'VatController@createVat');
+    Route::get('all-invoices-created-by-business-owner', 'BusinessTransactionController@getAllInvoiceByABusinessOwner');
+    Route::get('count-all-invoices-created-by-business-owner', 'BusinessTransactionController@countAllInvoiceByABusinessOwner');
+     Route::get('get-all-invoices-received-by-customer', 'BusinessTransactionController@getAllInvoiceRecievedByACutomer');
+      Route::get('count-all-invoices-recieved-by-business', 'BusinessTransactionController@countAllInvoiceRecievedByACutomer');
+      Route::get('business-settlements/{BusinessTransactionId}', 'BusinessTransactionController@AzatBusinessCollection');
+       Route::get('customer-invoice/{customerEmail}', 'BusinessTransactionController@getAllInvoiceSentToAParticularCustomer');
+       Route::get('get-all-transactions-created-by-a-specific-business/{business_code}', 'BusinessTransactionController@getAllTransactionsByASpecificBusiness');
+       Route::get('get-all-customers-under-a-specific-business/{business_code}', 'BusinessTransactionController@getAllCustomersUnderASpecificBusiness');
+       
+      
+    
+    //Email Template for Business
+    
+     Route::post('send-notification/{id}', 'MailTemplateController@mailNotification');
+    Route::get('get-customer-mails', 'MailTemplateController@getAllMails');
+    
+
+    //Customer
+    Route::post('create-customer/{business_code}', 'CustomerController@createCustomer');
+    Route::put('update-customer/{id}', 'CustomerController@updateCustomer');
+    Route::get('get-customers-under-a business/{owner_id}', 'CustomerController@listAllCustomer');
+    Route::delete('delete-a-customer/{id}', 'CustomerController@deleteACustomer');
+    Route::get('gac-under-a-specific-business/{customer_code}', 'CustomerController@getAllCustomersUnderABusiness');
+     
+    
     //Expense
+    
     Route::post('createExpense', 'ExpenseController@createExpense');
-    Route::post('userExpense/{expenseId}', 'ExpenseController@inviteUserToExpense');
-    Route::post('bulkUserExpense/{expenseId}', 'ExpenseController@BulkUploadInviteUsersToExpense');
+    Route::post('userExpense/{expenseUniqueCode}', 'ExpenseController@inviteUserToExpense');
     Route::put('updateExpense/{id}', 'ExpenseController@updateExpense');
     Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
-    Route::get('getRandomUserExpense/{user_id}', 'ExpenseController@getRandomUserExpense');
+    Route::get('getRandomUserExpense/{email}', 'ExpenseController@getRandomUserExpense');
     Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
     Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
+    Route::get('getUserDeletedExpense', 'ExpenseController@getUserDeletedExpense');
+    Route::get('getUserExpense', 'ExpenseController@getUserExpense');
+    Route::get('getUserDeletedExpenseInvite', 'ExpenseController@getUserDeletedExpenseInvite');
+    Route::get('getAllMemebersOfAnExpense/{expenseId}', 'ExpenseController@getAllMemebersOfAnExpense');
+    Route::get('getAmountsPaidPerExpense/{expenseId}', 'ExpenseController@getUserAmountsPaidPerExpense');
+    Route::get('getTotalNumberOfPaidUsersPerExpense/{expenseId}', 'ExpenseController@getTotalNumberOfPaidUsersPerExpense');
+    Route::post('/export-excel', 'ExpenseController@exportExpenseToExcel');
+    Route::post('/export-csv', 'ExpenseController@exportExpenseToCsv');
+    Route::post('collection/{transactionId}', 'ExpenseController@AzatIndividualCollection');
+    Route::get('get-transaction-status', 'ExpenseController@getStatus');
+    Route::post('verify-account', 'ExpenseController@accountVerification');
+    Route::get('getResponse', 'ExpenseController@getStatus');
+    Route::put('update-payback-transaction/{transactionId}', 'ExpenseController@UpdateTransactionRequest');
     
-    //Group
+    
+    
+    // User Group
     Route::post('createGroup', 'GroupController@createGroup');
+    Route::put('updateGroup/{id}', 'GroupController@updateGroup');
     Route::post('inviteUsersToGroup/{groupId}', 'GroupController@inviteUsersToGroup');
     Route::get('countAllGroupsPerUser', 'GroupController@countAllGroupsPerUser');
     Route::get('getAllGroupsPerUser', 'GroupController@getAllGroupsPerUser');
-    Route::get('getRandomUserGroup/{user_id}', 'GroupController@getRandomUserGroup');
-    Route::delete('deleteInvitedGroupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
+    Route::get('getRandomUserGroup/{email}', 'GroupController@getRandomUserGroup');
+    Route::delete('deleteInvitedGoupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
     Route::delete('deleteGroup/{id}', 'GroupController@deleteGroup');
+    Route::get('getAllMemebersOfAGroup/{groupId}', 'GroupController@getAllMemebersOfAGroup');
+    Route::get('list-users-per-Group/{groupId}', 'GroupController@getUserAmountsPaidPerGroup');
+    Route::get('getUserGroup', 'GroupController@getUserGroup');
+    Route::post('group-settlement/{transactionId}', 'GroupController@AzatGroupCollection');
+    Route::put('update-kontribute-transaction/{transactionId}', 'GroupController@UpdateTransactionGroupRequest');
+    
+   
+    
+    
     
     //Bank
-    Route::put('updateBank/{id}', 'BankController@updateBank');
+    Route::put('updateBank/{bankid}', 'BankController@updateBank');
     Route::post('addBank', 'BankController@addBank');
     Route::get('getBankPerUser', 'BankController@getBankPerUser');
     Route::delete('bank/{id}', 'BankController@bank');
+    
+   
+    
     
     //Sub Category
     Route::put('updateSubCategory/{id}', 'ExpenseSubCategoryController@updateSubCategory');
@@ -66,11 +198,17 @@ Route::namespace('API')->group(function () {
     Route::get('getSubCateListPerCategory/{category_id}', 'ExpenseSubCategoryController@getSubCateListPerCategory');
     Route::delete('deleteExpenseSubCategory/{id}', 'ExpenseSubCategoryController@deleteExpenseSubCategory');
     
+    
+    
     //Category
     Route::put('updateCategory/{id}', 'ExpenseCategoryController@updateCategory');
     Route::get('allCategoriesPerUser', 'ExpenseCategoryController@allCategoriesPerUser');
     Route::get('getCateList', 'ExpenseCategoryController@getCateList');
     Route::delete('deleteExpenseCategory/{id}', 'ExpenseCategoryController@deleteExpenseCategory');
+    
+    
+    // Wallet
+    Route::get('get-ledger', 'WalletController@createWallet');
      
     //Reporting
     Route::get('allExpensesPerUser', 'ExpenseController@allExpensesPerUser');
@@ -88,8 +226,9 @@ Route::namespace('API')->group(function () {
     Route::post('makeComplain', 'ComplainController@makeComplain');
     Route::get('getAllComplains', 'ComplainController@getAllComplains');
 
-    //Webhook Routes
-    Route::post('/webhook', 'ExpenseController@webhookResponse');
+   
     
        });
-   });       
+
+    }); 
+       

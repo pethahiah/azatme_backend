@@ -28,7 +28,10 @@ class GroupRequest extends FormRequest
 
             'name' => 'required|string',
             'description' => 'required|string',
-            'amount' => 'required'
+            'amount' => 'required',
+            'bankName' => 'required|string',
+            'bankCode' => 'required|min:3|max:3',
+            'account_number' => 'required|min:10|max:10'
         ];
     }
 }

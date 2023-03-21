@@ -29,10 +29,13 @@ class ForgotController extends Controller
             'email' => $email,
             'token' => $token,
         ]);
+        
+        $data = [
+           'token' => $token,
+           'email' => $email
+];
            //send email
-            Mail::send('Email.forgot',  [
-            'token' => $token, 
-            ], function ($message) use ($email) {
+            Mail::send('Email.forgot', $data , function ($message) use ($email) {
                 $message->to($email);
                 $message->subject('AzatMe: Reset Password');
             }); 

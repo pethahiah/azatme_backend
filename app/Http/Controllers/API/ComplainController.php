@@ -19,10 +19,7 @@ Public function makeComplain()
         'user_id' => Auth::user()->id,
              
         ]);  
-        
         return response()->json($complain);
-        
-        
     }
 
         public function getAllComplains()

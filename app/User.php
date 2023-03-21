@@ -17,7 +17,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'otp', 'phone','first_name', 'last_name', 'address', 'state', 'country', 'city', 'image', 'usertype'
+        'name', 'email', 'password', 'otp', 'phone','first_name', 'middle_name', 'last_name', 'address', 'state', 'country', 'city', 'image', 'usertype', 'registration_code', 'company_name','nimc','bvn'
     ];
 
     /**
@@ -37,10 +37,21 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    
+    public function userExpense()
+    {
+        return $this->belongsTo(userExpense::class, 'principal_id','id')->withDefault();
+    }
+    
+    
+     public function userGroup()
+    {
+        return $this->belongsTo(userGroup::class, 'reference_id','id')->withDefault();
+    }
 
 
     public function Expense()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(Expense::class, 'user_id','id')->withDefault();
     }
 }

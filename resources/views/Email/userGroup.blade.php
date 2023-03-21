@@ -341,8 +341,12 @@
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-                        <p>Hi,</p>
-                        <p>  You have been invited to join this group</p>
+                        <p>Hi {{$slip['receipient']}},</p>
+                        <p> You have been invited to make payment on this group
+                        
+                        To get the full feature of this app kindly click this link to <b><a href= "https://azatme.vercel.app/register"> Register</a></b> </p>
+
+                        <p>Meanwhile, kindly click to make payment<b> <a href={{$slip['paylink']}}>Pay Now</a></b></p>
 
                          
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">

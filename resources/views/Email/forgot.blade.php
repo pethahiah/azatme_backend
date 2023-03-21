@@ -332,18 +332,31 @@
         <td class="container">
           <div class="content">
 
-            <!-- START CENTERED WHITE CONTAINER -->
+             <!--START CENTERED WHITE CONTAINER -->
             <table role="presentation" class="main">
 
-              <!-- START MAIN CONTENT AREA Dear awonusi olajide (FrancollimAssociates),
--->
+               <!--START MAIN CONTENT AREA Dear awonusi olajide (FrancollimAssociates),-->
+
               <tr>
                 <td class="wrapper">
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-                        <p>Dear {{$token}},</p>
-                        <p>Kindly reset your password using this link.  <a href="{{url('staff-requests')}}">click here</a></p>
+                        <p>Dear <strong>{{$email}}</strong>,</p>
+                       <p
+                                            style="margin:0 0 12px 0;font-size:14px;line-height:24px;font-family:Arial,sans-serif;">
+                                            We've received a request to reset the password.
+                                            </p>
+                                        <p
+                                            style="margin:10px 0 12px 0;font-size:14px;line-height:24px;font-family:Arial,sans-serif;">
+                                            You can reset your password by using the below token:
+                                        </p> <strong>{{$token}}</strong></p>
+                                        
+                                        <p style="margin:100px 0 12px 0;font-size:14px;font-family:Arial,sans-serif;">
+                                            Thank
+                                            you, </p>
+                                        <p style="margin:0 0 12px 0;font-size:14px;font-family:Arial,sans-serif;">
+                                            AzatMe </p>
 
                          
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
@@ -371,11 +384,11 @@
                 </td>
               </tr>
 
-            <!-- END MAIN CONTENT AREA -->
+             <!--END MAIN CONTENT AREA -->
             </table>
-            <!-- END CENTERED WHITE CONTAINER -->
+             <!--END CENTERED WHITE CONTAINER -->
 
-            <!-- START FOOTER -->
+             <!--START FOOTER -->
             <div class="footer">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                 <tr>
@@ -391,7 +404,7 @@
                 </tr>
               </table>
             </div>
-            <!-- END FOOTER -->
+             <!--END FOOTER -->
 
           </div>
         </td>
@@ -400,3 +413,21 @@
     </table>
   </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

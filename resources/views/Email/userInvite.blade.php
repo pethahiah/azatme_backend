@@ -342,10 +342,17 @@
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-                        <p>Hi,</p>
-                        <p> You have been invited to this expense, 
+                        <p>Hi {{$slip['receipient']}},</p>
+                        <p> 
+                                    Your friend: , has requested a RefundMe, because he/she had spent some money earlier.
+
+                                    RefundMe, is a great solution that helps you to request for Payment from friends and Families for bills incurred. It can be split equally or based on Percentage as you may desire. Your account  protected and secure as you don’t have to share with any one.
+
+                                    Businesses also use it to receive payments without disclosing their account and payment is made against system generated invoices.</p>
                         
-                        To get the full feature of this app kindly click this link to signup </p>
+                        <p>To get the full feature of this app kindly click this link to <b><a href= "https://azatme.vercel.app/register"> Register</a></b> </p>
+
+                        <p>Meanwhile, kindly click to make payment<b> <a href={{$slip['paylink']}}>Pay Now</a></b></p>
 
                          
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">

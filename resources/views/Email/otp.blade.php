@@ -342,7 +342,7 @@
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-                        <p>Hi,</p>
+                        <p>Hi {{$email}},</p>
                         <p>Kindly find your one time password {{$otp}}</p>
 
                          
