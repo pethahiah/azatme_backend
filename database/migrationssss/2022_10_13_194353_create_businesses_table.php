@@ -21,10 +21,6 @@ class CreateBusinessesTable extends Migration
             $table->foreignId('owner_id');
             $table->string('business_address')->nullable();
             $table->string('business_email')->nullable();
-            $table->string('vat_id')->nullable();
-            $table->string('registration_number')->nullable();
-            $table->string('type')->nullable();
-            $table->string('description')->nullable();
             $table->timestamps();
         });
     }

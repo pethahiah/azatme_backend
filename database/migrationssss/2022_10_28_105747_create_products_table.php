@@ -18,7 +18,6 @@ class CreateProductsTable extends Migration
             $table->string('name');
             $table->string('description');
             $table->string('unique_code')->nullable();
-            $table->string('business_code')->nullable();
             $table->integer('user_id');
             $table->foreignId('category_id')->nullable();
             $table->foreignId('subcategory_id')->nullable();

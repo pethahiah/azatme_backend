@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateBusinessWithdrawalsTable extends Migration
+class CreateGroupWithdrawalsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,18 +13,18 @@ class CreateBusinessWithdrawalsTable extends Migration
      */
     public function up()
     {
-        Schema::create('business_withdrawals', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        Schema::create('group_withdrawals', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('beneficiary_id');
-            $table->foreignId('product_id');
-            $table->string('bank')->nullable();
-            $table->string('account_name')->nullable();
-            $table->string('account_number')->nullable();
+            $table->foreignId('group_id');
+            $table->string('accountName')->nullable();
+            $table->string('accountNumber')->nullable();
             $table->string('description')->nullable();
             $table->string('amount')->nullable();
-            $table->string('recordDateTime')->nullable();
-            $table->string('paymentAmount')->nullable();
+            $table->string('bank')->nullable();
             $table->string('transactionReference')->nullable();
+            $table->string('paymentAmount')->nullable();
+            $table->string('recordDateTime')->nullable();
             $table->timestamps();
         });
     }
@@ -36,6 +36,6 @@ class CreateBusinessWithdrawalsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('business_withdrawals');
+        Schema::dropIfExists('group_withdrawals');
     }
 }

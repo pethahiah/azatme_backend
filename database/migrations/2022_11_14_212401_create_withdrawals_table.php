@@ -21,7 +21,10 @@ class CreateWithdrawalsTable extends Migration
             $table->string('accountNumber')->nullable();
             $table->string('description')->nullable();
             $table->string('amount')->nullable();
-            $table->string('amountRemaining')->nullable();
+            $table->string('paymentAmount')->nullable();
+            $table->string('transactionReference')->nullable();
+            $table->string('recordDateTime')->nullable();
+            $table->string('bank')->nullable();
             $table->timestamps();
         });
     }

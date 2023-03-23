@@ -17,11 +17,9 @@ class CreateWalletsTable extends Migration
             $table->bigIncrements('id');
             $table->foreignId('user_id');
             $table->string('charges')->nullable();
+            $table->string('request_amount')->nullable();
             $table->string('amount_paid_by_paythru')->nullable();
             $table->string('residual_amount')->nullable();
-            $table->string('amountExpectedRefundMe')->nullable();
-            $table->string('amountExpectedKontribute')->nullable();
-            $table->string('amountExpectedBusiness')->nullable();
             $table->string('balance')->nullable();
             $table->timestamps();
         });

@@ -19,7 +19,6 @@ class CreateBusinessTransactionsTable extends Migration
             $table->string('email');
             $table->string('name');
             $table->string('unique_code');
-            $table->string('business_code');
             $table->string('description');
             $table->string('account_number');
             $table->string('bankName');

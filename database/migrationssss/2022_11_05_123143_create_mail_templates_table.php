@@ -20,11 +20,6 @@ class CreateMailTemplatesTable extends Migration
             $table->string('subject')->nullable();
             $table->string('greetings')->nullable();
             $table->string('url')->nullable();
-            $table->string('finalgreetings')->nullable();
-            $table->string('salutation')->nullable();
-            $table->string('facebookLink')->nullable();
-            $table->string('whatsappNumber')->nullable();
-            $table->string('campaignImage')->nullable();
             $table->foreignId('customer_id');
             $table->string('message')->nullable();
 

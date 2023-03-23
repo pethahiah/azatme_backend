@@ -22,9 +22,7 @@ class CreateBusinessWithdrawalsTable extends Migration
             $table->string('account_number')->nullable();
             $table->string('description')->nullable();
             $table->string('amount')->nullable();
-            $table->string('recordDateTime')->nullable();
-            $table->string('paymentAmount')->nullable();
-            $table->string('transactionReference')->nullable();
+            $table->string('amount_remaining')->nullable();
             $table->timestamps();
         });
     }

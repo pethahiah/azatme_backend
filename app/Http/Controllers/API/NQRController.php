@@ -6,16 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Nqr;
-use App\Setting;
- 
-      
+use App\Setting;    
 
 
 
 class NQRController extends Controller
 {
     //
-
     public function NqrMerchantRegistration(Request $request)
     {
         
@@ -35,9 +32,7 @@ class NQRController extends Controller
             "referenceCode" => $request->referenceCode,
             "remarks" => $request->remarks,
         ];
-
    // dd($data);
-
           $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'Authorization' => $token,
@@ -45,13 +40,9 @@ class NQRController extends Controller
           if($response->successful())
           //return $response;
             {   
-
               $ngrRegistration = json_decode($response->body(), true);
-
-        
               return response()->json($ngrRegistration);
             }
-
 }
 
 }
