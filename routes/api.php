@@ -41,13 +41,6 @@ Route::middleware('auth:admin-api')->group(function () {
 //         return response()->json($request->all());
 //     });
 
-
-
-
-
-
-    
-
 Route::namespace('API')->group(function () {
     Route::post('AttemptLogin', 'AuthController@AttemptLogin');
     Route::post('register', 'AuthController@register');
@@ -57,6 +50,7 @@ Route::namespace('API')->group(function () {
     Route::get('getAllUser', 'AuthController@getAllUser');
     Route::get('getBanks', 'BankController@ngnBanksApiList');
     Route::get('getToken', 'AuthController@signin');
+    Route::post('createparam', 'SettingController@param');
     Route::get('token', 'SettingController@returnToken');
     Route::post('/updateStatus', 'ExpenseController@webhookExpenseResponse');
     Route::post('/kontributewebhook', 'GroupController@webhookGroupResponse');

@@ -70,6 +70,26 @@ class ExpenseController extends Controller
        $amt = $expense->amount;
        $hashSign = hash('sha512', $amt . $secret);
        $PayThru_AppId = env('PayThru_ApplicationId');
+       $prodUrl = env('PayThru_Base_Live_Url');
+
+
+       $dataa = [
+        'ApplicationId' => $PayThru_AppId,
+        'password' => $hash
+      ];
+      //return $data;
+    $response = Http::withHeaders([
+        'Content-Type' => 'application/json',
+        'Timestamp' => $timestamp,
+  ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+    //return $response;
+    if($response->Successful())
+    {
+      $access = $response->object();
+      $accesss = $access->data;
+      $paythru = "Paythru";
+  
+      $token = $paythru." ".$accesss;
 
        //return "AppId ".  $PayThru_AppId;
     
@@ -161,13 +181,13 @@ class ExpenseController extends Controller
 
         ];
         
-        $param = Setting::where('id', 1)->first();
-        $token = $param->token;
+        // $param = Setting::where('id', 1)->first();
+        // $token = $param->token;
         
         $authmail = Auth::user()->email; 
       
       //return $token;
-        $url = $param->prodUrl;
+        $url = $prodUrl;
         $urls = $url.'/transaction/create';
 
        $response = Http::withHeaders([
@@ -203,6 +223,7 @@ class ExpenseController extends Controller
       }
       return response()->json($transaction);
       }
+    }
     }
     
     
@@ -412,6 +433,7 @@ return response()->json(null);
       $hash = hash('sha512', $timestamp . $secret);
       //return $hash;
       $AppId = env('PayThru_ApplicationId');
+      $prodUrl = env('PayThru_Base_Live_Url');
 
       $expenseAmount = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $transactionId)->whereNotNull('actualAmount')->first();
       $amount = $expenseAmount->actualAmount;
@@ -453,6 +475,23 @@ return response()->json(null);
    //return $getAccountName;
    
    $beneficiaryReferenceId = $getBankReferenceId->referenceId;
+    $dataa = [
+      'ApplicationId' => $PayThru_AppId,
+      'password' => $hash
+    ];
+    //return $data;
+  $response = Http::withHeaders([
+      'Content-Type' => 'application/json',
+      'Timestamp' => $timestamp,
+])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+  //return $response;
+  if($response->Successful())
+  {
+    $access = $response->object();
+    $accesss = $access->data;
+    $paythru = "Paythru";
+
+    $token = $paythru." ".$accesss;
    //return $beneficiaryReferenceId;
       $data = [
             'productId' => $productId,
@@ -462,13 +501,8 @@ return response()->json(null);
             ],
         ];
    //return $data;
-    
-    
-        $param = Setting::where('id', 1)->first();
-        $token = $param->token;
-      
       //return $token;
-        $url = $param->prodUrl;
+        $url = $prodUrl;
         $urls = $url.'/transaction/settlement';
     
          $response = Http::withHeaders([
@@ -490,6 +524,7 @@ return response()->json(null);
        // $collection->transactionReference;
       return response()->json($collection);
     }
+  }
 }
 
 
@@ -522,6 +557,7 @@ public function accountVerification(Request $request)
 
 $user = Auth::user()->id;
 //return $user;
+$prodUrl = env('PayThru_Base_Live_Url');
 $account = $request->account_number;
 $bankCode = $request->bankCode;
 
@@ -533,6 +569,25 @@ $first = $getLastName->first_name;
 $middle_name = $getLastName->middle_name;
 $fullName = $last.' '.$first.' '.$middle_name;
 $fullNames =$first.' '.$middle_name.' '.$last;
+    
+    $dataa = [
+      'ApplicationId' => $PayThru_AppId,
+      'password' => $hash
+    ];
+    //return $data;
+  $response = Http::withHeaders([
+      'Content-Type' => 'application/json',
+      'Timestamp' => $timestamp,
+])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+  //return $response;
+  if($response->Successful())
+  {
+    $access = $response->object();
+    $accesss = $access->data;
+    $paythru = "Paythru";
+
+    $token = $paythru." ".$accesss;
+
 //return $fullName;
    $response = Http::withHeaders([
         'Content-Type' => 'application/json',
@@ -544,21 +599,13 @@ $fullNames =$first.' '.$middle_name.' '.$last;
         
   $details = $response->object();
   
- $getData = $details->data;
+  $getData = $details->data;
  
-//  if(($fullName != $details->data) || ($fullNames != $details->data))
- 
-//  {
-     
-//       return response([
-//                 'message' => 'UnAuthorize Account Details'
-//             ], 403);
-     
-//  }else{
  return response()->json($details);
     
  //}
     }
+  }
     return null;
     
 }
@@ -575,11 +622,5 @@ $fullNames =$first.' '.$middle_name.' '.$last;
         $UserAmountsPaid = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $expenseId)->get();
         return response()->json($UserAmountsPaid);
     }
-    
-    
-    public function traceBalance()
-    {
-        
-    }
-    
+       
 }

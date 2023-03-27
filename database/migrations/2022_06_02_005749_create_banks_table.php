@@ -20,18 +20,11 @@ class CreateBanksTable extends Migration
             $table->double('account_name')->nullable();
             $table->string('referenceId')->nullable();
             $table->string('bankName')->nullable();
-            $table->string('bankCode')->nullable();           
+            $table->string('bankCode')->nullable(); 
+            $table->enum('type', array('ngr','link',));
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::dropIfExists('banks');
-    }
+   
 }

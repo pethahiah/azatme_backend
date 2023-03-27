@@ -85,6 +85,7 @@ class GroupController extends Controller
        $amt = $group->amount;
        $hashSign = hash('sha512', $amt . $secret);
        $PayThru_AppId = env('PayThru_ApplicationId');
+       $prodUrl = env('PayThru_Base_Live_Url');
 
       $emails = $request->email;
       if($group)
@@ -149,6 +150,24 @@ class GroupController extends Controller
          $totalpayable = $totalpayable + $info->amount_payable;
          $paylink_expiration_time = Carbon::now()->addMinutes(15);
       }
+
+      $dataa = [
+        'ApplicationId' => $PayThru_AppId,
+        'password' => $hash
+      ];
+      //return $data;
+    $response = Http::withHeaders([
+        'Content-Type' => 'application/json',
+        'Timestamp' => $timestamp,
+  ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+    //return $response;
+    if($response->Successful())
+    {
+      $access = $response->object();
+      $accesss = $access->data;
+      $paythru = "Paythru";
+  
+      $token = $paythru." ".$accesss;
       // Send payment request to paythru  
       $data = [
         'amount' => $group->amount,
@@ -164,13 +183,9 @@ class GroupController extends Controller
             'payers' => $payers
           ]
         ];
-        
-   //return $data;
-      $param = Setting::where('id', 1)->first();
-      $token = $param->token;
-      
+              
       //return $token;
-    $url = $param->prodUrl;
+    $url = $prodUrl;
     $urls = $url.'/transaction/create';
     //return $urls;
      
@@ -204,6 +219,7 @@ class GroupController extends Controller
       }
       return response()->json($transaction);
       } 
+    }
          }else{
               return response([
                 'message' => "Id doesn't belong to this transaction category"
@@ -277,6 +293,9 @@ public function AzatGroupCollection(Request $request, $transactionId)
       $hash = hash('sha512', $timestamp . $secret);
       //return $hash;
       $AppId = env('PayThru_ApplicationId');
+      $prodUrl = env('PayThru_Base_Live_Url');
+    
+    
       //return 
     
       $groupAmount = userGroup::where('reference_id', Auth::user()->id)->where('group_id', $transactionId)->whereNotNull('amount_payable')->first();
@@ -318,6 +337,24 @@ public function AzatGroupCollection(Request $request, $transactionId)
    
     $beneficiaryReferenceId = $getBankReferenceId->referenceId;
 
+    $dataa = [
+      'ApplicationId' => $PayThru_AppId,
+      'password' => $hash
+    ];
+    //return $data;
+  $response = Http::withHeaders([
+      'Content-Type' => 'application/json',
+      'Timestamp' => $timestamp,
+])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+  //return $response;
+  if($response->Successful())
+  {
+    $access = $response->object();
+    $accesss = $access->data;
+    $paythru = "Paythru";
+
+    $token = $paythru." ".$accesss;
+
       $data = [
             'productId' => $productId,
             'amount' => $amount,
@@ -326,10 +363,9 @@ public function AzatGroupCollection(Request $request, $transactionId)
             ],
         ];
         
-    $param = Setting::where('id', 1)->first();
-    $token = $param->token;
+  
       //return $token;
-    $url = $param->prodUrl;
+    $url = $prodUrl;
     $urls = $url.'/transaction/settlement';
     //return $urls;
 
@@ -344,6 +380,7 @@ public function AzatGroupCollection(Request $request, $transactionId)
         $collection = json_decode($response->body(), true);
         return $collection;
     }
+  }
 }
         
         

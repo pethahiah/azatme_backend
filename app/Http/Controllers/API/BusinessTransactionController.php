@@ -70,7 +70,9 @@ class BusinessTransactionController extends Controller
       $amt = $product->amount;
       $hashSign = hash('sha512', $amt . $secret);
       //$product = Product::findOrFail($product_id);
-
+      $prodUrl = env('PayThru_Base_Live_Url');
+    
+    
       //return $generalPath;
       $input['email'] = $request->input('email');
       $emails = $request->email;
@@ -121,6 +123,25 @@ class BusinessTransactionController extends Controller
               ]);
               
               //return $info;
+
+              $dataa = [
+                'ApplicationId' => $PayThru_AppId,
+                'password' => $hash
+              ];
+              //return $data;
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Timestamp' => $timestamp,
+          ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+            //return $response;
+            if($response->Successful())
+            {
+              $access = $response->object();
+              $accesss = $access->data;
+              $paythru = "Paythru";
+          
+              $token = $paythru." ".$accesss;
+          
               
             $data = [
                 'amount' => $info->transaction_amount,
@@ -132,14 +153,8 @@ class BusinessTransactionController extends Controller
                 'displaySummary' => false,
                
                 ];
-                
-                //return $data;
-                
- $param = Setting::where('id', 1)->first();
-      $token = $param->token;
-      
-      //return $token;
-    $url = $param->prodUrl;
+
+    $url = $prodUrl;
     $urls = $url.'/transaction/create';
 
  $response = Http::withHeaders([
@@ -152,12 +167,7 @@ class BusinessTransactionController extends Controller
               }else{
                 $transaction = json_decode($response->body(), true);
                 $paylink = $transaction['payLink'];
-                //$paylink = $slip['paylink'];
-       // return $paylink;
            
-                //$splitResult = $transaction['splitPayResult']['result'];
-                //foreach($splitResult as $key => $slip)
-               // {
                   Mail::to($user->customer_email)->send(new BusinessPaylinkMail($paylink));
                 //}
                  if($paylink)
@@ -172,6 +182,7 @@ class BusinessTransactionController extends Controller
               }
              
               return response()->json($transaction);
+            }
 
         }elseif($request['moto_id'] == 2)
         
@@ -214,6 +225,25 @@ class BusinessTransactionController extends Controller
         ]);
         
         //return $invoice;
+
+        $dataa = [
+          'ApplicationId' => $PayThru_AppId,
+          'password' => $hash
+        ];
+        //return $data;
+      $response = Http::withHeaders([
+          'Content-Type' => 'application/json',
+          'Timestamp' => $timestamp,
+    ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
+      //return $response;
+      if($response->Successful())
+      {
+        $access = $response->object();
+        $accesss = $access->data;
+        $paythru = "Paythru";
+    
+        $token = $paythru." ".$accesss;
+    
         
        $data = [
         'amount' => $product->amount,
@@ -224,10 +254,9 @@ class BusinessTransactionController extends Controller
         'sign' => $hashSign,
         'displaySummary' => false,
         ];
-        $param = Setting::where('id', 1)->first();
-        $token = $param->token;
+      
       //return $token;
-        $url = $param->prodUrl;
+        $url = $prodUrl;
         $urls = $url.'/transaction/create';
 
          $response = Http::withHeaders([
@@ -284,6 +313,7 @@ class BusinessTransactionController extends Controller
                         //return $pdf->download('invoice.pdf');
                         //}
                       }
+                    }
     }
 }
 }

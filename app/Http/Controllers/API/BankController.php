@@ -76,23 +76,37 @@ class BankController extends Controller
 
 public function ngnBanksApiList()
 {
-      $current_timestamp= now();
-      //echo $current_timestamp;
-      $timestamp = strtotime($current_timestamp);
-      $secret = env('PayThru_App_Secret');
-      $hash = hash('sha512', $timestamp . $secret);
-      $PayThru_AppId = env('PayThru_ApplicationId');
-      
-      
-      $param = Setting::where('id', 1)->first();
-      $token = $param->token;
-      $urls = $param->prodUrl;
-     // return $urls;
+    $current_timestamp= now();
+    $timestamp = strtotime($current_timestamp);
+   // echo $timestamp;
+    $secret = env('PayThru_App_Secret');
+    $hash = hash('sha256', $secret . $timestamp);
+    $PayThru_AppId = env('PayThru_ApplicationId');
+    $prodUrl = env('PayThru_Base_Live_Url');
+    
+    $data = [
+      'ApplicationId' => $PayThru_AppId,
+      'password' => $hash
+    ];
+    //return $data;
+  $response = Http::withHeaders([
+      'Content-Type' => 'application/json',
+      'Timestamp' => $timestamp,
+])->post('https://services.paythru.ng/identity/auth/login', $data);
+  //return $response;
+  if($response->Successful())
+  {
+    $access = $response->object();
+    $accesss = $access->data;
+    $paythru = "Paythru";
+
+    $token = $paythru." ".$accesss;
+
       
      $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,
-  ])->get($urls.'/bankinfo/listBanks');
+  ])->get($prodUrl.'/bankinfo/listBanks');
     //return $response;
     if($response->Successful())
     {
@@ -101,7 +115,7 @@ public function ngnBanksApiList()
     }  
 }
 
-
+}
 
 
 
