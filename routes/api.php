@@ -58,6 +58,7 @@ Route::namespace('API')->group(function () {
     Route::post('/kontributewebhook', 'GroupController@groupSettlementWebhookResponse');
     Route::post('/businesswebhook', 'BusinessTransactionController@businessSettlementWebhookResponse');
     Route::post('/updateStatus', 'ExpenseController@refundmeSettlementWebhookResponse');
+    Route::post('/contact-us', 'SheetController@externalContentPostMethod');
     
     
     
