@@ -32,12 +32,21 @@ use Twilio\Rest\Client;
 use DB;
 use App\Setting;
 use Storage;
+use App\Services\PaythruService;
 
 
 class ExpenseController extends Controller
 {
     //
-    public function createExpense(ExpenseRequest $request)
+public $paythruService;
+
+public function __construct(PaythruService $paythruService)
+    {
+        $this->paythruService = $paythruService;
+    }
+
+
+public function createExpense(ExpenseRequest $request)
     {
 
         $expense = Expense::create([
@@ -73,23 +82,7 @@ class ExpenseController extends Controller
        $prodUrl = env('PayThru_Base_Live_Url');
 
 
-       $dataa = [
-        'ApplicationId' => $PayThru_AppId,
-        'password' => $hash
-      ];
-      //return $data;
-    $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Timestamp' => $timestamp,
-  ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
-    //return $response;
-    if($response->Successful())
-    {
-      $access = $response->object();
-      $accesss = $access->data;
-      $paythru = "Paythru";
-  
-      $token = $paythru." ".$accesss;
+       $token = $this->paythruService->handle();
 
        //return "AppId ".  $PayThru_AppId;
     
@@ -140,9 +133,9 @@ class ExpenseController extends Controller
             $payable = $expense->amount/$count;
         }
         
-         $paylink_expiration_time = Carbon::now()->addHours(23);
+    $paylink_expiration_time = Carbon::now()->addHours(23);
 
-          $info = userExpense::create([
+    $info = userExpense::create([
             'principal_id' => Auth::user()->id,
             'expense_id' => $expense->id,
             'name' => $expense->name,
@@ -180,10 +173,7 @@ class ExpenseController extends Controller
           ]
 
         ];
-        
-        // $param = Setting::where('id', 1)->first();
-        // $token = $param->token;
-        
+
         $authmail = Auth::user()->email; 
       
       //return $token;
@@ -217,12 +207,10 @@ class ExpenseController extends Controller
         ]);
               
             }
-        }
-        
-       
+        } 
       }
       return response()->json($transaction);
-      }
+      
     }
     }
     
@@ -369,7 +357,7 @@ else
 return response()->json(null);
 }
 
- public function deleteExpense($id)
+public function deleteExpense($id)
         {
         $deleteExpense = expense::findOrFail($id);
         $getDeletedExpense = expense::where('user_id', Auth::user()->id)->where('id', $deleteExpense);
@@ -379,7 +367,7 @@ return response()->json(null);
         return response()->json(null);
         }
 
-    public function BulkUploadInviteUsersToExpense(Request $request, $expenseId)
+public function BulkUploadInviteUsersToExpense(Request $request, $expenseId)
     {
       
         $expense = expense::findOrFail($expenseId);
@@ -404,7 +392,7 @@ return response()->json(null);
         }
     }
 
-    public function exportExpenseToExcel(Request $request)
+public function exportExpenseToExcel(Request $request)
     {
       $fileName = 'azatme_report'.'_'.Carbon::now() . '.' . 'xlsx';
       $userExpense = userExpense::getuserExpense($request);
@@ -475,23 +463,8 @@ return response()->json(null);
    //return $getAccountName;
    
    $beneficiaryReferenceId = $getBankReferenceId->referenceId;
-    $dataa = [
-      'ApplicationId' => $PayThru_AppId,
-      'password' => $hash
-    ];
-    //return $data;
-  $response = Http::withHeaders([
-      'Content-Type' => 'application/json',
-      'Timestamp' => $timestamp,
-])->post('https://services.paythru.ng/identity/auth/login', $dataa);
-  //return $response;
-  if($response->Successful())
-  {
-    $access = $response->object();
-    $accesss = $access->data;
-    $paythru = "Paythru";
 
-    $token = $paythru." ".$accesss;
+   $token = $this->paythruService->handle();
    //return $beneficiaryReferenceId;
       $data = [
             'productId' => $productId,
@@ -523,7 +496,7 @@ return response()->json(null);
         ]);
        // $collection->transactionReference;
       return response()->json($collection);
-    }
+    
   }
 }
 
@@ -570,23 +543,7 @@ $middle_name = $getLastName->middle_name;
 $fullName = $last.' '.$first.' '.$middle_name;
 $fullNames =$first.' '.$middle_name.' '.$last;
     
-    $dataa = [
-      'ApplicationId' => $PayThru_AppId,
-      'password' => $hash
-    ];
-    //return $data;
-  $response = Http::withHeaders([
-      'Content-Type' => 'application/json',
-      'Timestamp' => $timestamp,
-])->post('https://services.paythru.ng/identity/auth/login', $dataa);
-  //return $response;
-  if($response->Successful())
-  {
-    $access = $response->object();
-    $accesss = $access->data;
-    $paythru = "Paythru";
-
-    $token = $paythru." ".$accesss;
+$token = $this->paythruService->handle();
 
 //return $fullName;
    $response = Http::withHeaders([
@@ -604,7 +561,7 @@ $fullNames =$first.' '.$middle_name.' '.$last;
  return response()->json($details);
     
  //}
-    }
+    
   }
     return null;
     

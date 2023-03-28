@@ -23,10 +23,18 @@ use Illuminate\Support\Facades\Http;
 use App\Mail\BusinessPaylinkMail;
 use App\Setting;
 use Illuminate\Support\Facades\Log;
+use App\Services\PaythruService;
 
 class BusinessTransactionController extends Controller
 {
     //
+
+    public $paythruService;
+
+    public function __construct(PaythruService $paythruService)
+    {
+        $this->paythruService = $paythruService;
+    }
 
     public function creatProduct(Request $request)
     {
@@ -124,24 +132,7 @@ class BusinessTransactionController extends Controller
               
               //return $info;
 
-              $dataa = [
-                'ApplicationId' => $PayThru_AppId,
-                'password' => $hash
-              ];
-              //return $data;
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Timestamp' => $timestamp,
-          ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
-            //return $response;
-            if($response->Successful())
-            {
-              $access = $response->object();
-              $accesss = $access->data;
-              $paythru = "Paythru";
-          
-              $token = $paythru." ".$accesss;
-          
+            $token = $this->paythruService->handle();
               
             $data = [
                 'amount' => $info->transaction_amount,
@@ -178,7 +169,7 @@ class BusinessTransactionController extends Controller
         $businessPayReference = businessTransaction::where(['email' => $user->customer_email, 'product_id' => $product->id, 'owner_id' => Auth::user()->id])->update([
             'paymentReference' => $now,
         ]);
-      }
+      
               }
              
               return response()->json($transaction);
@@ -226,23 +217,7 @@ class BusinessTransactionController extends Controller
         
         //return $invoice;
 
-        $dataa = [
-          'ApplicationId' => $PayThru_AppId,
-          'password' => $hash
-        ];
-        //return $data;
-      $response = Http::withHeaders([
-          'Content-Type' => 'application/json',
-          'Timestamp' => $timestamp,
-    ])->post('https://services.paythru.ng/identity/auth/login', $dataa);
-      //return $response;
-      if($response->Successful())
-      {
-        $access = $response->object();
-        $accesss = $access->data;
-        $paythru = "Paythru";
-    
-        $token = $paythru." ".$accesss;
+        $token = $this->paythruService->handle();
     
         
        $data = [
@@ -314,7 +289,7 @@ class BusinessTransactionController extends Controller
                         //}
                       }
                     }
-    }
+    
 }
 }
 }
@@ -368,6 +343,7 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
       $hash = hash('sha512', $timestamp . $secret);
       //return $hash;
       $AppId = env('PayThru_ApplicationId');
+      $prodUrl = env('PayThru_Base_Live_Url');
      
       $productAmount = businessTransaction::where('owner_id', Auth::user()->id)->where('product_id', $BusinessTransactionId)->whereNotNull('amount')->first();
       $amount = $productAmount->amount;
@@ -418,12 +394,9 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
             ],
         ];
         
-        
-        $param = Setting::where('id', 1)->first();
-        $token = $param->token;
-      
+        $token = $this->paythruService->handle();
       //return $token;
-        $url = $param->prodUrl;
+        $url = $prodUrl;
         $urls = $url.'/transaction/settlement';
 
         

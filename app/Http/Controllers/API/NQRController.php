@@ -8,10 +8,19 @@ use Illuminate\Support\Facades\Http;
 use App\Nqr;
 use App\Setting;    
 use Carbon\Carbon;
+use App\Services\PaythruService;
 
 
 class NQRController extends Controller
 {
+
+  public $paythruService;
+
+  public function __construct(PaythruService $paythruService)
+  {
+      $this->paythruService = $paythruService;
+  }
+
     //
     public function NqrMerchantRegistration(Request $request)
     {
@@ -23,23 +32,8 @@ class NQRController extends Controller
       $PayThru_AppId = env('PayThru_ApplicationId');
       $prodUrl = env('PayThru_Base_Live_Url');
       
-      $data = [
-        'ApplicationId' => $PayThru_AppId,
-        'password' => $hash
-      ];
-      //return $data;
-    $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Timestamp' => $timestamp,
-  ])->post('https://services.paythru.ng/identity/auth/login', $data);
-    //return $response;
-    if($response->Successful())
-    {
-      $access = $response->object();
-      $accesss = $access->data;
-      $paythru = "Paythru";
-
-      $token = $paythru." ".$accesss;
+      
+      $token = $this->paythruService->handle();
 
         //return $token;
 
@@ -68,7 +62,7 @@ class NQRController extends Controller
               $ngrRegistration = json_decode($response->body(), true);
               return response()->json($ngrRegistration);
             }
-}
+
 }   
 
 
@@ -82,23 +76,7 @@ class NQRController extends Controller
       $PayThru_AppId = env('PayThru_ApplicationId');
       $prodUrl = env('PayThru_Base_Live_Url');
 
-      $data = [
-        'ApplicationId' => $PayThru_AppId,
-        'password' => $hash
-      ];
-      //return $data;
-    $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Timestamp' => $timestamp,
-  ])->post('https://services.paythru.ng/identity/auth/login', $data);
-    //return $response;
-    if($response->Successful())
-    {
-      $access = $response->object();
-      $accesss = $access->data;
-      $paythru = "Paythru";
-     
-      $token = $paythru." ".$accesss;
+      $token = $this->paythruService->handle();
   
   //return $token;
     //$url = $prodUrl;
@@ -125,7 +103,7 @@ class NQRController extends Controller
     $ngrCollectionAccount = json_decode($response->body(), true);
     return response()->json($ngrCollectionAccount);
         
-  }
+  
 }
 
 
@@ -140,23 +118,7 @@ class NQRController extends Controller
       $PayThru_AppId = env('PayThru_ApplicationId');
       $prodUrl = env('PayThru_Base_Live_Url');
       
-      $data = [
-        'ApplicationId' => $PayThru_AppId,
-        'password' => $hash
-      ];
-      //return $data;
-    $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Timestamp' => $timestamp,
-  ])->post('https://services.paythru.ng/identity/auth/login', $data);
-    //return $response;
-    if($response->Successful())
-    {
-      $access = $response->object();
-      $accesss = $access->data;
-      $paythru = "Paythru";
-
-      $token = $paythru." ".$accesss;
+      $token = $this->paythruService->handle();
 
       $response = Http::withHeaders([
         'Content-Type' => 'application/json',
@@ -170,7 +132,7 @@ class NQRController extends Controller
       return response()->json($banks);
     }  
 
-    }
+    
 
 }
 }

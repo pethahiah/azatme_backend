@@ -9,10 +9,18 @@ use App\Bank;
 use Auth;
 use App\Setting;
 use Illuminate\Support\Facades\Http;
+use App\Services\PaythruService;
 
 class BankController extends Controller
 {
     //
+
+  public $paythruService;
+
+  public function __construct(PaythruService $paythruService)
+  {
+      $this->paythruService = $paythruService;
+  }
 
     public function addBank(BankRequest $request){
     $bank = new Bank();
@@ -74,7 +82,7 @@ class BankController extends Controller
 }
 
 
-public function ngnBanksApiList()
+public function ngnBanksApiList(PathruService $pathruService)
 {
     $current_timestamp= now();
     $timestamp = strtotime($current_timestamp);
@@ -84,24 +92,7 @@ public function ngnBanksApiList()
     $PayThru_AppId = env('PayThru_ApplicationId');
     $prodUrl = env('PayThru_Base_Live_Url');
     
-    $data = [
-      'ApplicationId' => $PayThru_AppId,
-      'password' => $hash
-    ];
-    //return $data;
-  $response = Http::withHeaders([
-      'Content-Type' => 'application/json',
-      'Timestamp' => $timestamp,
-])->post('https://services.paythru.ng/identity/auth/login', $data);
-  //return $response;
-  if($response->Successful())
-  {
-    $access = $response->object();
-    $accesss = $access->data;
-    $paythru = "Paythru";
-
-    $token = $paythru." ".$accesss;
-
+    $token = $this->paythruService->handle();
       
      $response = Http::withHeaders([
         'Content-Type' => 'application/json',
@@ -114,9 +105,5 @@ public function ngnBanksApiList()
       return response()->json($banks);
     }  
 }
-
-}
-
-
 
 }
