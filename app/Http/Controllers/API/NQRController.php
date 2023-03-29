@@ -21,12 +21,14 @@ class NQRController extends Controller
       $this->paythruService = $paythruService;
   }
 
-    //
+    
     public function NqrMerchantRegistration(Request $request)
     {
       $testUrl = env('PayThru_Base_Test_Url');
+      //return $testUrl;
       $token = $this->paythruService->handle();
       $endpoint = $testUrl.'/Nqr/Agg/Merchant/Register';
+      //return $endpoint;
         //return $token;
 
         $data = [

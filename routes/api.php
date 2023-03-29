@@ -32,15 +32,6 @@ Route::middleware('auth:admin-api')->group(function () {
 });
 
 
-
-
-
-// Route::post('/webhook', 'GroupController@webhookGroupResponse');
-
-//  Route::post('/test', function(Request $request) {
-//         return response()->json($request->all());
-//     });
-
 Route::namespace('API')->group(function () {
     Route::post('AttemptLogin', 'AuthController@AttemptLogin');
     Route::post('register', 'AuthController@register');
