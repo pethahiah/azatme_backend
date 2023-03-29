@@ -62,14 +62,29 @@ Route::namespace('API')->group(function () {
     
     
     
-     //NQR Services
+     //NQR  Aggr Merchant Services
     Route::post('nqr-merchant-registration', 'NQRController@NqrMerchantRegistration');
+    Route::post('create-merchant-collection-account', 'NQRController@merchantCollectionAccount');
+    Route::get('get-merchant-number/{merchantNumber}', 'NQRController@getMerchantNumber');
+    Route::post('create-sub-merchant', 'NQRController@createSubMerchant');
+    Route::get('get-all-submerchant-under-merchant/{id}', 'NQRController@getSubMerchantUnderAllMerchant');
+    Route::post('get-specific-submerchnat-under-merchant/{id}', 'NQRController@getSpecificSubMerchantUnderAMerchant');
+    Route::get('get-specific-merchant-info/{merchantNumber}', 'NQRController@getSpecificSubMerchantInfo');
+    Route::get('get-merchant-trans-report/{merchantNumber}', 'NQRController@getMerchantTransactionReport');
+    Route::post('generate-dynamic-qrcode/{merchantNumber}', 'NQRController@generateDynamicQrCode');
+    Route::post('get-merchant-transaction-status', 'NQRController@merchantTransactionStatus');
+
+    //NQR  Store Merchant Services
+    Route::post('store-generate-dyanmic-qrcode', 'NQRController@storeGenerateDyanmicQrCode');
+    Route::post('get-store-trans-report', 'NQRController@getStoreTransactionReport');
+    Route::post('get-store-trans-status', 'NQRController@storeTransactionStatus');
+    Route::get('get-store', 'NQRController@getStore');
+    Route::post('create-store', 'NQRController@createStore');
+    Route::get('get-specific-submerchant-list-Instore/{id}', 'NQRController@getListSpecificSubMerchantInStore');
     
-  
+    
 
 Route::middleware(['auth:api'])->group(function () {
-    
-    
     // User Update
     Route::get('getProfile', 'AuthController@getProfile');
     Route::get('logout', 'AuthController@logout');

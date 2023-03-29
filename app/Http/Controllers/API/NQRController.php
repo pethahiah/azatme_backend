@@ -102,7 +102,7 @@ public function getMerchantNumber($merchantNumber)
     }  
 }
 
-public function createSubMerchant()
+public function createSubMerchant(Request $request)
 {
   $testUrl = env('PayThru_Base_Test_Url');
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Sub';
@@ -132,7 +132,7 @@ $banks = json_decode($response->body(), true);
 
 }
 
-public function getSubMerchantUnderAMercant($id)
+public function getSubMerchantUnderAllMerchant($id)
 {
   $testUrl = env('PayThru_Base_Test_Url');
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Subs';
@@ -152,8 +152,129 @@ return response()->json($getSubMerchant);
 }
 
 
+public function getSpecificSubMerchantUnderAMerchant($id)
+{
+  $testUrl = env('PayThru_Base_Test_Url');
+  $endpoint = $testUrl.'/Nqr/agg/Merchant/Sub';
+  $token = $this->paythruService->handle();
+$response = Http::withHeaders([
+  'Content-Type' => 'application/json',
+  'Authorization' => $token,
+  
+])->get($endpoint."/$id");
+//return $response;
+if($response->Successful())
+{
+$getSpecificSubMerchant = json_decode($response->body(), true);
+return response()->json($getSpecificSubMerchant);
+}
 
+}
+
+
+public function getSpecificSubMerchantInfo($merchantNumber)
+{
+  $testUrl = env('PayThru_Base_Test_Url');
+  $endpoint = $testUrl.'/Nqr/agg/Merchant/Details';
+  $token = $this->paythruService->handle();
+$response = Http::withHeaders([
+  'Content-Type' => 'application/json',
+  'Authorization' => $token,
+  
+])->get($endpoint."/$merchantNumber");
+//return $response;
+if($response->Successful())
+{
+$getSubMerchantInfo = json_decode($response->body(), true);
+return response()->json($getSubMerchantInfo);
+}
+
+}
+
+public function getMerchantTransactionReport(Request $request, $merchantNumber)
+  {
+      $testUrl = env('PayThru_Base_Test_Url');
+      $token = $this->paythruService->handle();
+      $endpoint = $testUrl.'/Nqr/agg/merchant/reports';
+
+  $data = [
+      "startTime" => $request->startTime,
+      "endTime" => $request->endTime,
+      "orderType" => $request->orderType,
+      "page" => $request->$pageNumber,
+ 
+  ];
+
+  $response = Http::withHeaders([
+    'Content-Type' => 'application/json',
+    'Authorization' => $token,
+  ])->post($endpoint."/$merchantNumber", $data);
+
+  if($response->failed())
+  {
+    return false;
+  }
+    $getMerchantTransactionReport = json_decode($response->body(), true);
+    return response()->json($getMerchantTransactionReport);
+}
+
+public function generateDynamicQrCode(Request $request, $merchantNumber)
+{
+  $testUrl = env('PayThru_Base_Test_Url');
+  $token = $this->paythruService->handle();
+  $endpoint = $testUrl.'/Nqr/agg/merchant/transaction';
+
+$data = [
+  "channel" => $request->startTime,
+  "subMchNo" => $request->endTime,
+  "codeType" => $request->orderType,
+  "amount" => $request->$amount,
+  "order_no" => $request->orderType,
+  "orderType" => $request->$amount,
+
+];
+
+$response = Http::withHeaders([
+'Content-Type' => 'application/json',
+'Authorization' => $token,
+])->post($endpoint."/$merchantNumber", $data);
+
+if($response->failed())
+{
+return false;
+}
+$ngrGenerateDynamicCode = json_decode($response->body(), true);
+return response()->json($ngrGenerateDynamicCode);
+}
+
+
+public function merchantTransactionStatus(Request $request)
+{
+  $testUrl = env('PayThru_Base_Test_Url');
+  $token = $this->paythruService->handle();
+  $endpoint = $testUrl.'/Nqr/agg/merchant/transaction/status';
+
+$data = [
+  "orderNo" => $request->orderNo,
+  "merchantNumber" => $request->merchantNumber,
+  "orderSn" => $request->orderSn
+];
+
+$response = Http::withHeaders([
+'Content-Type' => 'application/json',
+'Authorization' => $token,
+])->post($endpoint."/$merchantNumber", $data);
+
+if($response->failed())
+{
+return false;
+}
+$ngrGenerateDynamicCode = json_decode($response->body(), true);
+return response()->json($ngrGenerateDynamicCode);
+}
 
 
 
 }
+
+
