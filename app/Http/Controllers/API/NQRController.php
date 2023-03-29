@@ -24,17 +24,9 @@ class NQRController extends Controller
     //
     public function NqrMerchantRegistration(Request $request)
     {
-      $current_timestamp= now();
-      $timestamp = strtotime($current_timestamp);
-     // echo $timestamp;
-      $secret = env('PayThru_App_Secret');
-      $hash = hash('sha256', $secret . $timestamp);
-      $PayThru_AppId = env('PayThru_ApplicationId');
-      $prodUrl = env('PayThru_Base_Live_Url');
-      
-      
+      $testUrl = env('PayThru_Base_Test_Url');
       $token = $this->paythruService->handle();
-
+      $endpoint = $testUrl.'/Nqr/Agg/Merchant/Register';
         //return $token;
 
         $data = [
@@ -52,37 +44,25 @@ class NQRController extends Controller
         ];
         
    // dd($data);
-          $response = Http::withHeaders([
+        $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'Authorization' => $token,
-          ])->post('http://sandbox.paythru.ng/Nqr/Agg/Merchant/Register', $data);
+          ])->post($endpoint, $data);
           if($response->successful())
           //return $response;
             {   
               $ngrRegistration = json_decode($response->body(), true);
               return response()->json($ngrRegistration);
             }
-
 }   
 
-
-
-  public function merchantCollectionAccount(Request $request)
+public function merchantCollectionAccount(Request $request)
   {
-      $current_timestamp= now();
-      $timestamp = strtotime($current_timestamp);
-      $secret = env('PayThru_App_Secret');
-      $hash = hash('sha256', $secret . $timestamp);
-      $PayThru_AppId = env('PayThru_ApplicationId');
-      $prodUrl = env('PayThru_Base_Live_Url');
-
+      $testUrl = env('PayThru_Base_Test_Url');
       $token = $this->paythruService->handle();
-  
-  //return $token;
-    //$url = $prodUrl;
-    $urls = $prodUrl.'/Nqr/agg/Merchant/Collections';
+      $endpoint = $testUrl.'/Nqr/agg/Merchant/Collections';
 
-    $data = [
+  $data = [
       "bankCode" => $request->bankCode,
       "accountName" => $request->accountName,
       "accountNumber" => $request->accountNumber,
@@ -90,11 +70,10 @@ class NQRController extends Controller
  
   ];
 
-
-     $response = Http::withHeaders([
+  $response = Http::withHeaders([
     'Content-Type' => 'application/json',
     'Authorization' => $token,
-  ])->post($urls, $data);
+  ])->post($endpoint, $data);
 
   if($response->failed())
   {
@@ -102,37 +81,79 @@ class NQRController extends Controller
   }
     $ngrCollectionAccount = json_decode($response->body(), true);
     return response()->json($ngrCollectionAccount);
-        
-  
 }
 
 
-    public function getMerchantNumber($merchantNumber)
-
-    {
-      $current_timestamp= now();
-      $timestamp = strtotime($current_timestamp);
-     // echo $timestamp;
-      $secret = env('PayThru_App_Secret');
-      $hash = hash('sha256', $secret . $timestamp);
-      $PayThru_AppId = env('PayThru_ApplicationId');
-      $prodUrl = env('PayThru_Base_Live_Url');
-      
+public function getMerchantNumber($merchantNumber)
+{
+      $testUrl = env('PayThru_Base_Test_Url');
+      $endpoint = $testUrl.'/Nqr/agg/Merchant/Collections';
       $token = $this->paythruService->handle();
-
-      $response = Http::withHeaders([
+    $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,
         
-  ])->get($prodUrl."Nqr/agg/Merchant/Collections/$merchantNumber");
+  ])->get($endpoint."/$merchantNumber");
     //return $response;
     if($response->Successful())
     {
-      $banks = json_decode($response->body(), true);
-      return response()->json($banks);
+    $getMerchantAcoount = json_decode($response->body(), true);
+      return response()->json($getMerchantAcoount);
     }  
+}
 
+public function createSubMerchant()
+{
+  $testUrl = env('PayThru_Base_Test_Url');
+  $endpoint = $testUrl.'/Nqr/agg/Merchant/Sub';
+  $token = $this->paythruService->handle();
+
+$data = [
+    "merchantNumber" => $request->bankCode,
+    "name" => $request->accountName,
+    "email" => $request->accountNumber,
+    "phoneNumber" => $request->merchantNumber,
+    "generateQrCodeWithFixedAmount" => true,
+    "qrCodeAmount" => $request->qrCodeAmount,
+    "storeId" => $request->storeId
+];
+
+$response = Http::withHeaders([
+    'Content-Type' => 'application/json',
+    'Authorization' => $token,
     
+])->get($endpoint, $data);
+//return $response;
+if($response->Successful())
+{
+$banks = json_decode($response->body(), true);
+  return response()->json($banks);
+}  
 
 }
+
+public function getSubMerchantUnderAMercant($id)
+{
+  $testUrl = env('PayThru_Base_Test_Url');
+  $endpoint = $testUrl.'/Nqr/agg/Merchant/Subs';
+  $token = $this->paythruService->handle();
+$response = Http::withHeaders([
+  'Content-Type' => 'application/json',
+  'Authorization' => $token,
+  
+])->get($endpoint."/$id");
+//return $response;
+if($response->Successful())
+{
+$getSubMerchant = json_decode($response->body(), true);
+return response()->json($getSubMerchant);
+}
+
+}
+
+
+
+
+
+
 }
