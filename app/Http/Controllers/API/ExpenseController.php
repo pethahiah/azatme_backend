@@ -113,7 +113,7 @@ public function createExpense(ExpenseRequest $request)
             $payable = $expense->amount*$request->percentage/100;
           }elseif(isset($request->percentage_per_user))
           {
-              //json_decode(json_encode($data),true);
+             
             $ppu = json_decode($request->percentage_per_user);
             //return $em;
             

@@ -108,13 +108,14 @@ public function createSubMerchant(Request $request)
 {
   $testUrl = env('PayThru_Base_Test_Url');
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Sub';
+  //return $endpoint;
   $token = $this->paythruService->handle();
 
 $data = [
-    "merchantNumber" => $request->bankCode,
-    "name" => $request->accountName,
-    "email" => $request->accountNumber,
-    "phoneNumber" => $request->merchantNumber,
+    "merchantNumber" => $request->merchantNumber,
+    "name" => $request->name,
+    "email" => $request->email,
+    "phoneNumber" => $request->phoneNumber,
     "generateQrCodeWithFixedAmount" => true,
     "qrCodeAmount" => $request->qrCodeAmount,
     "storeId" => $request->storeId
@@ -124,7 +125,7 @@ $response = Http::withHeaders([
     'Content-Type' => 'application/json',
     'Authorization' => $token,
     
-])->get($endpoint, $data);
+])->post($endpoint, $data);
 //return $response;
 if($response->Successful())
 {
@@ -144,7 +145,7 @@ $response = Http::withHeaders([
   'Authorization' => $token,
   
 ])->get($endpoint."/$id");
-//return $response;
+return $response;
 if($response->Successful())
 {
 $getSubMerchant = json_decode($response->body(), true);
@@ -199,11 +200,14 @@ public function getMerchantTransactionReport(Request $request, $merchantNumber)
       $token = $this->paythruService->handle();
       $endpoint = $testUrl.'/Nqr/agg/merchant/reports';
 
+      //$pageNumber = 10;
+      //return $pageNumber;
+
   $data = [
       "startTime" => $request->startTime,
       "endTime" => $request->endTime,
       "orderType" => $request->orderType,
-      "page" => $request->$pageNumber,
+      "page" => 2,
  
   ];
 

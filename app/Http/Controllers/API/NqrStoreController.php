@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Services\PaythruService;
+use Illuminate\Support\Facades\Http;
 
 class NqrStoreController extends Controller
 {
@@ -119,25 +120,28 @@ return response()->json($getStore);
 
 }
 
-public function createStore()
+public function createStore(Request $request)
 {
   $testUrl = env('PayThru_Base_Test_Url');
   $endpoint = $testUrl.'/Nqr/manage/stores';
   $token = $this->paythruService->handle();
-
+//return $endpoint;
   $data = [
-    "storeName" => $request->startTime,
-    "location" => $request->endTime,
-    "subMerchants" => $request->orderType,
-    "manager" => $request->$pageNumber,
+    "storeName" => $request->storeName,
+    "location" => $request->location,
+    "subMerchants" => $request->subMerchants,
+    "manager" => $request->manager
 ];
+
+//return $data;
 
 $response = Http::withHeaders([
   'Content-Type' => 'application/json',
   'Authorization' => $token,
-])->get($endpoint);
-
+])->post($endpoint, $data);
+//return $response;
 if($response->Successful())
+
 {
 $createStore = json_decode($response->body(), true);
 return response()->json($createStore);
