@@ -14,11 +14,12 @@ class PaythruService
 {
       $current_timestamp= now();
       $timestamp = strtotime($current_timestamp);
-     // echo $timestamp;
+     // echo $timestamp; 
       $secret = env('PayThru_App_Secret');
       $hash = hash('sha256', $secret . $timestamp);
       $PayThru_AppId = env('PayThru_ApplicationId');
       $TestUrl = env('PayThru_Base_Test_Url');
+      $AuthUrl = env('Paythru_Auth_Url');
       $data = [
         'ApplicationId' => $PayThru_AppId,
         'password' => $hash
@@ -27,7 +28,7 @@ class PaythruService
     $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Timestamp' => $timestamp,
-  ])->post('https://services.paythru.ng/identity/auth/login', $data);
+  ])->post($AuthUrl, $data);
     //return $response;
     if($response->Successful())
     {

@@ -25,7 +25,8 @@ class CreateUserExpensesTable extends Migration
             $table->string('actualAmount')->nullable();
             $table->decimal('percentage')->nullable();
             $table->decimal('percentage_per_user')->nullable();
-            $table->dateTime('transactionDate')->default(DB::raw('CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP'))->nullable();
+            $table->timestamp('transactionDate')->nullable()->default(null);
+            //$table->dateTime('transactionDate')->default(DB::raw('CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP'))->nullableTimestamps();
             $table->decimal('merchantReference')->nullable();
             $table->string('fiName')->nullable();
             $table->string('paymentMethod')->nullable();

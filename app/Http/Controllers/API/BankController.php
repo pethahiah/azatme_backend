@@ -82,16 +82,9 @@ class BankController extends Controller
 }
 
 
-public function ngnBanksApiList(PathruService $pathruService)
+public function ngnBanksApiList()
 {
-    $current_timestamp= now();
-    $timestamp = strtotime($current_timestamp);
-   // echo $timestamp;
-    $secret = env('PayThru_App_Secret');
-    $hash = hash('sha256', $secret . $timestamp);
-    $PayThru_AppId = env('PayThru_ApplicationId');
     $prodUrl = env('PayThru_Base_Live_Url');
-    
     $token = $this->paythruService->handle();
       
      $response = Http::withHeaders([
