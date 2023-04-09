@@ -27,7 +27,6 @@ class CreateBusinessTransactionsTable extends Migration
             $table->foreignId('moto_id');
             $table->foreignId('product_id');
             $table->timestamp('transactionDate')->nullable()->default(null);
-            //$table->dateTime('transactionDate')->default(DB::raw('CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP'))->nullable();
             $table->decimal('merchantReference')->nullable();
             $table->string('fiName')->nullable();
             $table->string('paymentMethod')->nullable();
