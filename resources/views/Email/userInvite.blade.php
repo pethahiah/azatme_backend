@@ -344,7 +344,7 @@
                       <td>
                         <p>Hi {{$slip['receipient']}},</p>
                         <p> 
-                                    Your friend: , has requested a RefundMe, because he/she had spent some money earlier.
+                                    Your friend {{$authmail['name']}}, has requested a RefundMe, because he/she had spent some money earlier.
 
                                     RefundMe, is a great solution that helps you to request for Payment from friends and Families for bills incurred. It can be split equally or based on Percentage as you may desire. Your account  protected and secure as you don’t have to share with any one.
 

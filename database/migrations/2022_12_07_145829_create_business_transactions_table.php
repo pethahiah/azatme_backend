@@ -36,7 +36,7 @@ class CreateBusinessTransactionsTable extends Migration
             $table->string('responseDescription')->nullable();
             $table->decimal('amount')->nullable();
             $table->string('Grand_total')->nullable();
-            $table->date('issue_date')->nullable();
+            $table->date('issue_date')->nullable();  
             $table->string('due_days')->nullable();
             $table->date('due_date')->nullable();
             $table->string('status')->nullable();

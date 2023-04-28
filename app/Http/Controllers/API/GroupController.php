@@ -81,8 +81,8 @@ public function inviteUsersToGroup(Request $request, $groupId)
         
         $group = expense::where('id', $groupId)->whereNull('category_id')->first();
         
-        //return $group->id;
-        
+        return $group;
+        //$ammm = '2000';
         
         $input['email'] = $request->input('email');
      
@@ -95,7 +95,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
        $hashSign = hash('sha512', $amt . $secret);
        $PayThru_AppId = env('PayThru_ApplicationId');
        $prodUrl = env('PayThru_Base_Live_Url');
-
+//return $amt;
       $emails = $request->email;
       if($group)
         {
@@ -162,6 +162,8 @@ public function inviteUsersToGroup(Request $request, $groupId)
 
       $token = $this->paythruService->handle();
 
+      return $token;
+
       // Send payment request to paythru  
       $data = [
         'amount' => $group->amount,
@@ -193,7 +195,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
         return false;
       }else{
         $transaction = json_decode($response->body(), true);
-       //return $transaction;
+       return $transaction;
         $splitResult = $transaction['splitPayResult']['result'];
         foreach($splitResult as $key => $slip)
         {

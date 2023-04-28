@@ -23,8 +23,7 @@ class PaythruService
       $data = [
         'ApplicationId' => $PayThru_AppId,
         'password' => $hash
-      ];   
-      //return $data;
+      ];
     $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Timestamp' => $timestamp,

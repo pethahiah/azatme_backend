@@ -88,7 +88,7 @@ public function createExpense(ExpenseRequest $request)
     
       $emails = $request->email;
       //return $emails;
-      if($emails)
+      if (!empty($emailArray))
       {
       $emailArray = (explode(';', $emails));
       $count = count($emailArray);
@@ -102,11 +102,11 @@ public function createExpense(ExpenseRequest $request)
       
         $payable = 0;
 
-        if($request['split_method_id'] == 1)
+        if($request['split_method_id'] == 3)
         {
             $payable = $expense->amount;
   
-        } elseif($request['split_method_id'] == 2)
+        } elseif($request['split_method_id'] == 1)
         {
           if(isset($request->percentage))
           {
@@ -119,7 +119,7 @@ public function createExpense(ExpenseRequest $request)
             
             $payable = $ppu->$em*$expense->amount/100;
           }
-        }elseif($request['split_method_id'] == 3)
+        }elseif($request['split_method_id'] == 2)
         {
            //$payable = $expense->amount/$count;
             $payable = round(($expense->amount / $count), 2);
@@ -174,7 +174,7 @@ public function createExpense(ExpenseRequest $request)
 
         ];
 
-        $authmail = Auth::user()->email; 
+        
       
       //return $token;
         $url = $prodUrl;
@@ -193,7 +193,9 @@ public function createExpense(ExpenseRequest $request)
         $splitResult = $transaction['splitPayResult']['result'];
         foreach($splitResult as $key => $slip)
         {
-          Mail::to($slip['receipient'], $authmail)->send(new SendUserInviteMail($slip));
+
+          $authmail = Auth::user(); 
+          Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
           
            $paylink = $slip['paylink'];
        // return $paylink;
@@ -206,7 +208,7 @@ public function createExpense(ExpenseRequest $request)
             'paymentReference' => $now,
         ]);
               
-            }
+            }     
         } 
       }
       return response()->json($transaction);
@@ -534,8 +536,8 @@ $prodUrl = env('PayThru_Base_Live_Url');
 $account = $request->account_number;
 $bankCode = $request->bankCode;
 
-$param = Setting::where('id', 1)->first();
-$token = $param->token;
+//$param = Setting::where('id', 1)->first();
+//$token = $param->token;
 $getLastName = User::where('id', $user)->first();
 $last = $getLastName->last_name;
 $first = $getLastName->first_name;
