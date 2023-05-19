@@ -14,6 +14,7 @@ use App\BusinessWithdrawal;
 use App\Invoice;
 use App\User;
 use Auth;
+use App\Bank;
 use Mail;
 use Illuminate\Support\Str;
 use PDF;
@@ -24,6 +25,8 @@ use App\Mail\BusinessPaylinkMail;
 use App\Setting;
 use Illuminate\Support\Facades\Log;
 use App\Services\PaythruService;
+use Illuminate\Support\Facades\Storage;
+
 
 class BusinessTransactionController extends Controller
 {
@@ -56,14 +59,22 @@ class BusinessTransactionController extends Controller
 
     }
    
-     public function getAllProductsPerBusiness()
+     public function getAllProductsPerBusinessMerchant()
     {
         $pageNumber = 50;
         $AuthUser = Auth::user()->id;
-        $getAllProductsPerBusiness = product::where('user_id', $AuthUser)->latest()->paginate($pageNumber);
+        $getAllProductsPerBusinessMerchant = product::where('user_id', $AuthUser)->latest()->paginate($pageNumber);
+        return response()->json($getAllProductsPerBusinessMerchant);
+    }
+
+    public function getProductsPerBusiness($businessCode)
+    {
+        $pageNumber = 50;
+        $AuthUser = Auth::user()->id;
+        $getAllProductsPerBusiness = product::where('business_code', $businessCode)->latest()->paginate($pageNumber);
         return response()->json($getAllProductsPerBusiness);
     }
-    
+
 
     public function startBusinessTransaction(Request $request, $product_id)
     {
@@ -270,20 +281,28 @@ class BusinessTransactionController extends Controller
                           $pdf = PDF::loadView('generate/invoice', compact('invoice', 'getBusiness', 'getUserInvo', 'paylink'));
                        // $pdf = PDF::loadView('invoices.pdf', compact('invoice'));
 
-        // Generate a unique filename for the PDF
-        $filename = 'invoice_' . $product_id . '_' . time() . '.pdf';
-        
+       			
 
+// Get the URL path of the saved PDF
+
+                          $filename = 'invoice_' . $product_id . '_' . time() . '.pdf';
+
+// Save the PDF to your server's storage directory
+                          \Storage::disk('public')->put($filename, $pdf->output());
+
+// Get the public URL of the saved PDF
+                        $pdf_url = \Storage::disk('public')->url($filename);
+  //      $url = Storage::disk('s3')->url($filename);   
         // Save the PDF to your server's storage directory
-        $pdf->save(public_path($filename));
+      //  $pdf->save(public_path($filename));
 
         // Generate a download link for the PDF
-        $path = "$generalPath/$filename";
+        //$path = "$generalPath/$filename";
         //$link = url('/api/invoices/' . $product_id . '/pdf/' . $filename);
-        //return $path;
+       // return $path;
        return response()->json([
            'status' => 'Successful',
-           'link' => $path]);
+           'link' => $pdf_url]);
 
                         //return $pdf->download('invoice.pdf');
                         //}
@@ -303,7 +322,7 @@ class BusinessTransactionController extends Controller
         $data = json_decode($dataEncode);
         //$da = $data->transactionDetails->status;
         Log::info("webhook-data" . json_encode($data));
-        if($data->transactionDetails->status == 'Successful'){
+        if($data->notificationType == 1){
          // return "good";
         $userExpense = businessTransaction::where('paymentReference', $data->transactionDetails->paymentReference)->update([
             'payThruReference' => $data->transactionDetails->payThruReference,
@@ -333,7 +352,7 @@ class BusinessTransactionController extends Controller
 
 public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
     {
-      
+//      return response->json(($request->all()));
       $current_timestamp= now();
      // return $current_timestamp;
       $timestamp = strtotime($current_timestamp);
@@ -341,28 +360,33 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
       $productId = env('PayThru_business_productid');
       //return $productId;
       $hash = hash('sha512', $timestamp . $secret);
-      //return $hash;
+//  return $hash;
       $AppId = env('PayThru_ApplicationId');
       $prodUrl = env('PayThru_Base_Live_Url');
      
       $productAmount = businessTransaction::where('owner_id', Auth::user()->id)->where('product_id', $BusinessTransactionId)->whereNotNull('amount')->first();
+//dd($productAmount);
       $amount = $productAmount->amount;
-   
+//dd($amount);
+//   return $productAmount;
   $getAdmin = Auth::user();
+//return $getAdmin->id;
   $getAd = $getAdmin -> usertype;
   if($getAd === 'merchant')
   { 
       $BusinessWithdrawal = new BusinessWithdrawal([
         'account_number' => $request->account_number,
         'description' => $request->description,
-        'product_id' => $productAmount ->id,
+       'product_id' => $productAmount ->id,
         'beneficiary_id' => Auth::user()->id,
         'amount' => $request->amount,
         'bank' => $request->bank
         ]);
+///dd($request->amount);
         
         $getUserBusinessTransactions = BusinessTransaction::where('owner_id', $getAdmin->id)->sum('residualAmount');
-        
+   
+//dd($getUserBusinessTransactions);     
         if(($request->amount) > $amount)
         {
             if(($request->amount) > $getUserBusinessTransactions)
@@ -376,7 +400,8 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
         ], 403);
         }
         }
-        
+
+//       dd("i go here"); 
         $BusinessWithdrawal->save();
     
     $acct = $request->account_number;

@@ -74,18 +74,14 @@ public function createGroup(Request $request)
         return response()->json($update);   
 }
 }
-        
-        
+
+
+
 public function inviteUsersToGroup(Request $request, $groupId)
-        {               
-        
-        $group = expense::where('id', $groupId)->whereNull('category_id')->first();
-        
-        //return $group->id;
-        
-        
+{
+       // $group = expense::where('id', $groupId)->whereNull('category_id')->get();
+        $group = expense::findOrFail($groupId);
         $input['email'] = $request->input('email');
-     
        $ProductId = env('PayThru_kontribute_productid');
        $current_timestamp= now();
        $timestamp = strtotime($current_timestamp);
@@ -95,7 +91,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
        $hashSign = hash('sha512', $amt . $secret);
        $PayThru_AppId = env('PayThru_ApplicationId');
        $prodUrl = env('PayThru_Base_Live_Url');
-
+//return $amt;
       $emails = $request->email;
       if($group)
         {
@@ -118,7 +114,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
         if($request['split_method_id'] == 1)
         {
             $payable = $group->amount;
-        } elseif($request['split_method_id'] == 2)
+        } elseif($request['split_method_id'] == 3)
         {
           if(isset($request->percentage))
           {
@@ -128,14 +124,14 @@ public function inviteUsersToGroup(Request $request, $groupId)
             $ppu = json_decode($request->percentage_per_user);
             $payable = $ppu->$em*$group->amount/100;
           }
-        }elseif($request['split_method_id'] == 3)
+        }elseif($request['split_method_id'] == 2)
         {
          $payable = round(($group->amount / $count), 2);
             if ($key == $count - 1) {
         $payable = $group->amount - (round($payable, 2) * ($count - 1));
         }
         }
-// return $payable;
+//return $payable;
         $paylink_expiration_time = Carbon::now()->addMinutes(15);
 
           $info = userGroup::create([
@@ -162,6 +158,8 @@ public function inviteUsersToGroup(Request $request, $groupId)
 
       $token = $this->paythruService->handle();
 
+      //return $token;
+
       // Send payment request to paythru  
       $data = [
         'amount' => $group->amount,
@@ -178,7 +176,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
           ]
         ];
               
-      //return $token;
+      //return $data;
     $url = $prodUrl;
     $urls = $url.'/transaction/create';
     //return $urls;
@@ -221,8 +219,8 @@ public function inviteUsersToGroup(Request $request, $groupId)
              
          }
         }  
-        
-    
+
+
     public function UpdateTransactionGroupRequest(Request $request, $transactionId)
     {
       $transaction = userGroup::findOrFail($transactionId);
@@ -252,7 +250,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
         $data = json_decode($dataEncode);
         Log::info("webhook-data" . json_encode($data));
         
-        if($data->transactionDetails->status == 'Successful'){
+        if($data->notificationType == 1){
          // return "good";
         $userExpense = userGroup::where('paymentReference', $data->transactionDetails->paymentReference)->update([
             'payThruReference' => $data->transactionDetails->payThruReference,

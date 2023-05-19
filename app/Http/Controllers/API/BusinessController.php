@@ -10,54 +10,53 @@ use Illuminate\Support\Str;
 use Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
+
 
 class BusinessController extends Controller
 {
     //
 
-    public function createBusiness(Request $request)
+public function createBusiness(Request $request)
     {
-        
-        $generalPath = env('file_public_path');
-        $getBusiness = Auth::user();
-        $getAd = $getBusiness -> usertype;
-            if($getAd === 'merchant')
-            {
-            $business = new Business([
-            'business_name' => $request->business_name,
-            'business_email' => $request->business_email,
-            'description' => $request->description,
-            'type' => $request->type,
-            'registration_number' => $request->registration_number,
-            'business_code' => Str::random(10),
-            'business_address' => $request->business_address,
-            'owner_id' => Auth::user()->id,
-            'vat_id' => $request->vat_id,
-            ]);
-                if($request->business_logo && $request->business_logo->isValid())
-                {
-                $file_name = time().'.'.$request->business_logo->extension();
-                $request->business_logo->move(public_path('images'),$file_name);
-                $path = "$generalPath/$file_name";
-                $business->business_logo = $path;
-                }
-                
-                
-                $buses = Business::where('business_email', $request->business_email)->get();
-        
-        if(sizeof($buses) > 0){
-            // tell business not to duplicate same email
-            return response([
-                'message' => 'business already exists'
-            ], 401);
-        }
+    $user = Auth::user();
+    if ($user->usertype === 'merchant') {
+    $business = new Business();
+    $business->business_name = $request->business_name;
+    $business->business_email = $request->business_email;
+    $business->description = $request->description;
+    $business->type = $request->type;
+    $business->registration_number = $request->registration_number;
+    $business->business_code = Str::random(10);
+    $business->business_address = $request->business_address;
+    $business->owner_id = $user->id;
+    $business->vat_id = $request->vat_id;
 
-                $business->save();
-                return response()->json($business);
-                }else{
-                return response()->json('You are not authorize to perform this action');
-                }
-     }
+    $path = null; // Initialize path variable
+   
+    if ($request->hasFile('business_logo') && $request->file('business_logo')->isValid()) {
+        $file = $request->file('business_logo')->store('profiles', 'public');
+        $hashedFilename = $request->file('business_logo')->hashName();
+        $business->business_logo = url('storage/profiles/' . $hashedFilename);
+        $path = public_path('storage/profiles/' . $hashedFilename);
+    }
+
+    $existingBusinesses = Business::where('business_email', $request->business_email)->get();
+
+    if ($existingBusinesses->count() > 0) {
+        return response()->json(['message' => 'Business already exists'], 401);
+    }
+
+    $business->save();
+
+    return response()->json([$business->business_logo, $business], 200);
+} else {
+    return response()->json('You are not authorized to perform this action');
+}
+
+    }
+
 
     public function updateBusiness(Request $request, $id)
     {

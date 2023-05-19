@@ -65,6 +65,7 @@ public function createExpense(ExpenseRequest $request)
 
     }
 
+    
     public function inviteUserToExpense(Request $request, $expenseUniqueCode)
     {
       //return response()->json($request->input());
@@ -80,33 +81,30 @@ public function createExpense(ExpenseRequest $request)
        $hashSign = hash('sha512', $amt . $secret);
        $PayThru_AppId = env('PayThru_ApplicationId');
        $prodUrl = env('PayThru_Base_Live_Url');
-
-
        $token = $this->paythruService->handle();
 
        //return "AppId ".  $PayThru_AppId;
-    
-      $emails = $request->email;
-      //return $emails;
-      if($emails)
-      {
-      $emailArray = (explode(';', $emails));
-      $count = count($emailArray);
-     // return response()->json($emailArray);
-      
-      $payers = [];
-      $totalpayable = 0;
-      foreach ($emailArray as $key => $em) {
-          //process each user here as each iteration gives you each email
-          $user = User::where('email', $em)->first();
-      
-        $payable = 0;
+       $emails = $request->email;
+       //return $emails;
+       if($emails)
+       {
+       $emailArray = (explode(';', $emails));
+       $count = count($emailArray);
+      // return response()->json($emailArray);
+   //       return $expense->amount;
+       $payers = [];
+       $totalpayable = 0;
+       foreach ($emailArray as $key => $em) {
+           //process each user here as each iteration gives you each email
+           $user = User::where('email', $em)->first();
+   
+         $payable = 0;
 
-        if($request['split_method_id'] == 1)
+        if($request['split_method_id'] == 3)
         {
             $payable = $expense->amount;
   
-        } elseif($request['split_method_id'] == 2)
+        } elseif($request['split_method_id'] == 1)
         {
           if(isset($request->percentage))
           {
@@ -119,7 +117,7 @@ public function createExpense(ExpenseRequest $request)
             
             $payable = $ppu->$em*$expense->amount/100;
           }
-        }elseif($request['split_method_id'] == 3)
+        }elseif($request['split_method_id'] == 2)
         {
            //$payable = $expense->amount/$count;
             $payable = round(($expense->amount / $count), 2);
@@ -133,7 +131,9 @@ public function createExpense(ExpenseRequest $request)
             $payable = $expense->amount/$count;
         }
         
-    $paylink_expiration_time = Carbon::now()->addHours(23);
+   $paylink_expiration_time = Carbon::now()->addHours(23);
+
+  // return  $response()->json("got here");
 
     $info = userExpense::create([
             'principal_id' => Auth::user()->id,
@@ -151,12 +151,13 @@ public function createExpense(ExpenseRequest $request)
             'bankCode' => $request['bankCode'],
             'account_number' => $request['account_number'],
           ]);
-          
+          //return $info;
          
          $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->payable];
          $totalpayable = $totalpayable + $info->payable;
          
       }
+
       // Send payment request to paythru  
       $data = [
         'amount' => $expense->amount,
@@ -167,14 +168,25 @@ public function createExpense(ExpenseRequest $request)
         'sign' => $hashSign,
         'expireDateTime'=> $paylink_expiration_time,
         'displaySummary' => true,
-        'splitPayInfo' => [
-            'inviteSome' => false,
-            'payers' => $payers
-          ]
+        // 'splitPayInfo' => [
+        //     'inviteSome' => false,
+        //     'payers' => $payers
+        //   ]
 
         ];
 
-        $authmail = Auth::user()->email; 
+        if($count > 1)
+        {
+            $data['splitPayInfo'] = [
+              'inviteSome' => false,
+              'payers' => $payers
+            ];
+        }
+
+        //
+        
+       //return $data;
+        
       
       //return $token;
         $url = $prodUrl;
@@ -184,30 +196,63 @@ public function createExpense(ExpenseRequest $request)
         'Content-Type' => 'application/json',
         'Authorization' => $token,
       ])->post($urls, $data );
+      //return $response->body();
       if($response->failed())
       {
         return false;
       }else{
         $transaction = json_decode($response->body(), true);
-        //return $transaction;
-        $splitResult = $transaction['splitPayResult']['result'];
-        foreach($splitResult as $key => $slip)
+        if(!$transaction['successful'])
         {
-          Mail::to($slip['receipient'], $authmail)->send(new SendUserInviteMail($slip));
-          
-           $paylink = $slip['paylink'];
-       // return $paylink;
-            if($paylink)
-            {
-              $getLastString = (explode('/', $paylink));
-              $now = end($getLastString);
-              //return $now;
-        $userExpenseReference = userExpense::where(['email' => $slip['receipient'], 'expense_id' => $expense->id, 'principal_id' => Auth::user()->id])->update([
-            'paymentReference' => $now,
-        ]);
-              
-            }
-        } 
+          return "Whoops! ". json_encode($transaction);
+        }
+        //return $transaction;
+        
+        if($count > 1)
+        {
+          $splitResult = $transaction['splitPayResult']['result'];
+          foreach($splitResult as $key => $slip)
+          {
+  
+            $authmail = Auth::user(); 
+            Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
+            
+             $paylink = $slip['paylink'];
+         // return $paylink;
+              if($paylink)
+              {
+                $getLastString = (explode('/', $paylink));
+                $now = end($getLastString);
+                //return $now;
+          $userExpenseReference = userExpense::where(['email' => $slip['receipient'], 'expense_id' => $expense->id, 'principal_id' => Auth::user()->id])->update([
+              'paymentReference' => $now,
+          ]);
+                
+              }     
+          } 
+        }
+        else{
+         // {"successIndicator":"9nbau1894ef9dg5q","payLink":"https://apps.paythru.ng/services/cardfree/pay/683112951682882400","bankTransferInstruction":null,"splitPayResult":{"isMultiple":true,"result":[{"paylink":"https://apps.paythru.ng/services/cardfree/pay/661361651682882400","amount":10000.0,"receipient":"lumiged4u@gmail.com","isActive":true,"bankPaymentDetails":null,"emvCode":null},{"paylink":"https://apps.paythru.ng/services/cardfree/pay/665979241682882400","amount":10000.0,"receipient":"sunday4oged@yahoo.com","isActive":true,"bankPaymentDetails":null,"emvCode":null}]},"emvCode":null,"code":0,"message":"Successful","data":null,"successful":true
+
+         $paylink = $transaction['payLink'];
+         $slip = ['paylink'=> $paylink, 'amount'=> $data['amount'], 'receipient' => $request->email ];
+         
+              $authmail = Auth::user(); 
+              Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
+
+              if($paylink)
+              {
+                $getLastString = (explode('/', $paylink));
+                $now = end($getLastString);
+                //return $now;
+          $userExpenseReference = userExpense::where(['email' => $slip['receipient'], 'expense_id' => $expense->id, 'principal_id' => Auth::user()->id])->update([
+              'paymentReference' => $now,
+//return response()->json($slip);
+          ]);		
+                                 
+              } 
+            
+        }
       }
       return response()->json($transaction);
       
@@ -243,8 +288,8 @@ public function createExpense(ExpenseRequest $request)
         $response = $request->all();
         $dataEncode = json_encode($response);
         $data = json_decode($dataEncode);
-        //Log::info("webhook-data" . json_encode($da));
-        if($data->transactionDetails->status == 'Successful'){
+        Log::info("starting refundme response");
+        if($data->notificationType == 1){
          // return "good";
         $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->update([
             'payThruReference' => $data->transactionDetails->payThruReference,
@@ -257,10 +302,8 @@ public function createExpense(ExpenseRequest $request)
             'residualAmount' => $data->transactionDetails->residualAmount,
             'resultCode' => $data->transactionDetails->resultCode,
             'responseDescription' => $data->transactionDetails->responseDescription,
-           
         ]);
           Log::info("done");
-          
           http_response_code(200);
 
         }else
@@ -534,8 +577,8 @@ $prodUrl = env('PayThru_Base_Live_Url');
 $account = $request->account_number;
 $bankCode = $request->bankCode;
 
-$param = Setting::where('id', 1)->first();
-$token = $param->token;
+//$param = Setting::where('id', 1)->first();
+//$token = $param->token;
 $getLastName = User::where('id', $user)->first();
 $last = $getLastName->last_name;
 $first = $getLastName->first_name;

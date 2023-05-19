@@ -16,6 +16,7 @@ use Log;
 use App\Http\Requests\BusinessRequest;
 use App\Business;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 
 class AuthController extends Controller
@@ -167,32 +168,26 @@ class AuthController extends Controller
                     return response()->json(['status'=>'false', 'message'=>$e->getMessage(), 'data'=>[]], 500);
         }
     }
-    
-    public function uploadImage(Request $request)
-    {
-        $generalPath = env('file_public_path');
-       // return response()->json($request->input());
-       
-       $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-   
-       $user = Auth::user();
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('uploads'), $imageName);
-            $path = "$generalPath/$imageName";
-            $user->image = $path;
-            $user->save();
-            return response()->json(['success' => true, 'image_url' => $path]);
-        } else {
-            return response()->json(['success' => false, 'message' => 'Image not found']);
-        }
-                             
+	public function uploadImage(Request $request)
+{
+   $request->validate([
+       'image' => 'required|image|mimes:jpeg,png,jpg,gif',
+   ]);
+
+    $user = Auth::user();
+
+  $path = null; 
+    if ($request->hasFile('image') && $request->file('image')->isValid()) {
+        $file = $request->file('image')->store('userProfiles', 'public');
+        $hashedFilename = $request->file('image')->hashName();
+        $user->image = url('storage/userProfiles/' . $hashedFilename);
+        $path = public_path('storage/profiles/' . $hashedFilename);
     }
 
+	$user->save();
+    return response()->json(['image' => $user->image, 'user' => $user], 200);
+}
 
     public function addUsersToBusiness(Request $request, $id)
     {
