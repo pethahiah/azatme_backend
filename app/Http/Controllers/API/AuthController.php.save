@@ -172,7 +172,7 @@ class AuthController extends Controller
 	public function uploadImage(Request $request)
 {
    $request->validate([
-       'image' => 'required|image|mimes:jpeg,png,jpg,gif',
+        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
    ]);
 
     $user = Auth::user();
@@ -184,9 +184,9 @@ class AuthController extends Controller
         $user->image = url('storage/userProfiles/' . $hashedFilename);
         $path = public_path('storage/profiles/' . $hashedFilename);
     }
+		
 
-	$user->save();
-    return response()->json(['image' => $user->image, 'user' => $user], 200);
+    return response()->json(['image' => $user->image, $user], 200);
 }
 
     public function addUsersToBusiness(Request $request, $id)

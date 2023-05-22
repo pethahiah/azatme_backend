@@ -120,7 +120,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('get-customers-under-a business/{owner_id}', 'CustomerController@listAllCustomer');
     Route::delete('delete-a-customer/{id}', 'CustomerController@deleteACustomer');
     Route::get('gac-under-a-specific-business/{customer_code}', 'CustomerController@getAllCustomersUnderABusiness');
-     
+    Route::get('get-all-customers', 'CustomerController@getAllCustomers');     
     
     //Expense
     
