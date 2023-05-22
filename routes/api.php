@@ -14,23 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::group(['prefix' => 'admin'], function () {
-   // Route::get('users', function ()    {
-        // Matches The "/admin/users" URL
-        Route::post('register', 'AdminController@register');
-    //});
-});
-
-
-
-Route::middleware('auth:admin-api')->group(function () {
-    // Admin-only routes
-    
-    
-    Route::post('admin/login', 'AdminController@login');
-    
-});
-
 
 Route::namespace('API')->group(function () {
     Route::post('AttemptLogin', 'AuthController@AttemptLogin');
@@ -108,7 +91,8 @@ Route::middleware(['auth:api'])->group(function () {
 
     //B2B Transactions
     Route::post('create-product', 'BusinessTransactionController@creatProduct');
-     Route::get('all-product', 'BusinessTransactionController@getAllProductsPerBusiness');
+    Route::get('all-product', 'BusinessTransactionController@getAllProductsPerBusinessMerchant');
+    Route::get('product-per-business/{businessCode}', 'BusinessTransactionController@getProductsPerBusiness');
     Route::post('initiate-business-transaction/{product_id}', 'BusinessTransactionController@startBusinessTransaction');
     Route::post('create-option', 'MotoController@moto');
     Route::get('get-option', 'MotoController@getMotoMethod');
@@ -117,7 +101,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('count-all-invoices-created-by-business-owner', 'BusinessTransactionController@countAllInvoiceByABusinessOwner');
      Route::get('get-all-invoices-received-by-customer', 'BusinessTransactionController@getAllInvoiceRecievedByACutomer');
       Route::get('count-all-invoices-recieved-by-business', 'BusinessTransactionController@countAllInvoiceRecievedByACutomer');
-      Route::get('business-settlements/{BusinessTransactionId}', 'BusinessTransactionController@AzatBusinessCollection');
+      Route::post('business-settlements/{BusinessTransactionId}', 'BusinessTransactionController@AzatBusinessCollection');
        Route::get('customer-invoice/{customerEmail}', 'BusinessTransactionController@getAllInvoiceSentToAParticularCustomer');
        Route::get('get-all-transactions-created-by-a-specific-business/{business_code}', 'BusinessTransactionController@getAllTransactionsByASpecificBusiness');
        Route::get('get-all-customers-under-a-specific-business/{business_code}', 'BusinessTransactionController@getAllCustomersUnderASpecificBusiness');
@@ -136,7 +120,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('get-customers-under-a business/{owner_id}', 'CustomerController@listAllCustomer');
     Route::delete('delete-a-customer/{id}', 'CustomerController@deleteACustomer');
     Route::get('gac-under-a-specific-business/{customer_code}', 'CustomerController@getAllCustomersUnderABusiness');
-     
+    Route::get('get-all-customers', 'CustomerController@getAllCustomers');     
     
     //Expense
     

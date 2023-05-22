@@ -344,7 +344,7 @@
                         <p>Hi {{$slip['receipient']}},</p>
                         <p> You have been invited to make payment on this group
                         
-                        To get the full feature of this app kindly click this link to <b><a href= "https://azatme.vercel.app/register"> Register</a></b> </p>
+                        To get the full feature of this app kindly click this link to <b><a href= "https://azatme.com/register"> Register</a></b> </p>
 
                         <p>Meanwhile, kindly click to make payment<b> <a href={{$slip['paylink']}}>Pay Now</a></b></p>
 

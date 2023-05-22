@@ -20,15 +20,20 @@ class PaythruService
       $PayThru_AppId = env('PayThru_ApplicationId');
       $TestUrl = env('PayThru_Base_Test_Url');
       $AuthUrl = env('Paythru_Auth_Url');
+
+//return $AuthUrl;
+
       $data = [
         'ApplicationId' => $PayThru_AppId,
         'password' => $hash
       ];
+//return $data;
+
     $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Timestamp' => $timestamp,
   ])->post($AuthUrl, $data);
-    //return $response;
+//    return $response;
     if($response->Successful())
     {
       $access = $response->object();
@@ -41,6 +46,8 @@ class PaythruService
 
 
 }
+
+
 
 
    

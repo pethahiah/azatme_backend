@@ -26,13 +26,16 @@ class CustomerController extends Controller
             'customer_code' => $business_code->business_code,
             'owner_id' => Auth::user()->id,
         ]);
-        $cus = Customer::where('customer_email', $request->customer_email)->get();
+
         
+
+        $cus = Customer::where('customer_email', $request->customer_email)->get();
+        $num = 1;
         if(sizeof($cus) > 0){
             // tell business not to duplicate same email
-            return response([
-                'message' => 'customer already exists'
-            ], 409);
+            $customerFlagged = Customer::where(['customer_name' => $request->customer_name, 'customer_email' => $request->customer_email, 'customer_phone' => $request->customer_phone])->update([
+                'flagged' => $num,
+            ]);
         }
         $customer->save();
         return response()->json($customer);
@@ -98,6 +101,14 @@ class CustomerController extends Controller
             }
 
         }
+
+
+   public function getAllCustomers()
+    {
+        $getAllCustomer = Customer::get();
+        return response()->json($getAllCustomer);
+
+    }
 
 
 }

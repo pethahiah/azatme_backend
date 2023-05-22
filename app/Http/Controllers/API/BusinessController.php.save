@@ -1,3 +1,4 @@
+
 <?php
 
 namespace App\Http\Controllers\API;
@@ -18,45 +19,61 @@ class BusinessController extends Controller
 {
     //
 
-public function createBusiness(Request $request)
+    public function createBusiness(Request $request)
     {
-    $user = Auth::user();
-    if ($user->usertype === 'merchant') {
-    $business = new Business();
-    $business->business_name = $request->business_name;
-    $business->business_email = $request->business_email;
-    $business->description = $request->description;
-    $business->type = $request->type;
-    $business->registration_number = $request->registration_number;
-    $business->business_code = Str::random(10);
-    $business->business_address = $request->business_address;
-    $business->owner_id = $user->id;
-    $business->vat_id = $request->vat_id;
+        
+        $generalPath = env('file_public_path');
+        $getBusiness = Auth::user();
+        $getAd = $getBusiness -> usertype;
+            if($getAd === 'merchant')
+            {
+            $business = new Business([
+            'business_name' => $request->business_name,
+            'business_email' => $request->business_email,
+            'description' => $request->description,
+            'type' => $request->type,
+            'registration_number' => $request->registration_number,
+            'business_code' => Str::random(10),
+            'business_address' => $request->business_address,
+            'owner_id' => Auth::user()->id,
+            'vat_id' => $request->vat_id,
+            ]);
+                if($request->business_logo && $request->business_logo->isValid())
+                {
+               // $file_name = time().'.'.$request->business_logo->extension();
 
-    $path = null; // Initialize path variable
-   
-    if ($request->hasFile('business_logo') && $request->file('business_logo')->isValid()) {
-        $file = $request->file('business_logo')->store('profiles', 'public');
-        $hashedFilename = $request->file('business_logo')->hashName();
-        $business->business_logo = url('storage/profiles/' . $hashedFilename);
-        $path = public_path('storage/profiles/' . $hashedFilename);
-    }
+            // $request->business_logo->move(public_path('aza_images', $file_name));
+	//		 $path = "$generalPath/$file_name";
+          //      $business->business_logo = $path;
+//		$directory = 'images'; // Replace with your desired directory name in S3
+  //          $file = $request->file('business_logo');
+    //        $filename = $file->getClientOriginalName();
 
-    $existingBusinesses = Business::where('business_email', $request->business_email)->get();
+      //      $path = Storage::disk('s3')->putFileAs($directory, $file, $filename, 'public');
 
-    if ($existingBusinesses->count() > 0) {
-        return response()->json(['message' => 'Business already exists'], 401);
-    }
+        //    $url = Storage::disk('s3')->url($path);
+ 			$file = $request->file('business_logo')->store('businessImages');
+  //
+      		$business->business_logo = \Storage::disk('public')->url($file);
 
-    $business->save();
+                }
+                
+                
+                $buses = Business::where('business_email', $request->business_email)->get();
+        
+        if(sizeof($buses) > 0){
+            // tell business not to duplicate same email
+            return response([
+                'message' => 'business already exists'
+            ], 401);
+        }
 
-    return response()->json([$business->business_logo, $business], 200);
-} else {
-    return response()->json('You are not authorized to perform this action');
-}
-
-    }
-
+                $business->save();
+                return response()->json($business);
+                }else{
+                return response()->json('You are not authorize to perform this action');
+                }
+     }
 
     public function updateBusiness(Request $request, $id)
     {

@@ -345,7 +345,7 @@
                         <p>Hi,</p>
                         <p> You have been invited to this expense, 
                         
-                        To get the full feature of this app kindly click this link to signup <a href= "https://azatme.vercel.app/register"> Register</a></p>
+                        To get the full feature of this app kindly click this link to signup <a href= "https://azatme.com/register"> Register</a></p>
 
                        
  <p>Meanwhile, kindly click to make payment<b> <a href={{$paylink}}>Pay Now</a></b></p>

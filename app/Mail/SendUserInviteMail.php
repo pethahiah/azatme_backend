@@ -21,7 +21,8 @@ class SendUserInviteMail extends Mailable
     public function __construct($slip, $authmail)
     {
         $this->slip = $slip;
-        $this->authmail = $authmail;
+         $this->authmail = $authmail;
+
         //
     }
 
