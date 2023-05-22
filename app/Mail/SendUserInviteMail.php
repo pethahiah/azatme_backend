@@ -22,6 +22,7 @@ class SendUserInviteMail extends Mailable
     {
         $this->slip = $slip;
          $this->authmail = $authmail;
+
         //
     }
 

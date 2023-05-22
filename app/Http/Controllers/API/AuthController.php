@@ -263,6 +263,34 @@ class AuthController extends Controller
     $user->saveOrFail();
     return response()->json(['success' => true, $user]);
     }
+
+
+    public function signin()
+{
+      $current_timestamp= now();
+      $timestamp = strtotime($current_timestamp);
+     // echo $timestamp;
+      $secret = env('PayThru_App_Secret');
+      $hash = hash('sha256', $secret . $timestamp);
+      $PayThru_AppId = env('PayThru_ApplicationId');
+      $TestUrl = env('PayThru_Base_Test_Url');
+      $data = [
+        'ApplicationId' => "93cdbd1e3ae649b3b5e173ffb87d95d2993de430b81a4415b8c2f309356d2278",
+        'password' => $hash
+      ];
+      
+      //return $data;
+    $response = Http::withHeaders([
+        'Content-Type' => 'application/json',
+        'Timestamp' => $timestamp,
+  ])->post('https://services.paythru.ng/identity/auth/login', $data);
+    //return $response;
+    if($response->Successful())
+    {
+      $banks = json_decode($response->body(), true);
+      return response()->json($banks);
+    }
+}
     
     
     

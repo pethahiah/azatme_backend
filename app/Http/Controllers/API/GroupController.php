@@ -78,9 +78,11 @@ public function createGroup(Request $request)
 
 
 public function inviteUsersToGroup(Request $request, $groupId)
+
 {
        // $group = expense::where('id', $groupId)->whereNull('category_id')->get();
         $group = expense::findOrFail($groupId);
+
         $input['email'] = $request->input('email');
        $ProductId = env('PayThru_kontribute_productid');
        $current_timestamp= now();
@@ -157,8 +159,8 @@ public function inviteUsersToGroup(Request $request, $groupId)
       }
 
       $token = $this->paythruService->handle();
-
       //return $token;
+
 
       // Send payment request to paythru  
       $data = [
@@ -191,7 +193,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
         return false;
       }else{
         $transaction = json_decode($response->body(), true);
-       //return $transaction;
+       return $transaction;
         $splitResult = $transaction['splitPayResult']['result'];
         foreach($splitResult as $key => $slip)
         {

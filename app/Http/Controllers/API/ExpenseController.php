@@ -204,7 +204,9 @@ public function createExpense(ExpenseRequest $request)
         $transaction = json_decode($response->body(), true);
         if(!$transaction['successful'])
         {
+
           return "Whoops! ". json_encode($transaction);
+
         }
         //return $transaction;
         
@@ -236,6 +238,7 @@ public function createExpense(ExpenseRequest $request)
 
          $paylink = $transaction['payLink'];
          $slip = ['paylink'=> $paylink, 'amount'=> $data['amount'], 'receipient' => $request->email ];
+
          
               $authmail = Auth::user(); 
               Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
@@ -250,6 +253,7 @@ public function createExpense(ExpenseRequest $request)
 //return response()->json($slip);
           ]);		
                                  
+
               } 
             
         }
