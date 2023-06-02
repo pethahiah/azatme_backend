@@ -29,10 +29,11 @@ Route::namespace('API')->group(function () {
     Route::post('/updateStatus', 'ExpenseController@webhookExpenseResponse');
     Route::post('/kontributewebhook', 'GroupController@webhookGroupResponse');
     Route::post('/businesswebhook', 'BusinessTransactionController@webhookBusinessResponse');
-    Route::post('/kontributewebhook', 'GroupController@groupSettlementWebhookResponse');
-    Route::post('/businesswebhook', 'BusinessTransactionController@businessSettlementWebhookResponse');
-    Route::post('/updateStatus', 'ExpenseController@refundmeSettlementWebhookResponse');
+   // Route::post('/kontributewebhook', 'GroupController@groupSettlementWebhookResponse');
+  //  Route::post('/businesswebhook', 'BusinessTransactionController@businessSettlementWebhookResponse');
+//    Route::post('/updateStatus', 'ExpenseController@refundmeSettlementWebhookResponse');
     Route::post('/contact-us', 'SheetController@externalContentPostMethod');
+Route::get('get-all-customers', 'CustomerController@getAllCustomers');
     
     
      //NQR  Aggr Merchant Services
@@ -120,7 +121,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('get-customers-under-a business/{owner_id}', 'CustomerController@listAllCustomer');
     Route::delete('delete-a-customer/{id}', 'CustomerController@deleteACustomer');
     Route::get('gac-under-a-specific-business/{customer_code}', 'CustomerController@getAllCustomersUnderABusiness');
-     
     
     //Expense
     

@@ -318,9 +318,8 @@ class BusinessTransactionController extends Controller
     public function webhookBusinessResponse(Request $request)
    {
         $response = $request->all();
-        $dataEncode = json_encode($response);
-        $data = json_decode($dataEncode);
-        //$da = $data->transactionDetails->status;
+       // $dataEncode = json_encode($response);
+        $data = json_decode($response);
         Log::info("webhook-data" . json_encode($data));
         if($data->notificationType == 1){
          // return "good";
@@ -517,8 +516,8 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
         $productId = env('PayThru_business_productid');
        
         $response = $request->all();
-        $dataEncode = json_encode($response);
-        $data = json_decode($dataEncode);
+       // $dataEncode = json_encode($response);
+        $data = json_decode($response);
         if($data->notificationType == 2){
          // return "good";
         $updateBusinessWithdrawal = BusinessWithdrawal::where(['transactionReferences'=> $data->transactionDetails->transactionReferences, $productId => $data->transactionDetails->productId])->update([
@@ -530,7 +529,7 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
 
         }else
        return response([
-                'message' => 'data does not exists'
+                'message' => 'notificationtype is not 2'
             ], 401);
     }
     

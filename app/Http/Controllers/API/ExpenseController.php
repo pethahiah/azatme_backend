@@ -151,12 +151,22 @@ public function createExpense(ExpenseRequest $request)
             'bankCode' => $request['bankCode'],
             'account_number' => $request['account_number'],
           ]);
-          //return $info;
+          //return $info
          
          $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->payable];
          $totalpayable = $totalpayable + $info->payable;
          
       }
+	//Check for payable sum
+
+	 $checkAmontPayable = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $expenseUniqueCode)->sum('payable');
+//return $checkAmontPayable;
+        if($checkAmontPayable > $expense->amount)
+            {
+              return response([
+                'message' => 'You cannot request for an amount greater than your refundMe, kindly create another refundMe for this trasaction'
+            ], 422);
+            }
 
       // Send payment request to paythru  
       $data = [
@@ -286,10 +296,11 @@ public function createExpense(ExpenseRequest $request)
      public function webhookExpenseResponse(Request $request)
    {
         $response = $request->all();
-        $dataEncode = json_encode($response);
-        $data = json_decode($dataEncode);
+//        $dataEncode = json_encode($response);
+        $data = json_decode($response);
         Log::info("starting refundme response");
-        if($data->notificationType == 1){
+	$notificationType = $data->notificationType;
+        if($notificationType == 1){
          // return "good";
         $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->update([
             'payThruReference' => $data->transactionDetails->payThruReference,
@@ -308,7 +319,7 @@ public function createExpense(ExpenseRequest $request)
 
         }else
        return response([
-                'message' => 'data does not exists'
+                'message' => 'Notification type is not 1'
             ], 401);
     }
 
@@ -550,8 +561,8 @@ public function refundmeSettlementWebhookResponse(Request $request)
         $productId = env('PayThru_expense_productid');
        
         $response = $request->all();
-        $dataEncode = json_encode($response);
-        $data = json_decode($dataEncode);
+       // $dataEncode = json_encode($response);
+        $data = json_decode($response);
         if($data->notificationType == 2){
          // return "good";
         $updatePaybackWithdrawal = Withdrawal::where(['transactionReferences'=> $data->transactionDetails->transactionReferences, $productId => $data->transactionDetails->productId])->update([
@@ -563,7 +574,7 @@ public function refundmeSettlementWebhookResponse(Request $request)
 
         }else
        return response([
-                'message' => 'data does not exists'
+                'message' => 'Notification type is not 2'
             ], 401);
     }
 

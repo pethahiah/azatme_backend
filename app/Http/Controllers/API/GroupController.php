@@ -246,8 +246,8 @@ public function inviteUsersToGroup(Request $request, $groupId)
     public function webhookGroupResponse(Request $request)
   { 
         $response = $request->all();
-        $dataEncode = json_encode($response);
-        $data = json_decode($dataEncode);
+//        $dataEncode = json_encode($response);
+        $data = json_decode($response);
         Log::info("webhook-data" . json_encode($data));
         
         if($data->notificationType == 1){
@@ -270,7 +270,7 @@ public function inviteUsersToGroup(Request $request, $groupId)
 
         }else
        return response([
-                'message' => 'payment not successfully updated'
+                'message' => 'Notification type is not 1'
             ], 401);
     }
 
@@ -458,8 +458,8 @@ public function getUserAmountsPaidPerGroup(Request $request, $groupId)
         $productId = env('PayThru_business_productid');
        
         $response = $request->all();
-        $dataEncode = json_encode($response);
-        $data = json_decode($dataEncode);
+       // $dataEncode = json_encode($response);
+        $data = json_decode($response);
         if($data->notificationType == 2){
          // return "good";
         $updateGroupWithdrawal = GroupWithdrawal::where(['transactionReferences'=> $data->transactionDetails->transactionReferences, $productId => $data->transactionDetails->productId])->update([
@@ -471,7 +471,7 @@ public function getUserAmountsPaidPerGroup(Request $request, $groupId)
 
         }else
        return response([
-                'message' => 'data does not exists'
+                'message' => 'Notification type is not 2'
             ], 401);
     }
         
