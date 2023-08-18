@@ -23,9 +23,12 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Http;
 use App\Mail\BusinessPaylinkMail;
 use App\Setting;
+use App\Active;
 use Illuminate\Support\Facades\Log;
 use App\Services\PaythruService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\QueryException;
+
 
 
 class BusinessTransactionController extends Controller
@@ -42,7 +45,8 @@ class BusinessTransactionController extends Controller
     public function creatProduct(Request $request)
     {
         $getAdmin = Auth::user()->id;
-        //return $getAdmin;
+        //return $getAdmin
+   	$getBusinessVatOption = Business::where('owner_id', Auth::user()->id)->first();
 
         $product = Product::create([
             'name' => $request->name,
@@ -76,7 +80,7 @@ class BusinessTransactionController extends Controller
     }
 
 
-    public function startBusinessTransaction(Request $request, $product_id)
+    public function startBusinessTransaction(Request $request, $product_id, $business_code)
     {
       //return response()->json($request->input());
       $product = product::findOrFail($product_id);
@@ -85,13 +89,9 @@ class BusinessTransactionController extends Controller
       $secret = env('PayThru_App_Secret');
       $generalPath = env('file_public_path');
       $PayThru_productId = env('PayThru_business_productid');
-      $hash = hash('sha512', $timestamp . $secret);
-      $amt = $product->amount;
-      $hashSign = hash('sha512', $amt . $secret);
       //$product = Product::findOrFail($product_id);
       $prodUrl = env('PayThru_Base_Live_Url');
-    
-    
+
       //return $generalPath;
       $input['email'] = $request->input('email');
       $emails = $request->email;
@@ -108,21 +108,30 @@ class BusinessTransactionController extends Controller
     $totalpayable = 0;
     $payable = 0;
 
-        if($request['split_method_id'] == 1)
-        {
-            $payable = $product->amount;
-  
-        } elseif($request['split_method_id'] == 2)
-        {
-          if(isset($request->percentage))
-          {
-            $payable = $product->amount*$request->percentage/100;
-          }elseif(isset($request->percentage_per_user))
-          {
-            $ppu = json_decode($request->percentage_per_user);
-            $payable = $ppu->$em*$product->amount/100;
-          }
-        }
+    $vat = 0;
+    $getBusinessVatOption = Business::where('owner_id', Auth::user()->id)->where('business_code', $business_code)->first();
+//return $getBusinessVatOption;
+    $getVatOption = $getBusinessVatOption->vat_option;
+
+    if($getVatOption == 'Yes')
+    {
+      $vat = 0.75;
+    }elseif($getVatOption == 'No')
+   {
+     $vat = 0;
+   }
+
+ // Ensure that $request->quantity is numeric
+    $quantity = is_numeric($request->quantity) ? $request->quantity : 0;
+
+    // Ensure that $product->amount is numeric
+    $amount = is_numeric($product->amount) ? $product->amount : 0;
+
+    // Calculate vat and Grand_total with well-formed numeric values
+    $vatAmount = $amount * $quantity * $vat;
+    $grandTotal = ($amount * $quantity) + $vatAmount;
+    $hash = hash('sha512', $timestamp . $secret);
+    $hashSign = hash('sha512', $grandTotal . $secret);
         
         if($request['moto_id'] == 1)
         {
@@ -138,6 +147,9 @@ class BusinessTransactionController extends Controller
                 'moto_id' => $request['moto_id'],
                 'bankName' => $request['bankName'],
                 'bankCode' => $request['bankCode'],
+		'qty' => $quantity,
+                'vat' => $vatAmount,
+                'Grand_total' => $grandTotal,
                 'account_number' => $request['account_number'],
               ]);
               
@@ -146,7 +158,7 @@ class BusinessTransactionController extends Controller
             $token = $this->paythruService->handle();
               
             $data = [
-                'amount' => $info->transaction_amount,
+                'amount' => $grandTotal,
                 'productId' => $PayThru_productId,
                 'transactionReference' => time().$product->id,
                 'paymentDescription' => $product->description,
@@ -155,7 +167,7 @@ class BusinessTransactionController extends Controller
                 'displaySummary' => false,
                
                 ];
-
+//return $data;
     $url = $prodUrl;
     $urls = $url.'/transaction/create';
 
@@ -163,6 +175,7 @@ class BusinessTransactionController extends Controller
         'Content-Type' => 'application/json',
         'Authorization' => $token,
 ])->post($urls, $data );
+//return $response;
               if($response->failed())
               {
                 return false;
@@ -218,21 +231,18 @@ class BusinessTransactionController extends Controller
                 'bankCode' => $request['bankCode'],
                 'moto_id' => $request['moto_id'],
                 'invoice_number' => $invoice_number,
-                'qty' => $request->quantity,
-                'vat' => $product->amount*7.5/100,
-                'Grand_total' => $product->amount+$product->amount*7.5/100,
+                'qty' => $quantity,
+                'vat' => $vatAmount,
+                'Grand_total' => $grandTotal,
                 'due_days' => $request->due_days,
                 'due_date' => $current->addDays($request->due_days),
                 'issue_date' => \Carbon\Carbon::now(),      
         ]);
-        
         //return $invoice;
 
         $token = $this->paythruService->handle();
-    
-        
        $data = [
-        'amount' => $product->amount,
+        'amount' => $grandTotal,
         'productId' => $PayThru_productId,
         'transactionReference' => time().$product->id,
         'paymentDescription' => $product->description,
@@ -249,6 +259,7 @@ class BusinessTransactionController extends Controller
         'Content-Type' => 'application/json',
         'Authorization' => $token,
         ])->post($urls, $data );
+//	return $response;
                       if($response->failed())
                       {
                         return false;
@@ -269,37 +280,32 @@ class BusinessTransactionController extends Controller
       
      $paylink = $transaction['payLink'];
      
-                          $getBusiness = User::where('id', Auth::user()->id)->first();
-                        $InvoiceTrans = businessTransaction::where('unique_code', $product->unique_code)->first();
+         $getBusiness = User::where('id', Auth::user()->id)->first();
+	 $business = Business::where('owner_id', Auth::user()->id)->first();
+// 	return	$business->business_logo;
+         $InvoiceTrans = businessTransaction::where('unique_code', $product->unique_code)->first();
                          // return $InvoiceTrans;
                           
-                          $sum = $InvoiceTrans->vat;
-                          $sum1 = $InvoiceTrans->amount;
-                          $cusInvoEmail = $InvoiceTrans->email;
-                          $getUserInvo = Customer::where('customer_email', $cusInvoEmail)->first();
+         $sum = $InvoiceTrans->vat;
+         $sum1 = $InvoiceTrans->amount;
+         $cusInvoEmail = $InvoiceTrans->email;
+         $getUserInvo = Customer::where('customer_email', $cusInvoEmail)->first();
                           
-                          $pdf = PDF::loadView('generate/invoice', compact('invoice', 'getBusiness', 'getUserInvo', 'paylink'));
+         $pdf = PDF::loadView('generate/invoice', compact('invoice', 'getBusiness', 'business', 'getUserInvo', 'paylink'));
                        // $pdf = PDF::loadView('invoices.pdf', compact('invoice'));
 
        			
 
 // Get the URL path of the saved PDF
 
-                          $filename = 'invoice_' . $product_id . '_' . time() . '.pdf';
+       $filename = 'invoice_' . $product_id . '_' . time() . '.pdf';
 
 // Save the PDF to your server's storage directory
-                          \Storage::disk('public')->put($filename, $pdf->output());
+      \Storage::disk('public')->put($filename, $pdf->output());
 
 // Get the public URL of the saved PDF
-                        $pdf_url = \Storage::disk('public')->url($filename);
-  //      $url = Storage::disk('s3')->url($filename);   
-        // Save the PDF to your server's storage directory
-      //  $pdf->save(public_path($filename));
-
-        // Generate a download link for the PDF
-        //$path = "$generalPath/$filename";
-        //$link = url('/api/invoices/' . $product_id . '/pdf/' . $filename);
-       // return $path;
+    $pdf_url = \Storage::disk('public')->url($filename);
+  
        return response()->json([
            'status' => 'Successful',
            'link' => $pdf_url]);
@@ -315,94 +321,145 @@ class BusinessTransactionController extends Controller
 
 
   //Calling PayThru gateway for transaction response updates
-    public function webhookBusinessResponse(Request $request)
-   {
-        $response = $request->all();
-       // $dataEncode = json_encode($response);
-        $data = json_decode($response);
-        Log::info("webhook-data" . json_encode($data));
-        if($data->notificationType == 1){
-         // return "good";
-        $userExpense = businessTransaction::where('paymentReference', $data->transactionDetails->paymentReference)->update([
-            'payThruReference' => $data->transactionDetails->payThruReference,
-            'fiName' => $data->transactionDetails->fiName,
-            'status' => $data->transactionDetails->status,
-            'amount' => $data->transactionDetails->amount,
-            'responseCode' => $data->transactionDetails->responseCode,
-            'paymentMethod' => $data->transactionDetails->paymentMethod,
-            'commission' => $data->transactionDetails->commission,
-            'residualAmount' => $data->transactionDetails->residualAmount,
-            'resultCode' => $data->transactionDetails->resultCode,
-            'responseDescription' => $data->transactionDetails->responseDescription,
-           
-        ]);
-          Log::info("done for Buz");
-          
-          http_response_code(200);
+ public function webhookBusinessResponse(Request $request)
+{
+ try {
+    $productId = env('PayThru_business_productid');
+    $response = $request->all();
+    $dataEncode = json_encode($response);
+    $data = json_decode($dataEncode);
+    $modelType = "Business";
 
-        }else
+    Log::info("Starting webhookBusinessResponse");
+
+    if ($data->notificationType == 1) {
+        $buisness = businessTransaction::where('paymentReference', $data->transactionDetails->paymentReference)->first();
+//	$minus_residual = $business->minus_residual;
+        if ($buisness) {
+//	    $existing_minus_residual = $buisness->minus_residual ?? 0;
+  //          $new_minus_residual = $existing_minus_residual + $data->transactionDetails->residualAmount;
+		
+            $buisness->payThruReference = $data->transactionDetails->payThruReference;
+            $buisness->fiName = $data->transactionDetails->fiName;
+            $buisness->status = $data->transactionDetails->status;
+            $buisness->amount = $data->transactionDetails->amount;
+            $buisness->responseCode = $data->transactionDetails->responseCode;
+            $buisness->paymentMethod = $data->transactionDetails->paymentMethod;
+            $buisness->commission = $data->transactionDetails->commission;
+            $buisness->residualAmount = $data->transactionDetails->residualAmount;
+            $buisness->resultCode = $data->transactionDetails->resultCode;
+            $buisness->responseDescription = $data->transactionDetails->responseDescription;
+    //        $business->minus_residual = $new_minus_residual;
+            $buisness->save();
+	   $activePayment = new Active([
+                    'paymentReference' => $data->transactionDetails->paymentReference,
+                    'product_id' => $productId,
+                    'product_type' => $modelType
+                ]);
+           $activePayment->save();
+                Log::info("Payment reference saved in ActivePayment table");
+
+            Log::info("User buisness updated");
+        } else {
+            Log::info("User buisness not found for payment reference: " . $data->transactionDetails->paymentReference);
+        }
+
+        http_response_code(200);
         
-        Log::info("Not successful for Buz");
-       return response([
-                'message' => 'No response recieve for this transaction'
-            ], 401);
+    } elseif ($data->notificationType == 2) {
+      if (isset($data->transactionDetails->transactionReferences[0])) {
+          Log::info("Transaction references: " . json_encode($data->transactionDetails->transactionReferences));
+	  $transactionReferences = $data->transactionDetails->transactionReferences[0];
+	  $upda = BusinessWithdrawal::where('transactionReferences', $transactionReferences)->first();
+	  $updatePaybackWithdrawal = BusinessWithdrawal::where([
+		'transactionReferences' => $transactionReferences,
+		'uniqueId' => $upda->uniqueId
+		])->first();
+
+          if ($updatePaybackWithdrawal) {
+              $updatePaybackWithdrawal->paymentAmount = $data->transactionDetails->paymentAmount;
+              $updatePaybackWithdrawal->recordDateTime = $data->transactionDetails->recordDateTime;
+	      // Set the status to "success"
+              $updatePaybackWithdrawal->status = 'success';
+	
+              $updatePaybackWithdrawal->save();
+
+              Log::info("Business withdrawal updated");
+          } else {
+              Log::info("Business withdrawal not found for transaction references: " . $data->transactionDetails->transactionReferences[0]);
+          }
+      } else {
+          Log::info("Transaction references not found in the webhook data");
+      }
+  }
+
+  http_response_code(200);
+} catch (\Illuminate\Database\QueryException $e) {
+  Log::error($e->getMessage());
+  return response()->json(['error' => 'An error occurred'], 500);
+}
+}
+
+
+public function AzatBusinessCollection(Request $request)
+    {
+    $current_timestamp = now();
+    $timestamp = strtotime($current_timestamp);
+    $secret = env('PayThru_App_Secret');
+    $productId = env('PayThru_expense_productid');
+    $hash = hash('sha512', $timestamp . $secret);
+    $AppId = env('PayThru_ApplicationId');
+    $prodUrl = env('PayThru_Base_Live_Url');
+    $charges = env('PayThru_Withdrawal_Charges');
+
+    $userBusinessTransactions = BusinessTransaction::where('owner_id', auth()->user()->id)
+        ->sum('residualAmount');
+
+    // Step 1: Subtract residualAmount from the request->amount and update it in minus_residual column
+    $requestAmount = $request->amount;
+    $minusResidual = $userBusinessTransactions - $requestAmount;
+
+    // Check if the first withdrawal request or consecutive withdrawal
+    $latestWithdrawal = BusinessTransaction::where('owner_id', auth()->user()->id)
+        ->latest('updated_at')
+        ->first();
+
+    if ($latestWithdrawal) {
+        // Consecutive withdrawal request
+        $latestMinusResidual = $latestWithdrawal->minus_residual;
+        if ($requestAmount > $latestMinusResidual) {
+            // Step 4: Request amount exceeds latest minus_residual
+            $remainingAmount = $requestAmount - $latestMinusResidual;
+           // $remainingMinusResidual = $userBusinessTransactions - $remainingAmount;
+            if ($remainingAmount < 0) {
+                return response()->json(['message' => 'You do not have sufficient amount in your Business Account'], 400);
+            }
+            $minusResidual = $remainingAmount;
+        } else {
+            // Step 3: Update minus_residual for consecutive withdrawal
+            $minusResidual = $latestMinusResidual - $requestAmount;
+        }
+    } else {
+        // Step 3: First request to withdraw
+        if ($requestAmount > $userBusinessTransactions) {
+            return response()->json(['message' => 'You do not have sufficient amount in your RefundMe'], 400);
+        }
     }
 
-
-public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
-    {
-//      return response->json(($request->all()));
-      $current_timestamp= now();
-     // return $current_timestamp;
-      $timestamp = strtotime($current_timestamp);
-      $secret = env('PayThru_App_Secret');
-      $productId = env('PayThru_business_productid');
-      //return $productId;
-      $hash = hash('sha512', $timestamp . $secret);
-//  return $hash;
-      $AppId = env('PayThru_ApplicationId');
-      $prodUrl = env('PayThru_Base_Live_Url');
-     
-      $productAmount = businessTransaction::where('owner_id', Auth::user()->id)->where('product_id', $BusinessTransactionId)->whereNotNull('amount')->first();
-//dd($productAmount);
-      $amount = $productAmount->amount;
-//dd($amount);
-//   return $productAmount;
-  $getAdmin = Auth::user();
-//return $getAdmin->id;
-  $getAd = $getAdmin -> usertype;
-  if($getAd === 'merchant')
-  { 
-      $BusinessWithdrawal = new BusinessWithdrawal([
+        BusinessTransaction::where('onwer_id', auth()->user()->id)->update(['minus_residual' => $minusResidual]);
+ $BusinessWithdrawal = new BusinessWithdrawal([
         'account_number' => $request->account_number,
         'description' => $request->description,
-       'product_id' => $productAmount ->id,
-        'beneficiary_id' => Auth::user()->id,
-        'amount' => $request->amount,
-        'bank' => $request->bank
-        ]);
-///dd($request->amount);
-        
-        $getUserBusinessTransactions = BusinessTransaction::where('owner_id', $getAdmin->id)->sum('residualAmount');
-   
-//dd($getUserBusinessTransactions);     
-        if(($request->amount) > $amount)
-        {
-            if(($request->amount) > $getUserBusinessTransactions)
-            {
-                return response([
-            'message' => 'You dont not have sufficient balance in your business account'
-        ], 403);
-            }else{
-          return response([
-            'message' => 'Please enter correct product amount'
-        ], 403);
-        }
-        }
+        'beneficiary_id' => auth()->user()->id,
+        'amount' => $requestAmount - $charges,
+        'bank' => $request->bank,
+        'charges' => $charges,
+        'uniqueId' => Str::random(10),
+       // 'minus_residual' => $minusResidual, // Update minus_residual here
+    ]);
 
-//       dd("i go here"); 
-        $BusinessWithdrawal->save();
-    
+    $BusinessWithdrawal->save();
+   // $businessAmountWithdrawn = $request->amount - $charges;
     $acct = $request->account_number;
     
    $getBankReferenceId = Bank::where('user_id', Auth::user()->id)->where('account_number', $acct)->first();
@@ -412,7 +469,7 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
  
       $data = [
             'productId' => $productId,
-            'amount' => $amount,
+            'amount' => $request->amount,
             'beneficiary' => [
             'nameEnquiryReference' => $beneficiaryReferenceId
             ],
@@ -432,22 +489,39 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
       {
         return false;
       }else{
-        $collection = json_decode($response->body(), true);
-        return $collection;
+       // $collection = json_decode($response->body(), true);
+       // return $collection;
+	 $collection = $response->object();
+	$saveTransactionReference = BusinessWithdrawal::where('beneficiary_id', Auth::user()->id)->where('uniqueId', $BusinessWithdrawal->uniqueId)->update([
+        'transactionReferences' => $collection->transactionReference,
+//	'minus_residual' => $minusResidual,
+	'status' => $collection->message
+      ]);
+	 return response()->json($saveTransactionReference, 200);
     }
-  }else{
-    return response()->json('Auth user is not a merchant');
- }
 }
+
+	public function getBusinessWithdrawalTransaction()
+        {
+        $getWithdrawalTransaction = BusinessWithdrawal::where('beneficiary_id', Auth::user()->id)->get();
+        if($getWithdrawalTransaction->count() > 0)
+        {
+        return response()->json($getWithdrawalTransaction);
+        }else{
+         return response([
+                'message' => 'transaction not found for this user'
+            ], 403);
+                }
+        }
+
 
 
 // Business Owner
-
     public function getAllInvoiceByABusinessOwner()
     {
         $getUser = Auth::user()->id;
         $pageNumber = 50;
-        $getAllInvoiceByABusiness = Invoice::where('owner_id', $getUser)->latest()->paginate($pageNumber);
+        $getAllInvoiceByABusiness = businessTransaction::where('owner_id', $getUser)->latest()->paginate($pageNumber);
         return response()->json($getAllInvoiceByABusiness);
 
     }
@@ -516,8 +590,8 @@ public function AzatBusinessCollection(Request $request, $BusinessTransactionId)
         $productId = env('PayThru_business_productid');
        
         $response = $request->all();
-       // $dataEncode = json_encode($response);
-        $data = json_decode($response);
+       $dataEncode = json_encode($response);
+        $data = json_decode($dataEncode);
         if($data->notificationType == 2){
          // return "good";
         $updateBusinessWithdrawal = BusinessWithdrawal::where(['transactionReferences'=> $data->transactionDetails->transactionReferences, $productId => $data->transactionDetails->productId])->update([

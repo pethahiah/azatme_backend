@@ -5,11 +5,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use app\user;
+use app\complain;
 
 class ComplainController extends Controller
 {
     //
-Public function makeComplain()
+Public function makeComplain(Request $request)
 {
         $complain = Complain::create([
         'expense_name'=> $request->expense_name,

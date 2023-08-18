@@ -5,7 +5,8 @@
 </head>
 <style type="text/css">
     body{
-        font-family: 'Roboto Condensed', sans-serif;
+        font-family: Arial, sans-serif;
+	 background-color: #f2f2f2;
     }
     .m-0{
         margin: 0px;
@@ -63,6 +64,8 @@
     table tr th{
         background: #F4F4F4;
         font-size:15px;
+	background-color: #f4f4f4;
+        color: #333333;
     }
     table tr td{
         font-size:13px;
@@ -83,6 +86,19 @@
     .total-right p{
         padding-right:20px;
     }
+   table tr:nth-child(even) {
+        background-color: #e8e8e8;
+    }
+    .pay-now-button {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white;
+        padding: 8px 16px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+
 </style>
  
 <body>
@@ -98,7 +114,12 @@
         <p class="m-0 pt-5 text-bold w-100">Due Days - <span class="gray-color">{{$invoice->due_days}}</span></p>
     </div>
      <div class="w-20 float-left logo mt-20">
-     
+		
+    @if ($business->business_logo )
+   <img src="{{ $business->business_logo }}" alt="Business logo" width="300" height="200">
+@else
+    <p>No image to display.</p>
+@endif     
     </div>
     <div style="clear: both;"></div>
 </div>
@@ -134,55 +155,61 @@
         </tr>
     </table>
 </div>
-
 <div class="table-section bill-tbl w-100 mt-10">
     <table class="table w-100 mt-10">
         <tr>
+            <th class="w-50">Serial Number</th>
             <th class="w-50">Product Name</th>
             <th class="w-50">Product Description</th>
             <th class="w-50">Price</th>
             <th class="w-50">Qty</th>
-            <th class="w-50">VAT</th>
-            <th class="w-50">Grand Total</th>
+            <th class="w-50">Total</th>
         </tr>
+@php
+    $serialNumber = 1;
+@endphp
         <tr align="center">
+            <td>{{$serialNumber}}</td>
             <td>{{$invoice->name}}</td>
             <td>{{$invoice->description}}</td>
-            <td>{{$invoice->transaction_amount}}</td>
+            <td>N{{number_format($invoice->transaction_amount, 2)}}</td>
             <td>{{$invoice->qty}}</td>
-            <td>{{$invoice->vat}}</td>
-            <td>{{$invoice->Grand_total}}</td>
+            <td>N{{number_format($invoice->transaction_amount * $invoice->qty, 2)}}</td>
         </tr>
         <tr>
-            <!--<td colspan="7">-->
-            <!--    <div class="total-part">-->
-            <!--        <div class="total-left w-85 float-left" align="right">-->
-            <!--            <p>Account Number:</p>-->
-            <!--            <p>Bank Name:</p>-->
-                        
-            <!--        </div>-->
-            <!--        <div class="total-right w-15 float-left text-bold" align="left">-->
-            <!--            <p>{{$invoice->account_number}}</p>-->
-            <!--            <p>{{$invoice->bankName}}</p>-->
-                       
-                       
-            <!--        </div>-->
-            <!--        <div style="clear: both;"></div>-->
-            <!--    </div> -->
-            <!--</td>-->
+            <td colspan="6">
+                <div class="total-part">
+                    <div class="total-left w-85 float-left" align="right">
+                        <p>Sub Total:</p>
+                        <p>VAT:</p>
+                        <p>Total:</p>
+                    </div>
+                    <div class="total-right w-15 float-left text-bold" align="left">
+                        <p>N{{number_format($invoice->transaction_amount * $invoice->qty, 2)}}</p>
+                       @if (is_numeric($invoice->vat) && $invoice->vat != 0)
+                            <p>N{{number_format($invoice->vat, 2)}}</p>
+                            <p>N{{number_format($invoice->Grand_total, 2)}}</p>
+                        @else
+                            <p>0</p>
+                            <p>N{{number_format($invoice->transaction_amount * $invoice->qty, 2)}}</p>
+                        @endif
+                    </div>
+                    <div style="clear: both;"></div>
+                </div>
+            </td>
         </tr>
     </table>
 </div>
 
 <div class="table-section bill-tbl w-100 mt-10">
     <table class="table w-100 mt-10">
-         <tr>
-            <th>Kindly click the link to make payment</th>
-            <th class="w-50">{{$paylink}}</th>
-            
+        <tr>
+            <th>Click pay now button to make payment</th>
+            <th class="w-50">
+                <a href="{{$paylink}}" class="pay-now-button">Pay Now</a>
+            </th>
         </tr>
-      
-       
     </table>
 </div>
+
 </html>

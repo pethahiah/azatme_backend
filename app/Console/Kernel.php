@@ -31,7 +31,7 @@ class Kernel extends ConsoleKernel
  	$schedule->call(function () {
             // Your logic to update the customer table
             Customer::where('flagged', 1)->delete();
-        })->->everyFiveMinutes();
+       })->everyFiveMinutes();
 	$schedule->command('send-deleted-customers-email')->everyFiveMinutes();
     }
 

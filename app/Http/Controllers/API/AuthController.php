@@ -17,6 +17,7 @@ use App\Http\Requests\BusinessRequest;
 use App\Business;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Redis;
 
 
 class AuthController extends Controller
@@ -44,7 +45,7 @@ class AuthController extends Controller
                 'message' => 'user already exists'
             ], 409);
         }
-   
+
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
@@ -52,70 +53,109 @@ class AuthController extends Controller
             'company_name' => $request->company_name,
             'phone'=> preg_replace('/^0/','+234',$request->phone),
             'password' => Hash::make($request->password)
-        
         ]);
         $user->save();
         return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);       
 }
 
+    //login function
 
+public function getRequesterIP()
+{
+    return request()->ip();
+}
 
+public function AttemptLogin(LoginRequest $request)
+{
+    $email = $request->get('email');
+    $password = $request->get('password');
+    $user = User::where('email', '=', $email)->first();
 
-//login function
+    // Implement rate limiting for user and IP address using Redis cache
+    $userRateLimitKey = 'rate_limit:user:' . $user->id . ':' . $email;
+    $ipRateLimitKey = 'rate_limit:ip:' . $this->getRequesterIP();
+    $rateLimitDuration = 300; // 5 minutes
+    $rateLimitMaxAttempts = 3;
 
-    public function AttemptLogin(LoginRequest $request)
-    {
+    $currentUserAttempts = (int) Redis::get($userRateLimitKey) ?? 0;
+    $currentIPAttempts = (int) Redis::get($ipRateLimitKey) ?? 0;
+
+    if ($currentUserAttempts >= $rateLimitMaxAttempts || $currentIPAttempts >= $rateLimitMaxAttempts) {
+        return response(['message' => 'Too many login attempts. Try again after 5 minutes.'], 429);
+    }
+
+    if (Hash::check($password, $user->password)) {
         $otp = random_int(0, 999999);
         $otp = str_pad($otp, 6, 0, STR_PAD_LEFT);
-        Log::info("otp = ".$otp);
-        
-        $email = request()->get('email');
-        $password = request()->get('password');
-        $uxer = User::where('email', '=', $email)->first();
-        if(Hash::check($request->password, $uxer->password))
-        {
-            $user = User::where('phone', $email)->orWhere('email', $email)->update(['otp' => $otp]);
-            //send email
-           // $data =  ['otp' => $otp];
-            $data = [
-           'otp' => $otp,
-           'email' => $email
-];
-            $subject = 'AzatMe: ONE TIME PASSWORD';
-            Mail::send('Email.otp', $data, function($message) use($request,$subject){
-                $message->to($request->email)->subject($subject);
-            });
-            return response(["status" => 200, "message" => "OTP sent successfully"]);
-            
-    }else{   
-        
+        Log::info("otp = " . $otp);
 
-        return response()->json([
-            'message' => 'Record not found.'
-        ], 404);
-       // return response()->json(['status'=>'false','message'=>'password is not correct']);
-}        
+        // Update user's OTP in the database
+        $user->otp = $otp;
+        $user->save();
+
+        // Send email with OTP
+        $data = [
+            'otp' => $otp,
+            'email' => $email
+        ];
+        $subject = 'AzatMe: ONE TIME PASSWORD';
+        Mail::send('Email.otp', $data, function ($message) use ($request, $subject) {
+            $message->to($request->email)->subject($subject);
+        });
+
+        // Ensure to update the Redis keys when the login is successful
+        Redis::incr($userRateLimitKey);
+        Redis::incr($ipRateLimitKey);
+        if (!Redis::ttl($userRateLimitKey)) {
+            Redis::expire($userRateLimitKey, $rateLimitDuration);
+        }
+        if (!Redis::ttl($ipRateLimitKey)) {
+            Redis::expire($ipRateLimitKey, $rateLimitDuration);
         }
 
-  
-
-    public function loginViaOtp(Request $request)
-    {
-
-    $user  = User::where([['email','=',$request->email],['otp','=',$request->otp]])->first();
-        if($user){
-            auth()->login($user, true);
-            User::where('email','=',$request->email)->update(['otp' => null]);
-            $accessToken = auth()->user()->createToken('authToken')->accessToken;
-
-            return response(["status" => 200, "message" => "Success", 'user' => auth()->user(), 'access_token' => $accessToken]);
-        }
-        else{
-            return response(["status" => 401, 'message' => 'Invalid']);
-        }
-
-        
+        return response(["status" => 200, "message" => "OTP sent successfully"]);
+    } else {
+        return response()->json(['message' => 'Record not found.'], 404);
     }
+}
+
+public function loginViaOtp(Request $request)
+{
+    $user = User::where([['email', '=', $request->email], ['otp', '=', $request->otp]])->first();
+    if ($user) {
+        auth()->login($user, true);
+        $user->otp = null;
+        $user->save();
+        $accessToken = auth()->user()->createToken('authToken')->accessToken;
+
+        // Reset the rate limit counters after successful login
+        $userRateLimitKey = 'rate_limit:user:' . $user->id . ':' . $request->email;
+        $ipRateLimitKey = 'rate_limit:ip:' . $this->getRequesterIP();
+        Redis::del($userRateLimitKey);
+        Redis::del($ipRateLimitKey);
+
+        // Get and display the user data from Redis cache
+       // $userDataKey = 'user:' . $user->id;
+       // $userData = Redis::get($userDataKey);
+
+//        if ($userData) {
+            // Assuming user data was stored as JSON, decode it to an array for display
+  //          $userArray = json_decode($userData, true);
+
+            // Display the user data as needed
+            // For example:
+    //        echo "User ID: " . $userArray['id'] . "<br>";
+      //      echo "Name: " . $userArray['name'] . "<br>";
+            // and so on...
+       // }
+
+        return response(["status" => 200, "message" => "Success", 'user' => auth()->user(), 'access_token' => $accessToken]);
+    } else {
+        return response(["status" => 401, 'message' => 'Invalid']);
+    }
+}
+
+
     //logout function
 
     public function logout() {

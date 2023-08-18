@@ -12,17 +12,18 @@ class SendUserInviteMail extends Mailable
     use Queueable, SerializesModels;
     public $slip;
     public $authmail;
+    public $uxer;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($slip, $authmail)
+    public function __construct($slip, $authmail, $uxer)
     {
         $this->slip = $slip;
-         $this->authmail = $authmail;
-        //
+        $this->authmail = $authmail;
+        $this->uxer = $uxer;
     }
 
     /**
@@ -32,7 +33,7 @@ class SendUserInviteMail extends Mailable
      */
     public function build()
     {
-        return $this->subject("User Invite and Paymentlink")->markdown('Email.userInvite')->with(['authmail' => $this->authmail]);
+        return $this->subject("User Invite and Paymentlink")->markdown('Email.userInvite')->with(['authmail' => $this->authmail, 'uxer' => $this->uxer]);
         
     }
 }

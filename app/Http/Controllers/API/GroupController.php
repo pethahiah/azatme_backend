@@ -9,6 +9,7 @@ use App\Http\Requests\userGroupRequest;
 use App\Expense;
 use Illuminate\Support\Str;
 use Auth;
+use App\Bank;
 use App\User;
 use Mail;
 use Carbon\Carbon;
@@ -27,7 +28,11 @@ use Illuminate\Support\Facades\Log;
 use App\Mail\SendUserInviteMail;
 use App\Setting;
 use DB;
+use App\Invited;
+use App\Active;
 use App\Services\PaythruService;
+use Illuminate\Database\QueryException;
+
 
 
 class GroupController extends Controller
@@ -35,7 +40,7 @@ class GroupController extends Controller
     //
 
 
-    public $paythruService;
+public $paythruService;
 
 public function __construct(PaythruService $paythruService)
   {
@@ -50,7 +55,7 @@ public function createGroup(Request $request)
         'description' => $request->description,
         'uique_code'=> Str::random(10),
         'amount' => $request->amount,
-        'user_id' => Auth::user()->id, 
+        'user_id' => Auth::user()->id,
         ]);
         
         return response()->json($expense);
@@ -77,148 +82,337 @@ public function createGroup(Request $request)
 
 
 
-public function inviteUsersToGroup(Request $request, $groupId)
-{
-       // $group = expense::where('id', $groupId)->whereNull('category_id')->get();
-        $group = expense::findOrFail($groupId);
-        $input['email'] = $request->input('email');
-       $ProductId = env('PayThru_kontribute_productid');
-       $current_timestamp= now();
-       $timestamp = strtotime($current_timestamp);
-       $secret = env('PayThru_App_Secret');
-       $hash = hash('sha512', $timestamp . $secret);
-       $amt = $group->amount;
-       $hashSign = hash('sha512', $amt . $secret);
-       $PayThru_AppId = env('PayThru_ApplicationId');
-       $prodUrl = env('PayThru_Base_Live_Url');
-//return $amt;
-      $emails = $request->email;
-      if($group)
-        {
-      if($emails)
-      {
-      $emailArray = (explode(';', $emails));
-      $count = count($emailArray);
-    // return response()->json($emailArray);
+// public function inviteUsersToGroup(Request $request, $groupId)
+// {
+//        // $group = expense::where('id', $groupId)->whereNull('category_id')->get();
+//         $group = expense::findOrFail($groupId);
+// //return $group;
+//         $input['email'] = $request->input('email');
+//        $ProductId = env('PayThru_kontribute_productid');
+//        $current_timestamp= now();
+//        $timestamp = strtotime($current_timestamp);
+//        $secret = env('PayThru_App_Secret');
+//        $hash = hash('sha512', $timestamp . $secret);
+//        $amt = $group->amount;
+//        $hashSign = hash('sha512', $amt . $secret);
+//        $PayThru_AppId = env('PayThru_ApplicationId');
+//        $prodUrl = env('PayThru_Base_Live_Url');
+// //return $amt;
+//       $emails = $request->email;
+//       if($group)
+//         {
+//       if($emails)
+//       {
+//       $emailArray = (explode(';', $emails));
+//       $count = count($emailArray);
+// //     return response()->json($emailArray);
       
-      $payers = [];
-      $totalpayable = 0;
+//       $payers = [];
+//       $totalpayable = 0;
       
-      foreach ($emailArray as $key => $em) {
-          //process each user here as each iteration gives you each email
-          $user = User::where('email', $em)->first();
-          
-          //return $em;
-        $payable = 0;
+//       foreach ($emailArray as $key => $em) {
+//           //process each user here as each iteration gives you each email
+//   //        $user = User::where('email', $em)->first();
+// 	$user = Invited::where('auth_id', Auth::user()->id)->where('email', $em)->first();
+//   //        return $em;
+//         $payable = 0;
   
-        if($request['split_method_id'] == 1)
-        {
-            $payable = $group->amount;
-        } elseif($request['split_method_id'] == 3)
-        {
-          if(isset($request->percentage))
-          {
-            $payable = $group->amount*$request->percentage/100;
-          }elseif(isset($request->percentage_per_user))
-          {
-            $ppu = json_decode($request->percentage_per_user);
-            $payable = $ppu->$em*$group->amount/100;
-          }
-        }elseif($request['split_method_id'] == 2)
-        {
-         $payable = round(($group->amount / $count), 2);
-            if ($key == $count - 1) {
-        $payable = $group->amount - (round($payable, 2) * ($count - 1));
-        }
-        }
-//return $payable;
-        $paylink_expiration_time = Carbon::now()->addMinutes(15);
+//         if($request['split_method_id'] == 1)
+//         {
+//             $payable = $group->amount;
+//         } elseif($request['split_method_id'] == 3)
+//         {
+//           if(isset($request->percentage))
+//           {
+//             $payable = $group->amount*$request->percentage/100;
+//           }elseif(isset($request->percentage_per_user))
+//           {
+//             $ppu = json_decode($request->percentage_per_user);
+//             $payable = $ppu->$em*$group->amount/100;
+//           }
+//         }elseif($request['split_method_id'] == 2)
+//         {
+//          $payable = round(($group->amount / $count), 2);
+//             if ($key == $count - 1) {
+//         $payable = $group->amount - (round($payable, 2) * ($count - 1));
+//         }
+//         }
+// //return $payable;
+//         $paylink_expiration_time = Carbon::now()->addMinutes(15);
 
-          $info = userGroup::create([
-            'reference_id' => Auth::user()->id,
-            'group_id' => $group->id,
-            'name' => $group->name,
-            'uique_code' => $group->uique_code,
-            'email' => $em,
-            'description' => $group['description'],
-            'split_method_id' => $request['split_method_id'],
-            'amount_payable' => $payable,
-            'actualAmount' => $group->amount,
-            'linkExpireDateTime'=> $paylink_expiration_time,
-            'bankName' => $request['bankName'],
-            'account_name' => $request['account_name'],
-            'bankCode' => $request['bankCode'],
-            'account_number' => $request['account_number'],
-          ]);
+
+// $userGroup = userGroup::where('reference_id', Auth::user()->id)
+//       ->where('group_id', $groupId)
+//       ->selectRaw('SUM(amount_payable) AS checkAmountPayable, SUM(residualAmount) AS totalResidual')
+//       ->first();
+
+//    $checkAmountPayable = $userGroup->checkAmountPayable;
+//    $totalResidual = $userGroup->totalResidual;
+
+//  if ($group->amount == $checkAmountPayable) {
+//         if ($totalResidual == $group->amount) {
+//             // Payment is completely paid
+//             return response([
+//                 'message' => 'Your payment is already completed.'
+//             ], 422);
+//         } else {
+//             // Refundme is completed
+//             return response([
+//                 'message' => 'You cannot request for an amount greater than your kontribute. Kontribute is completed.'
+//             ], 422);
+//         }
+//     }
+
+// //return $group->name;
+
+//           $info = userGroup::create([
+//             'reference_id' => Auth::user()->id,
+//             'group_id' => $group->id,
+//             'name' => $group->name,
+// 	    'first_name' => $user->first_name,
+//             'last_name' => $user->last_name,
+//             'uique_code' => $group->uique_code,
+//             'email' => $em,
+//             'description' => $group['description'],
+//             'split_method_id' => $request['split_method_id'],
+//             'amount_payable' => $payable,
+//             'actualAmount' => $group->amount,
+//             'linkExpireDateTime'=> $paylink_expiration_time,
+//             'bankName' => $request['bankName'],
+//             'account_name' => $request['account_name'],
+//             'bankCode' => $request['bankCode'],
+//             'account_number' => $request['account_number'],
+// //	    'uidd'=> Str::random(10),
+//           ]);
       
-         $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->amount_payable];
-         $totalpayable = $totalpayable + $info->amount_payable;
-         $paylink_expiration_time = Carbon::now()->addMinutes(15);
-      }
+//          $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->amount_payable];
+//          $totalpayable = $totalpayable + $info->amount_payable;
+//          $paylink_expiration_time = Carbon::now()->addMinutes(15);
+//       }
 
-      $token = $this->paythruService->handle();
+//       $token = $this->paythruService->handle();
 
-      //return $token;
+//       //return $token;
 
-      // Send payment request to paythru  
-      $data = [
-        'amount' => $group->amount,
-        'productId' => $ProductId,
-        'transactionReference' => time().$group->id,
-        'paymentDescription' => $group->description,
-        'paymentType' => 1,
-        'sign' => $hashSign,
-        'expireDateTime'=> $paylink_expiration_time,
-        'displaySummary' => false,
-        'splitPayInfo' => [
-            'inviteSome' => false,
-            'payers' => $payers
-          ]
-        ];
+//       // Send payment request to paythru  
+//       $data = [
+//         'amount' => $group->amount,
+//         'productId' => $ProductId,
+//         'transactionReference' => time().$group->id,
+//         'paymentDescription' => $group->description,
+//         'paymentType' => 1,
+//         'sign' => $hashSign,
+//         'expireDateTime'=> $paylink_expiration_time,
+//         'displaySummary' => false,
+//         'splitPayInfo' => [
+//             'inviteSome' => false,
+//             'payers' => $payers
+//           ]
+//         ];
               
-      //return $data;
-    $url = $prodUrl;
-    $urls = $url.'/transaction/create';
-    //return $urls;
+// //      return $data;
+//     $url = $prodUrl;
+//     $urls = $url.'/transaction/create';
+//     //return $urls;
      
      
-    $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Authorization' => $token,
-  ])->post($urls, $data);
-      if($response->failed())
-      {
-        return false;
-      }else{
-        $transaction = json_decode($response->body(), true);
-       //return $transaction;
-        $splitResult = $transaction['splitPayResult']['result'];
-        foreach($splitResult as $key => $slip)
-        {
-          Mail::to($slip['receipient'])->send(new KontributMail($slip));
-          $paylink = $slip['paylink'];
-       // return $paylink;
-            if($paylink)
-            {
-              $getLastString = (explode('/', $paylink));
-              $now = end($getLastString);
-              //return $now;
-        $userGroupReference = userGroup::where(['email' => $slip['receipient'], 'group_id' => $group->id, 'reference_id' => Auth::user()->id])->update([
-            'paymentReference' => $now,
-        ]);
-      }
-        }
-      }
-      return response()->json($transaction);
+//     $response = Http::withHeaders([
+//         'Content-Type' => 'application/json',
+//         'Authorization' => $token,
+//   ])->post($urls, $data);
+//       if($response->failed())
+//       {
+//         return false;
+//       }else{
+//         $transaction = json_decode($response->body(), true);
+// //       return $transaction;
+//         $splitResult = $transaction['splitPayResult']['result'];
+//         foreach($splitResult as $key => $slip)
+//         {
+// 	   	$authmail = Auth::user();
+// 		$userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
+//                 $uxer = $userss->first_name;
+// 		 Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new KontributMail($slip, $authmail, $uxer));
+//                // Mail::to($slip['receipient'])->send(new KontributMail($slip));
+// //          Mail::to($slip['receipient'])->send(new KontributMail($slip));
+//           $paylink = $slip['paylink'];
+//        // return $paylink;
+//             if($paylink)
+//             {
+//               $getLastString = (explode('/', $paylink));
+//               $now = end($getLastString);
+//               //return $now;
+//         $userGroupReference = userGroup::where(['email' => $slip['receipient'], 'group_id' => $group->id, 'reference_id' => Auth::user()->id])->update([
+//             'paymentReference' => $now,
+//         ]);
+//       }
+//         }
+//       }
+//       return response()->json($transaction);
       
-    }
-         }else{
-              return response([
-                'message' => "Id doesn't belong to this transaction category"
-            ], 401);
+//     }
+//          }else{
+//               return response([
+//                 'message' => "Id doesn't belong to this transaction category"
+//             ], 401);
              
-         }
-        }  
+//          }
+//         }  
+
+
+
+public function inviteUsersToGroup(Request $request, $groupId)
+        {
+            $group = Expense::findOrFail($groupId);
+        
+            if (!$group) {
+                return response(['message' => "Group not found"], 404);
+            }
+        
+            $emails = $request->input('email');
+            $paymentType = $request->input('paymentType', 1);
+        
+            if ($paymentType == 1) {
+                return $this->processPaymentType1($group, $emails, $request);
+            } elseif ($paymentType == 2) {
+                return $this->processPaymentType2($group, $emails, $request);
+            } else {
+                return response(['message' => "Invalid payment type"], 400);
+            }
+        }
+        
+private function processPaymentType1($group, $emails, $request)
+        {
+            $productId = env('PayThru_kontribute_productid');
+            $secret = env('PayThru_App_Secret');
+            $prodUrl = env('PayThru_Base_Live_Url');
+            $token = $this->paythruService->handle();
+        
+            [$payers, $totalPayable] = $this->calculatePayments($group, $emails, $request);
+        
+            $paymentData = $this->preparePaymentData($group, $productId, $secret, 1, $payers);
+            $response = $this->sendPaymentRequest($token, $prodUrl, $paymentData);
+        
+            if ($response->failed()) {
+                return response(['message' => "Payment request failed"], 500);
+            }
+        
+            $transaction = $this->processPaymentResults($response, $payers, $group);
+            return response()->json($transaction);
+        }
+        
+private function processPaymentType2($group, $emails, $request)
+        {
+            $productId = env('PayThru_kontribute_productid');
+            $secret = env('PayThru_App_Secret');
+            $prodUrl = env('PayThru_Base_Live_Url');
+            $token = $this->paythruService->handle();
+        
+            [$payers, $totalPayable] = $this->calculatePayments($group, $emails, $request);
+        
+            $paymentData = $this->preparePaymentDataForType2($group, $productId, $secret, 2, $payers);
+            $response = $this->sendPaymentRequest($token, $prodUrl, $paymentData);
+        
+            if ($response->failed()) {
+                return response(['message' => "Payment request failed"], 500);
+            }
+        
+            $transaction = $this->processPaymentResults($response, $payers, $group);
+            return response()->json($transaction);
+        }
+
+private function calculatePayments($group, $emails, $request)
+{
+    $paymentMethodId = $request['split_method_id'];
+    $count = count($emails);
+
+    $payers = [];
+    $totalPayable = 0;
+
+    foreach ($emails as $key => $email) {
+        $user = User::where('email', $email)->first();
+        $payable = 0;
+
+        if ($paymentMethodId == 1) {
+            $payable = $group->amount;
+        } elseif ($paymentMethodId == 3) {
+            if (isset($request->percentage)) {
+                $payable = $group->amount * $request->percentage / 100;
+            } elseif (isset($request->percentage_per_user)) {
+                $ppu = json_decode($request->percentage_per_user);
+                $payable = $ppu->$email * $group->amount / 100;
+            }
+        } elseif ($paymentMethodId == 2) {
+            $payable = round(($group->amount / $count), 2);
+            if ($key == $count - 1) {
+                $payable = $group->amount - (round($payable, 2) * ($count - 1));
+            }
+        }
+
+        $payers[] = ["payerEmail" => $email, "paymentAmount" => $payable];
+        $totalPayable += $payable;
+    }
+
+    return [$payers, $totalPayable];
+}
+
+private function processPaymentResults($response, $payers, $group)
+{
+    $transactionData = json_decode($response->body(), true);
+    // Iterate through the splitPayResult to handle each payer's data
+    foreach ($transactionData['splitPayResult']['result'] as $payerData) {
+        $payerEmail = $payerData['payerEmail'];
+        $paymentReference = $payerData['paylink'];
+
+        // Update the payment reference for the specific payer
+        $this->updatePaymentReference($payerEmail, $group->id, $paymentReference);
+
+        // Send email to the payer with relevant data
+        Mail::to($payerEmail)->send(new KontributMail($payerData));
+    }
+    return $transactionData;
+}
+
+private function updatePaymentReference($payerEmail, $groupId, $paymentReference)
+{
+    // Update the payment reference for the specific payer and group
+    userGroup::where([
+        'email' => $payerEmail,
+        'group_id' => $groupId,
+        'reference_id' => Auth::user()->id
+    ])->update([
+        'paymentReference' => $paymentReference,
+    ]);
+}
+
+private function sendPaymentRequest($token, $prodUrl, $paymentData)
+{
+    try {
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => $token,
+        ])->post("$prodUrl/transaction/create", $paymentData);
+
+        return $response;
+    } catch (\Exception $e) {
+        Log::error($e->getMessage());
+        return response(['message' => "Payment request failed"], 500);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     public function UpdateTransactionGroupRequest(Request $request, $transactionId)
@@ -241,125 +435,206 @@ public function inviteUsersToGroup(Request $request, $groupId)
       }
       
     }
-         
-         
-    public function webhookGroupResponse(Request $request)
-  { 
-        $response = $request->all();
-//        $dataEncode = json_encode($response);
-        $data = json_decode($response);
-        Log::info("webhook-data" . json_encode($data));
-        
-        if($data->notificationType == 1){
-         // return "good";
-        $userExpense = userGroup::where('paymentReference', $data->transactionDetails->paymentReference)->update([
-            'payThruReference' => $data->transactionDetails->payThruReference,
-            'fiName' => $data->transactionDetails->fiName,
-            'status' => $data->transactionDetails->status,
-            'amount' => $data->transactionDetails->amount,
-            'responseCode' => $data->transactionDetails->responseCode,
-            'paymentMethod' => $data->transactionDetails->paymentMethod,
-            'commission' => $data->transactionDetails->commission,
-            'residualAmount' => $data->transactionDetails->residualAmount,
-            'resultCode' => $data->transactionDetails->resultCode,
-            'responseDescription' => $data->transactionDetails->responseDescription,
-        ]);
-          Log::info("done for Kontribute");
-          
-          http_response_code(200);
 
-        }else
-       return response([
-                'message' => 'Notification type is not 1'
-            ], 401);
+
+// Calling PayThru gateway for transaction response updates
+public function webhookGroupResponse(Request $request)
+{
+ try {
+    $productId = env('paythru_group_productid');
+    $response = $request->all();
+    $dataEncode = json_encode($response);
+    $data = json_decode($dataEncode);
+    $modelType = "group";
+
+   
+
+    Log::info("Starting webhookGroupResponse");
+
+    if ($data->notificationType == 1) {
+        $userGroup = userGroup::where('paymentReference', $data->transactionDetails->paymentReference)->first();
+//	$minus_residual = $userGroup->minus_residual;
+        if ($userGroup) {
+//   	    $existing_minus_residual = $userGroup->minus_residual ?? 0;
+  //          $new_minus_residual = $existing_minus_residual + $data->transactionDetails->residualAmount;
+
+            $userGroup->payThruReference = $data->transactionDetails->payThruReference;
+            $userGroup->fiName = $data->transactionDetails->fiName;
+            $userGroup->status = $data->transactionDetails->status;
+            $userGroup->amount = $data->transactionDetails->amount;
+            $userGroup->responseCode = $data->transactionDetails->responseCode;
+            $userGroup->paymentMethod = $data->transactionDetails->paymentMethod;
+            $userGroup->commission = $data->transactionDetails->commission;
+            $userGroup->residualAmount = $data->transactionDetails->residualAmount;
+            $userGroup->resultCode = $data->transactionDetails->resultCode;
+            $userGroup->responseDescription = $data->transactionDetails->responseDescription;
+    //        $userGroup->minus_residual = $new_minus_residual;
+            $userGroup->save();
+
+	   $activePayment = new Active([
+                    'paymentReference' => $data->transactionDetails->paymentReference,
+                    'product_id' => $productId,
+                    'product_type' => $modelType
+                ]);
+           $activePayment->save();
+                Log::info("Payment reference saved in ActivePayment table");
+
+            Log::info("User Group updated");
+        } else {
+            Log::info("User Group not found for payment reference: " . $data->transactionDetails->paymentReference);
+        }
+
+        http_response_code(200);
+		} elseif ($data->notificationType == 2) {
+            if (isset($data->transactionDetails->transactionReferences[0])) {
+                $transactionReferences = $data->transactionDetails->transactionReferences[0];
+                Log::info("Received withdrawal notification for transaction references: " . $transactionReferences);
+
+                // Update withdrawal
+                $withdrawal = GroupWithdrawal::where('transactionReferences', $transactionReferences)->first();
+
+                if ($withdrawal) {
+                    $uniqueId = $withdrawal->uniqueId;
+
+                    $updatePaybackWithdrawal = GroupWithdrawal::where([
+                        'transactionReferences' => $transactionReferences,
+                        'uniqueId' => $uniqueId
+                    ])->first();
+
+                    if ($updatePaybackWithdrawal) {
+                        $updatePaybackWithdrawal->paymentAmount = $data->transactionDetails->paymentAmount;
+                        $updatePaybackWithdrawal->recordDateTime = $data->transactionDetails->recordDateTime;
+			// Set the status to "success"
+                        $updatePaybackWithdrawal->status = 'success';
+                        $updatePaybackWithdrawal->save();
+
+                        Log::info("Kontribute withdrawal updated");
+                    } else {
+                        Log::info("Kontribte withdrawal not found for transaction references: " . $transactionReferences);
+                    }
+                } else {
+                    Log::info("Withdrawal not found for transaction references: " . $transactionReferences);
+                }
+            } else {
+                Log::info("Transaction references not found in the webhook data");
+            }
+        }
+
+        http_response_code(200);
+    } catch (\Illuminate\Database\QueryException $e) {
+        Log::error($e->getMessage());
+        return response()->json(['error' => 'An error occurred'], 500);
+    }
+}
+
+
+public function AzatGroupCollection(Request $request)
+{
+    $current_timestamp = now();
+    $timestamp = strtotime($current_timestamp);
+    $secret = env('PayThru_App_Secret');
+    $productId = env('PayThru_expense_productid');
+    $hash = hash('sha512', $timestamp . $secret);
+    $AppId = env('PayThru_ApplicationId');
+    $prodUrl = env('PayThru_Base_Live_Url');
+    $charges = env('PayThru_Withdrawal_Charges');
+
+    $userGroupTransactions = userGroup::where('reference_id', auth()->user()->id)
+        ->sum('residualAmount');
+
+    // Step 1: Subtract residualAmount from the request->amount and update it in minus_residual column
+    $requestAmount = $request->amount;
+    $minusResidual = $userGroupTransactions - $requestAmount;
+
+    // Check if the first withdrawal request or consecutive withdrawal
+    $latestWithdrawal = userGroup::where('reference_id', auth()->user()->id)
+        ->latest('updated_at')
+        ->first();
+
+    if ($latestWithdrawal) {
+        // Consecutive withdrawal request
+        $latestMinusResidual = $latestWithdrawal->minus_residual;
+        if ($requestAmount > $latestMinusResidual) {
+            // Step 4: Request amount exceeds latest minus_residual
+            $remainingAmount = $requestAmount - $latestMinusResidual;
+            //$remainingMinusResidual = $userGroupTransactions - $remainingAmount;
+            if ($remainingAmount < 0) {
+                return response()->json(['message' => 'You do not have sufficient amount in your Kontribute'], 400);
+            }
+            $minusResidual = $remainingAmount;
+        } else {
+            // Step 3: Update minus_residual for consecutive withdrawal
+            $minusResidual = $latestMinusResidual - $requestAmount;
+        }
+    } else {
+        // Step 3: First request to withdraw
+        if ($requestAmount > $userGroupTransactions) {
+            return response()->json(['message' => 'You do not have sufficient amount in your Kontribute'], 400);
+        }
     }
 
-public function AzatGroupCollection(Request $request, $transactionId)
-    {
-      $current_timestamp= now();
-     // return $current_timestamp;
-      $timestamp = strtotime($current_timestamp);
-      $secret = env('PayThru_App_Secret');
-      $productId = env('PayThru_kontribute_productid');
-      //return $productId;
-      $hash = hash('sha512', $timestamp . $secret);
-      //return $hash;
-      $AppId = env('PayThru_ApplicationId');
-      $prodUrl = env('PayThru_Base_Live_Url');
-    
-    
-      //return 
-    
-      $groupAmount = userGroup::where('reference_id', Auth::user()->id)->where('group_id', $transactionId)->whereNotNull('amount_payable')->first();
-      //return $groupAmount;
-      
-      $amount = $groupAmount->amount_payable;
-       // return $amount;
+	userGroup::where('reference_id', auth()->user()->id)->update(['minus_residual' => $minusResidual]);
 
-      $groupWithdrawal = new GroupWithdrawal([
+
+    // Save the withdrawal details
+    $withdrawal = new GroupWithdrawal([
         'account_number' => $request->account_number,
         'description' => $request->description,
-        'group_id' => $groupAmount->id,
-        'beneficiary_id' => Auth::user()->id,
-        'amount' => $request->amount,
-        'bank' => $request->bank
-        ]);
-        
-        $getUserKontributeTransactions = userGroup::where('reference_id', Auth::user()->id)->sum('residualAmount');
-        
-        if(($request->amount) > $amount)
-        {
-            if(($request->amount) > $getUserKontributeTransactions)
-            {
-                return response([
-            'message' => 'You dont not have sufficient amount in your Kontribute'
-        ], 403);
-            }else{
-          return response([
-            'message' => 'Please enter correct Kontribute amount'
-        ], 403);
-        }
-        }
-        
-        
-    $groupWithdrawal->save();
+        'beneficiary_id' => auth()->user()->id,
+        'amount' => $requestAmount - $charges,
+        'bank' => $request->bank,
+        'charges' => $charges,
+        'uniqueId' => Str::random(10),
+       // 'minus_residual' => $minusResidual, // Update minus_residual here
+    ]);
+
+    $withdrawal->save();
+
+    $kontributeAmountWithdrawn = $requestAmount - $charges;
     $acct = $request->account_number;
-    $getBankReferenceId = Bank::where('user_id', Auth::user()->id)->where('account_number', $acct)->first();
-   //return $getBankReferenceId;
-   
-    $beneficiaryReferenceId = $getBankReferenceId->referenceId;
+
+    $bank = Bank::where('user_id', auth()->user()->id)
+        ->where('account_number', $acct)
+        ->first();
+
+    if (!$bank) {
+        return response()->json(['message' => 'Bank account not found'], 404);
+    }
+
+    $beneficiaryReferenceId = $bank->referenceId;
 
     $token = $this->paythruService->handle();
 
-      $data = [
-            'productId' => $productId,
-            'amount' => $amount,
-            'beneficiary' => [
+    $data = [
+        'productId' => $productId,
+        'amount' => $kontributeAmountWithdrawn,
+        'beneficiary' => [
             'nameEnquiryReference' => $beneficiaryReferenceId
-            ],
-        ];
-        
-  
-      //return $token;
-    $url = $prodUrl;
-    $urls = $url.'/transaction/settlement';
-    //return $urls;
+        ],
+    ];
 
-         $response = Http::withHeaders([
+    $url = $prodUrl . '/transaction/settlement';
+
+    $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,
-      ])->post($urls, $data );
-      if($response->failed())
-      {
-        return false;
-      }else{
-        $collection = json_decode($response->body(), true);
-        return $collection;
-    
-  }
+    ])->post($url, $data);
+
+    if ($response->failed()) {
+        return response()->json(['message' => 'Settlement request failed'], 500);
+    }
+
+    $collection = $response->object();
+    Log::info('API response: ' . json_encode($collection));
+    $saveTransactionReference = GroupWithdrawal::where('beneficiary_id', Auth::user()->id)->where('uniqueId', $withdrawal->uniqueId)->update([
+        'transactionReferences' => $collection->transactionReference,
+        'status' => $collection->message,
+       // 'minus_residual' => $minusResidual
+    ]);
+
+    return response()->json($saveTransactionReference, 200);
 }
-        
-        
+
         public function countAllGroupsPerUser()
         {
         $getAuthUser = Auth::user();
@@ -374,17 +649,49 @@ public function AzatGroupCollection(Request $request, $transactionId)
         return response()->json($countUserGroups);
         
         }
-        
-        
+
+
+
+	public function getWithdrawalTransaction()
+{
+    $getWithdrawalTransaction = GroupWithdrawal::where('beneficiary_id', Auth::user()->id)->get();
+    if ($getWithdrawalTransaction->count() > 0) {
+        return response()->json($getWithdrawalTransaction);
+    } else {
+        return response([
+            'message' => 'Transaction not found for this user'
+        ], 403);
+    }
+}
+
         public function getUserGroup()
     {
             $pageNumber = 50;
             $getAuthUser = Auth::user();
-            //return Auth::user()->email;
-            $getUserGroupExpense = Expense::where('user_id', $getAuthUser->id)->whereNull('subcategory_id')->paginate($pageNumber);
-            $getUserGroupAddedTransactions = userGroup::where('email', $getAuthUser->email)->paginate($pageNumber);
-           
-            
+            $getUserGroupAddedTransactions = userGroup::where('email', $getAuthUser->email)->whereNull('deleted_at')->paginate($pageNumber);
+$groupIds = DB::table('expenses')
+    ->join('user_groups', function ($join) {
+        $join->on('expenses.user_id', '=', 'user_groups.reference_id')
+            ->on('expenses.id', '=', 'user_groups.group_id');
+    })
+    ->select('expenses.id')
+    ->where('expenses.user_id', '=', $getAuthUser->id)
+    ->whereNull('expenses.subcategory_id')
+    ->whereNull('expenses.deleted_at') // Exclude soft-deleted records
+    ->groupBy('expenses.id')
+    ->pluck('expenses.id');
+
+$getUserGroupExpense = DB::table('expenses')
+    ->join('user_groups', function ($join) {
+        $join->on('expenses.user_id', '=', 'user_groups.reference_id')
+            ->on('expenses.id', '=', 'user_groups.group_id');
+    })
+    ->select('expenses.*', DB::raw('SUM(user_groups.residualAmount) as total_paid'))
+    ->whereIn('expenses.id', $groupIds)
+    ->whereNull('expenses.deleted_at') // Exclude soft-deleted records
+    ->groupBy('expenses.id')
+    ->paginate($pageNumber);
+
             return response()->json([
                 'getAuthUserGroupsCreated' => $getUserGroupExpense,
                 'getGroupsInvitedTo' => $getUserGroupAddedTransactions,
@@ -401,10 +708,8 @@ public function AzatGroupCollection(Request $request, $transactionId)
 
         public function getAllMemebersOfAGroup($groupId)
 {
-    
         $getUserGroup = userGroup::where('reference_id', Auth::user()->id)->where('group_id', $groupId)->select('email')->get();
         return response()->json($getUserGroup);
-
 }
 
 
@@ -450,31 +755,106 @@ public function getUserAmountsPaidPerGroup(Request $request, $groupId)
         else
         return response()->json(null); 
         }
-        
-        
-         public function groupSettlementWebhookResponse(Request $request)
-   {
-       
-        $productId = env('PayThru_business_productid');
-       
-        $response = $request->all();
-       // $dataEncode = json_encode($response);
-        $data = json_decode($response);
-        if($data->notificationType == 2){
-         // return "good";
-        $updateGroupWithdrawal = GroupWithdrawal::where(['transactionReferences'=> $data->transactionDetails->transactionReferences, $productId => $data->transactionDetails->productId])->update([
-            'paymentAmount' => $data->transactionDetails->paymentAmount,
-            'recordDateTime' => $data->transactionDetails->recordDateTime,
-        ]);
-          Log::info("payback settlement done");
-          http_response_code(200);
 
-        }else
-       return response([
-                'message' => 'Notification type is not 2'
-            ], 401);
+public function reinitiateTransactionToGroup(Request $request, $groupId, $id)
+        {
+     $group = Expense::findOrFail($groupId);
+     $existingUserGroup = userExpense::findOrFail($id);
+    // Find the existing UserGroup record with the desired uidd
+//    $existingUserGroup = UserGroup::where('reference_id', Auth::user()->id)
+  //      ->where('group_id', $groupId)
+    //    ->where('id', $id)
+      //  ->first();
+
+ if ($existingUserGroup->reference_id !== Auth::user()->id) {
+        return response([
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
-        
-        
 
-}
+
+
+    if (!$existingUserGroup) {
+        // If the UserGroup with the desired uidd is not found, return an error response
+        return response([
+            'message' => 'Invalid uidd. Please provide a valid uidd for the existing transaction.',
+        ], 422);
+    }
+
+    // Fetch the invited user's first and last name based on their email address
+    $invitedUser = Invited::where('email', $existingUserGroup->email)->first();
+    $firstName = $invitedUser->first_name ?? 'Unknown';
+    $lastName = $invitedUser->last_name ?? '';
+
+    // Calculate the payable amount for the new transaction
+    $payable = $existingUserGroup->amount_payable - $existingUserGroup->residualAmount;
+
+$info = UserGroup::create([
+                  'reference_id' => Auth::user()->id,
+                  'group_id' => $groupId,
+                  'name' => $group->name,
+                  'uique_code' => $group->uique_code,
+                  'email' => $existingUserGroup->email,
+		  'first_name' => $firstName,
+        	  'last_name' => $lastName,
+                  'description' => $group->description,
+                  'split_method_id' => $request['split_method_id'],
+                  'amount_payable' => $payable,
+                  'actualAmount' => $group->actual_amount,
+                  'bankName' => $request['bankName'],
+                  'account_name' => $request['account_name'],
+                  'bankCode' => $request['bankCode'],
+                  'account_number' => $request['account_number'],
+                 'uidd'=> Str::random(10),
+    ]);
+              $current_timestamp = now();
+              $timestamp = strtotime($current_timestamp);
+      
+              $productId = env('PayThru_expense_productid');
+              $prodUrl = env('PayThru_Base_Live_Url');
+      
+              $data = [
+                  'amount' => $payable,
+                  'productId' => $productId,
+                  'transactionReference' => time() . $groupId,
+                  'paymentDescription' => $group->description,
+                  'paymentType' => 1,
+                  'sign' => hash('sha512', $payable . env('PayThru_App_Secret')),
+                  'displaySummary' => true,
+              ];
+      //return $data;
+              $token = $this->paythruService->handle();
+              $url = $prodUrl . '/transaction/create';
+              $response = Http::withHeaders([
+                  'Content-Type' => 'application/json',
+                  'Authorization' => $token,
+              ])->post($url, $data);
+              if ($response->failed()) {
+                  return false;
+              } else {
+                  $transaction = json_decode($response->body(), true);
+                  if (!$transaction['successful']) {
+                      return response("Whoops! " . json_encode($transaction), 422);
+                  }
+                  $paylink = $transaction['payLink'];
+                  $slip = ['paylink' => $paylink, 'amount' => $data['amount'], 'receipient' => $existingUserGroup->email];
+                  $authmail = Auth::user();
+	//	$userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
+	//	$uxer = $userss->first_name;
+                  Mail::to($slip['receipient'])->send(new KontributMail($slip));
+                  if ($paylink) {
+                      $getLastString = explode('/', $paylink);
+                      $now = end($getLastString);
+                      UserGroup::where([
+              		   'email' => $slip['receipient'],
+                          'group_id' => $group->id,
+                          'reference_id' => Auth::user()->id,
+			  'uidd' => $info->uidd
+                      ])->update([
+                          'paymentReference' => $now,
+                      ]);
+                  }
+                  return response()->json($transaction);
+              }
+          }
+        }

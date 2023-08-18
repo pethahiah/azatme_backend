@@ -29,33 +29,9 @@ Route::namespace('API')->group(function () {
     Route::post('/updateStatus', 'ExpenseController@webhookExpenseResponse');
     Route::post('/kontributewebhook', 'GroupController@webhookGroupResponse');
     Route::post('/businesswebhook', 'BusinessTransactionController@webhookBusinessResponse');
-   // Route::post('/kontributewebhook', 'GroupController@groupSettlementWebhookResponse');
-  //  Route::post('/businesswebhook', 'BusinessTransactionController@businessSettlementWebhookResponse');
-//    Route::post('/updateStatus', 'ExpenseController@refundmeSettlementWebhookResponse');
     Route::post('/contact-us', 'SheetController@externalContentPostMethod');
-Route::get('get-all-customers', 'CustomerController@getAllCustomers');
-    
-    
-     //NQR  Aggr Merchant Services
-    Route::post('nqr-merchant-registration', 'NQRController@NqrMerchantRegistration');
-    Route::post('create-merchant-collection-account', 'NQRController@merchantCollectionAccount');
-    Route::get('get-merchant-number/{merchantNumber}', 'NQRController@getMerchantNumber');
-    Route::post('create-sub-merchant', 'NQRController@createSubMerchant');
-    Route::get('get-all-submerchant-under-merchant/{id}', 'NQRController@getSubMerchantUnderAllMerchant');
-    Route::post('get-specific-submerchnat-under-merchant/{id}', 'NQRController@getSpecificSubMerchantUnderAMerchant');
-    Route::get('get-specific-merchant-info/{merchantNumber}', 'NQRController@getSpecificSubMerchantInfo');
-    Route::post('get-merchant-trans-report/{merchantNumber}', 'NQRController@getMerchantTransactionReport');
-    Route::post('generate-dynamic-qrcode/{merchantNumber}', 'NQRController@generateDynamicQrCode');
-    Route::post('get-merchant-transaction-status', 'NQRController@merchantTransactionStatus');
+    Route::get('get-all-customers', 'CustomerController@getAllCustomers');
 
-    //NQR  Store Merchant Services
-    Route::post('store-generate-dyanmic-qrcode', 'NqrStoreController@storeGenerateDyanmicQrCode');
-    Route::post('get-store-trans-report', 'NqrStoreController@getStoreTransactionReport');
-    Route::post('get-store-trans-status', 'NqrStoreController@storeTransactionStatus');
-    Route::get('get-store', 'NqrStoreController@getStore');
-    Route::post('create-store', 'NqrStoreController@createStore');
-    Route::get('get-specific-submerchant-list-Instore/{id}', 'NqrStoreController@getListSpecificSubMerchantInStore');
-    
 
 Route::middleware(['auth:api'])->group(function () {
     // User Update
@@ -94,7 +70,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('create-product', 'BusinessTransactionController@creatProduct');
     Route::get('all-product', 'BusinessTransactionController@getAllProductsPerBusinessMerchant');
     Route::get('product-per-business/{businessCode}', 'BusinessTransactionController@getProductsPerBusiness');
-    Route::post('initiate-business-transaction/{product_id}', 'BusinessTransactionController@startBusinessTransaction');
+    Route::post('initiate-business-transaction/{product_id}/{business_code}', 'BusinessTransactionController@startBusinessTransaction');
     Route::post('create-option', 'MotoController@moto');
     Route::get('get-option', 'MotoController@getMotoMethod');
     Route::post('create-vat', 'VatController@createVat');
@@ -102,13 +78,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('count-all-invoices-created-by-business-owner', 'BusinessTransactionController@countAllInvoiceByABusinessOwner');
      Route::get('get-all-invoices-received-by-customer', 'BusinessTransactionController@getAllInvoiceRecievedByACutomer');
       Route::get('count-all-invoices-recieved-by-business', 'BusinessTransactionController@countAllInvoiceRecievedByACutomer');
-      Route::post('business-settlements/{BusinessTransactionId}', 'BusinessTransactionController@AzatBusinessCollection');
+      Route::post('business-settlements', 'BusinessTransactionController@AzatBusinessCollection');
        Route::get('customer-invoice/{customerEmail}', 'BusinessTransactionController@getAllInvoiceSentToAParticularCustomer');
        Route::get('get-all-transactions-created-by-a-specific-business/{business_code}', 'BusinessTransactionController@getAllTransactionsByASpecificBusiness');
        Route::get('get-all-customers-under-a-specific-business/{business_code}', 'BusinessTransactionController@getAllCustomersUnderASpecificBusiness');
-       
-      
-    
+	Route::get('get-withdrawal-response', 'BusinessTransactionController@getBusinessWithdrawalTransaction');
     //Email Template for Business
     
      Route::post('send-notification/{id}', 'MailTemplateController@mailNotification');
@@ -131,7 +105,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('getRandomUserExpense/{email}', 'ExpenseController@getRandomUserExpense');
     Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
     Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
-    Route::get('getUserDeletedExpense', 'ExpenseController@getUserDeletedExpense');
+    Route::post('create-customer/{business_code}', 'CustomerController@createCustomer');
     Route::get('getUserExpense', 'ExpenseController@getUserExpense');
     Route::get('getUserDeletedExpenseInvite', 'ExpenseController@getUserDeletedExpenseInvite');
     Route::get('getAllMemebersOfAnExpense/{expenseId}', 'ExpenseController@getAllMemebersOfAnExpense');
@@ -139,14 +113,15 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('getTotalNumberOfPaidUsersPerExpense/{expenseId}', 'ExpenseController@getTotalNumberOfPaidUsersPerExpense');
     Route::post('/export-excel', 'ExpenseController@exportExpenseToExcel');
     Route::post('/export-csv', 'ExpenseController@exportExpenseToCsv');
-    Route::post('collection/{transactionId}', 'ExpenseController@AzatIndividualCollection');
+    Route::post('collection', 'ExpenseController@AzatIndividualCollection');
     Route::get('get-transaction-status', 'ExpenseController@getStatus');
     Route::post('verify-account', 'ExpenseController@accountVerification');
     Route::get('getResponse', 'ExpenseController@getStatus');
     Route::put('update-payback-transaction/{transactionId}', 'ExpenseController@UpdateTransactionRequest');
-    
-    
-    
+    Route::get('get-invited-users', 'ExpenseController@getInvitedUsers');
+    Route::get('recreate-underpaid-transactions/{expenseId}/{id}', 'ExpenseController@reinitiateTransaction');
+    Route::get('get-unpaid-balance/{expenseId}', 'ExpenseController@checkResidual');
+    Route::get('get-refund-withdrawal-response', 'ExpenseController@getExpenseWithdrawalTransaction');
     // User Group
     Route::post('createGroup', 'GroupController@createGroup');
     Route::put('updateGroup/{id}', 'GroupController@updateGroup');
@@ -159,13 +134,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('getAllMemebersOfAGroup/{groupId}', 'GroupController@getAllMemebersOfAGroup');
     Route::get('list-users-per-Group/{groupId}', 'GroupController@getUserAmountsPaidPerGroup');
     Route::get('getUserGroup', 'GroupController@getUserGroup');
-    Route::post('group-settlement/{transactionId}', 'GroupController@AzatGroupCollection');
+    Route::post('group-settlement', 'GroupController@AzatGroupCollection');
     Route::put('update-kontribute-transaction/{transactionId}', 'GroupController@UpdateTransactionGroupRequest');
-    
-   
-    
-    
-    
+    Route::get('re-initiate-transaction/{groupId}/{id}', 'GroupController@reinitiateTransactionToGroup');
+   Route::get('get-kontribute-withdrawal-response', 'GroupController@getWithdrawalTransaction');
+
     //Bank
     Route::put('updateBank/{bankid}', 'BankController@updateBank');
     Route::post('addBank', 'BankController@addBank');
@@ -196,11 +169,29 @@ Route::middleware(['auth:api'])->group(function () {
     //Reporting
     Route::get('allExpensesPerUser', 'ExpenseController@allExpensesPerUser');
     Route::get('countExpensesPerUser', 'ExpenseController@countExpensesPerUser');
-    Route::post('getUserExpenseWithDate', 'ExpenseController@getUserExpenseWithDate');
-    Route::post('getUserGroupWithDate', 'ExpenseController@getUserGroupWithDate');
+    Route::post('getUserExpenseWithDate', 'ReportingController@getUserExpenseWithDate');
+    Route::post('getUserGroupWithDate', 'ReportingController@getUserGroupWithDate');
     Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
     Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
-    
+
+
+    //Admin
+    Route::get('allExpenses', 'AdminController@getAllExpenses');
+    Route::get('allKontributes', 'AdminController@getAllKontributes');
+    Route::get('countAllExpenses', 'ExpenseController@countAllExpenses');
+    Route::post('getAllExpenseWithDate', 'ReportingController@getUserExpenseWithDate');
+    Route::post('getAllGroupWithDate', 'ReportingController@getUserGroupWithDate');
+    Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
+    Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
+    Route::get('get-all-AddedUser-Expenses/{refundmeId}', 'AdminController@getUserAddedToExpense}');
+    Route::get('get-all-active-expense/{refundmeId}', 'AdminController@getActiveExpenses');
+    Route::get('get-all-AddedUser-Kontribute/{kontributeId}', 'AdminController@getUserAddedToKontribute}');
+    Route::get('get-all-active-kontribute/{kontributeId}', 'AdminController@getActiveKontribute');
+    Route::get('count-all-added-users-refundme', 'AdminController@countUserAddedToExpense');
+    Route::get('count-all-active-users-refundme', 'AdminController@countActiveExpenses');
+    Route::get('countAllKontributes', 'AdminController@countAllKontributes');
+    Route::get('count-all-added-users-kontribute', 'AdminController@countUserAddedToKontribute');
+    Route::get('count-all-active-users-kontributes', 'AdminController@countActiveKontribtes');    
     //Splitting Methods
     Route::post('splitingMethod', 'PaymentSplittingController@splitingMethod');
     Route::get('getSplittingMethods', 'PaymentSplittingController@getSplittingMethods');
@@ -209,7 +200,30 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('makeComplain', 'ComplainController@makeComplain');
     Route::get('getAllComplains', 'ComplainController@getAllComplains');
 
-   
+   //Invited users
+   Route::post('add-users', 'ExpenseController@add');
+//   Route::get('update-balance-residual', 'BalanceUpdateController@updateBalanceResidual');
+
+   //NQR  Aggr Merchant Services
+    Route::post('nqr-merchant-registration', 'NQRController@NqrMerchantRegistration');
+    Route::post('create-merchant-collection-account', 'NQRController@merchantCollectionAccount');
+    Route::get('get-merchant-number/{merchantNumber}', 'NQRController@getMerchantNumber');
+    Route::post('create-sub-merchant', 'NQRController@createSubMerchant');
+    Route::get('get-all-submerchant-under-merchant/{id}', 'NQRController@getSubMerchantUnderAllMerchant');
+    Route::post('get-specific-submerchnat-under-merchant/{id}', 'NQRController@getSpecificSubMerchantUnderAMerchant');
+    Route::get('get-specific-merchant-info/{merchantNumber}', 'NQRController@getSpecificSubMerchantInfo');
+    Route::post('get-merchant-trans-report/{merchantNumber}', 'NQRController@getMerchantTransactionReport');
+    Route::post('generate-dynamic-qrcode/{merchantNumber}', 'NQRController@generateDynamicQrCode');
+    Route::post('get-merchant-transaction-status', 'NQRController@merchantTransactionStatus');
+    Route::get('get-all-merchants', 'NQRController@getAllMerchant');
+
+    //NQR  Store Merchant Services
+    Route::post('store-generate-dyanmic-qrcode', 'NqrStoreController@storeGenerateDyanmicQrCode');
+    Route::post('get-store-trans-report', 'NqrStoreController@getStoreTransactionReport');
+    Route::post('get-store-trans-status', 'NqrStoreController@storeTransactionStatus');
+    Route::get('get-store', 'NqrStoreController@getStore');
+    Route::post('create-store', 'NqrStoreController@createStore');
+    Route::get('get-specific-submerchant-list-Instore/{id}', 'NqrStoreController@getListSpecificSubMerchantInStore');
     
        });
 

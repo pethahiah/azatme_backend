@@ -8,11 +8,39 @@ use Carbon\Carbon;
 use App\ExpenseCategory;
 use Auth;
 use App\Expense;
+use App\userExpense;
+use App\userGroup;
 use App\ExpenseSubCategory;
 
 class ReportingController extends Controller
 {
     //
+
+public function allExpensesPerUser()
+{
+
+  $pageNumber = 50;
+  $getAuthUser = Auth::user();
+  $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->latest()->paginate($pageNumber);
+  return response()->json($getUserExpenses);
+
+}
+
+
+
+public function getRandomUserExpense($email)
+{
+$getUserExpense = userExpense::where('principal_id', Auth::user()->id)->where('email', $email)->get();
+return response()->json($getUserExpense);
+
+}
+
+public function countExpensesPerUser()
+{
+  $getAuthUser = Auth::user();
+  $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->count();
+  return response()->json($getUserExpenses);
+}
 public function getUserExpenseWithDate(Request $request)
     {
        $start_date = Carbon::parse($request->from)

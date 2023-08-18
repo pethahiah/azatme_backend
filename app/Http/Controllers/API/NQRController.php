@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Http;
 use App\Nqr;
 use App\Setting;    
 use Carbon\Carbon;
+use Auth;
+use App\nrqMerchant;
 use App\Services\PaythruService;
 
 
@@ -21,46 +23,77 @@ class NQRController extends Controller
       $this->paythruService = $paythruService;
   }
 
-    
-    public function NqrMerchantRegistration(Request $request)
+  public function NqrMerchantRegistration(Request $request)
     {
-      $testUrl = env('PayThru_Base_Test_Url');
-      //return $testUrl;
-      $token = $this->paythruService->handle();
-      $endpoint = $testUrl.'/Nqr/Agg/Merchant/Register';
-      //return $endpoint;
-        //return $token;
+        $testUrl = "https://services.paythru.ng";
+        //return $testUrl;
+        $token = $this->paythruService->handle();
+        $endpoint = $testUrl.'/Nqr/Agg/Merchant/Register';
+        $user = Auth::user();
 
-        $data = [
-            "name" => $request->name,
-            "tin" => $request->tin,
-            "contact" => $request->contact,
-            "phone" => $request->phone,
-            "email" => $request->email,
-            "address" => $request->address,
-            "bankNo" => $request->bankNo,
-            "accountName" => $request->accountName,
-            "accountNumber" => $request->accountNumber,
-            "referenceCode" => $request->referenceCode,
-            "remarks" => $request->remarks,
-        ];
-        
-   // dd($data);
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Authorization' => $token,
-          ])->post($endpoint, $data);
-          if($response->successful())
-          //return $response;
-            {   
-              $ngrRegistration = json_decode($response->body(), true);
-              return response()->json($ngrRegistration);
-            }
-}   
+        if ($user->usertype === 'merchant') {
+            $data = [
+                "name" => $request->name,
+                "tin" => $request->tin,
+                "contact" => $request->contact,
+                "phone" => $request->phone,
+                "email" => $request->email,
+                "address" => $request->address,
+                "bankNo" => $request->bankNo,
+                "accountName" => $request->accountName,
+                "accountNumber" => $request->accountNumber,
+                "referenceCode" => time().$user->id ,
+                "remarks" => $request->remarks,
+            ];
+
+            // dd($data);
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => $token,
+            ])->post($endpoint, $data);
+
+            if ($response->successful()) {
+                //return $response;
+                $ngrRegistration = json_decode($response->body(), true);
+
+                if (is_array($ngrRegistration) && isset($ngrRegistration['merchantNumber'])) {
+                    $nqrSync = nrqMerchant::create([
+                        "auth_id" => Auth::user()->id,
+                        "name" => $request->name,
+                        "tin" => $request->tin,
+                        "contact" => $request->contact,
+                        "phone" => $request->phone,
+                        "email" => $request->email,
+                        "address" => $request->address,
+                        "bankNo" => $request->bankNo,
+                        "accountName" => $request->accountName,
+                        "accountNumber" => $request->accountNumber,
+                        "referenceCode" => $request->referenceCode,
+                        "remarks" => $request->remarks,
+                        "merchantNumber" => $ngrRegistration['merchantNumber'],
+			"qrcode" => $ngrRegistration['qrCode'],
+                    ]);
+                    return response()->json($ngrRegistration);
+                } else {
+                    // If 'merchantNumber' key is not found or not an array, handle the error
+                    return response()->json('Invalid response from API.', 500);
+                }
+	}
+        } else {
+            return response()->json('You are not authorized to perform this action');
+    }
+}
+
+public function getAllMerchant()
+{
+ 	$getMerchant = nrqMerchant::where('auth_id', Auth::user()->id)->get();
+	return response()->json($getMerchant);
+
+}
 
 public function merchantCollectionAccount(Request $request)
   {
-      $testUrl = env('PayThru_Base_Test_Url');
+      $testUrl = "https://services.paythru.ng";
       $token = $this->paythruService->handle();
       $endpoint = $testUrl.'/Nqr/agg/Merchant/Collections';
 
@@ -88,7 +121,7 @@ public function merchantCollectionAccount(Request $request)
 
 public function getMerchantNumber($merchantNumber)
 {
-      $testUrl = env('PayThru_Base_Test_Url');
+      $testUrl = "https://services.paythru.ng";
       $endpoint = $testUrl.'/Nqr/agg/Merchant/Collections';
       $token = $this->paythruService->handle();
     $response = Http::withHeaders([
@@ -106,7 +139,7 @@ public function getMerchantNumber($merchantNumber)
 
 public function createSubMerchant(Request $request)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Sub';
   //return $endpoint;
   $token = $this->paythruService->handle();
@@ -137,7 +170,7 @@ $banks = json_decode($response->body(), true);
 
 public function getSubMerchantUnderAllMerchant($id)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Subs';
   $token = $this->paythruService->handle();
 $response = Http::withHeaders([
@@ -145,7 +178,7 @@ $response = Http::withHeaders([
   'Authorization' => $token,
   
 ])->get($endpoint."/$id");
-return $response;
+//return $response;
 if($response->Successful())
 {
 $getSubMerchant = json_decode($response->body(), true);
@@ -157,7 +190,7 @@ return response()->json($getSubMerchant);
 
 public function getSpecificSubMerchantUnderAMerchant($id)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Sub';
   $token = $this->paythruService->handle();
 $response = Http::withHeaders([
@@ -177,7 +210,7 @@ return response()->json($getSpecificSubMerchant);
 
 public function getSpecificSubMerchantInfo($merchantNumber)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl.'/Nqr/agg/Merchant/Details';
   $token = $this->paythruService->handle();
 $response = Http::withHeaders([
@@ -196,7 +229,7 @@ return response()->json($getSubMerchantInfo);
 
 public function getMerchantTransactionReport(Request $request, $merchantNumber)
   {
-      $testUrl = env('PayThru_Base_Test_Url');
+      $testUrl = "https://services.paythru.ng";
       $token = $this->paythruService->handle();
       $endpoint = $testUrl.'/Nqr/agg/merchant/reports';
 
@@ -226,7 +259,7 @@ public function getMerchantTransactionReport(Request $request, $merchantNumber)
 
 public function generateDynamicQrCode(Request $request, $merchantNumber)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $token = $this->paythruService->handle();
   $endpoint = $testUrl.'/Nqr/agg/merchant/transaction';
 
@@ -256,7 +289,7 @@ return response()->json($ngrGenerateDynamicCode);
 
 public function merchantTransactionStatus(Request $request)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $token = $this->paythruService->handle();
   $endpoint = $testUrl.'/Nqr/agg/merchant/transaction/status';
 
