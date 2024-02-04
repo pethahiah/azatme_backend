@@ -44,10 +44,13 @@ class BusinessTransaction extends Model
                 'commission',
                 'residualAmount',
                 'resultCode',
-                'responseDescription'
-        
-    
-        
-    
+                'responseDescription',
+		'minus_residual',
+		'stat',
+		'product_code',
+		'providedEmail',
+		'providedName',
+		'remarks',
+		'negative_amount'
         ];
 }

@@ -20,8 +20,8 @@ class Expense extends Model
         'actual_amount',
         'subcategory_id',
         'amount',
-        'description'
-        
+        'description',
+	'confirm'
         
     ];
 
@@ -35,6 +35,20 @@ class Expense extends Model
     {
         return $this->hasMany(userGroup::class, 'reference_id', 'user_id');
     }
+
+
+public function userExpenses()
+    {
+        return $this->hasMany(UserExpense::class, 'expenses_id', 'id');
+    }
+
+
+
+public function userGroups()
+    {
+        return $this->hasMany(UserExpense::class, 'expenses_id', 'id');
+    }
+
 
 
 }

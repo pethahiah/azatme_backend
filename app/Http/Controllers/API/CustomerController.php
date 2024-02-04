@@ -13,34 +13,48 @@ use Illuminate\Support\Facades\DB;
 class CustomerController extends Controller
 {
     //
-
     public function createCustomer(Request $request, $business_code)
-    {
+{
+    $business = Business::where('business_code', $business_code)->first();
+//	return $business->business_code;
 
-        $business_code = Business::where('business_code', $business_code)->select('business_code')->first();
-       // return $business_code;
-        $customer = new Customer([
-            'customer_name' => $request->customer_name,
-            'customer_email' => $request->customer_email,
-            'customer_phone' => $request->customer_phone,
-            'customer_code' => $business_code->business_code,
-            'owner_id' => Auth::user()->id,
-        ]);
-
-        
-
-        $cus = Customer::where('customer_email', $request->customer_email)->get();
-        $num = 1;
-        if(sizeof($cus) > 0){
-            // tell business not to duplicate same email
-            $customerFlagged = Customer::where(['customer_name' => $request->customer_name, 'customer_email' => $request->customer_email, 'customer_phone' => $request->customer_phone])->update([
-                'flagged' => $num,
-            ]);
+   // Check if customer already exist
+$existingCustomer = Customer::where('customer_code', $business->business_code)->where('customer_email', $request->customer_email)->first();
+//     $existingCustomer = Customer::where(['customer_code' => $business_code, 'customer_email' => $request->customer_email)->first();
+	 if ($existingCustomer) {
+            return response([
+                'message' => 'User already exists with this business code'
+            ], 409);
         }
-        $customer->save();
-        return response()->json($customer);
 
+    // Check if a user with the given email, name, and phone already exists
+    $customerFlagged = Customer::where([
+        'customer_name' => $request->customer_name,
+        'customer_email' => $request->customer_email,
+        'customer_phone' => $request->customer_phone,
+	'customer_code' => $business_code
+    ])->first();
+
+    if ($customerFlagged) {
+        // Customer already exists, flag it
+        $customerFlagged->flagged = 1;
+        $customerFlagged->save();
+
+        return response()->json($customerFlagged);
     }
+
+    // Create a new customer
+    $customer = new Customer([
+        'customer_name' => $request->customer_name,
+        'customer_email' => $request->customer_email,
+        'customer_phone' => $request->customer_phone,
+        'customer_code' => $business->business_code,
+        'owner_id' => Auth::user()->id,
+    ]);
+
+    $customer->save();
+    return response()->json($customer);
+}
 
     public function updateCustomer(Request $request, $id)
     {

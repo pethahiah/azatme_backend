@@ -17,7 +17,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'otp', 'phone','first_name', 'middle_name', 'last_name', 'address', 'state', 'country', 'city', 'image', 'usertype', 'registration_code', 'company_name','nimc','bvn'
+        'name', 'email', 'password', 'otp', 'phone','first_name', 'middle_name', 'last_name', 'address', 'state', 'country', 'city', 
+'image', 'usertype', 'registration_code', 'company_name','nimc','bvn', 'isVerified','enrollment_username','nin_bvnDetails','accessToken','face_image','lga_of_origin', 'age', 'gender'
     ];
 
     /**

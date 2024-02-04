@@ -21,8 +21,8 @@ class Business extends Model
         'description',
         'type',
         'registration_number',
-        'vat_id'
-        
+        'vat_id',
+        'vat_option'
         
     ];
 }

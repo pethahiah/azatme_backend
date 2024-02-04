@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdateFlaggedInCustomers extends Migration
+class AddPaymentTypeToUserGroupsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,9 @@ class UpdateFlaggedInCustomers extends Migration
      */
     public function up()
     {
-        Schema::table('customers', function (Blueprint $table) {
+        Schema::table('user_groups', function (Blueprint $table) {
             //
-            $table->string('flagged')->nullable();
+		$table->string('paymentType')->nullable();
         });
     }
-
-   
 }
