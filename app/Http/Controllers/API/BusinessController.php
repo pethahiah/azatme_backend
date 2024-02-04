@@ -31,6 +31,7 @@ public function createBusiness(Request $request)
     $business->business_code = Str::random(10);
     $business->business_address = $request->business_address;
     $business->owner_id = $user->id;
+    $business->vat_option = $request->vat_option;
     $business->vat_id = $request->vat_id;
 
     $path = null; // Initialize path variable
@@ -45,7 +46,7 @@ public function createBusiness(Request $request)
     $existingBusinesses = Business::where('business_email', $request->business_email)->get();
 
     if ($existingBusinesses->count() > 0) {
-        return response()->json(['message' => 'Business already exists'], 401);
+        return response()->json(['message' => 'Business already exists'], 409);
     }
 
     $business->save();
