@@ -480,7 +480,6 @@ private function areUserDetailsMatching($user, $validationData)
 
 
 
-
     public function getBvnConsent(Request $request)
     {
         $responseFromFirstCall = $this->initiateBvnConsent($request);
@@ -490,7 +489,7 @@ private function areUserDetailsMatching($user, $validationData)
         }
        $requestId = $responseFromFirstCall['requestId'];
         $response = Http::get("https://www.sandbox.paythru.ng/BvnIgree/api/v1/bvn/consent/{$requestId}");
-        return $response;
+       // return $response;
         if ($response->successful()) {
 
           return response()->json($response);

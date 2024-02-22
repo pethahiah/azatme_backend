@@ -17,7 +17,9 @@ class ReferralSettings
         $endDate = Carbon::createFromFormat('d/m/Y', $requestData['end_date']);
 
 
-        $duration = ($requestData['duration'] === 'evergreen') ? 1200 : $requestData['duration'];
+        $duration = $requestData['duration'] ?? 'evergreen';
+        $duration = ($duration === 'evergreen' || $duration === 'fixed') ? $duration : 'evergreen';
+
 
         return ReferralSetting::create([
             'admin_id' => Auth::user()->getAuthIdentifier(),
@@ -37,7 +39,8 @@ class ReferralSettings
         $endDate = Carbon::createFromFormat('d/m/Y', $requestData['end_date']);
 
 
-        $duration = ($requestData['duration'] === 'evergreen') ? 1200 : $requestData['duration'];
+        $duration = $requestData['duration'] ?? 'evergreen';
+        $duration = ($duration === 'evergreen' || $duration === 'fixed') ? $duration : 'evergreen';
 
         $updateData = [
             'duration' => $duration,

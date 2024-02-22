@@ -34,4 +34,12 @@ class ReferralController extends Controller
 
         return response()->json(['url' => $uniqueUrl]);
     }
+
+    public function getAllReferral(): \Illuminate\Http\JsonResponse
+    {
+        $userId = Auth::user()->getAuthIdentifier();
+        $referral = Referral::where('user_id', $userId)->get();
+
+        return response()->json($referral);
+    }
 }

@@ -35,7 +35,7 @@ class AdminController extends Controller
     public function adminsRegisters(Request $request)
 {
 
-    
+
     // Validate the request for admin registration
     $this->validate($request, [
         'name' => 'required|min:3|max:50',
@@ -118,7 +118,7 @@ public function adminRegister(Request $request)
      * Handle an incoming authentication request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
 
 
@@ -181,7 +181,7 @@ public function adminRegister(Request $request)
           return response()->json(['error' => 'Unsuccessful'], 500);
       }
   }
-  
+
 
 
 
@@ -228,7 +228,7 @@ public function adminRegister(Request $request)
 
 public function countAllExpenses()
   {
-   
+
     try {
       $getAllExpenses = UserExpense::count();
       return response()->json($getAllExpenses);
@@ -414,7 +414,7 @@ public function countUserAddedToExpense($refundmeId)
     $getAdmin = Auth::user();
 
     // Check if the user type is admin
-    if ($getAdmin->usertype === 'admin') { 
+    if ($getAdmin->usertype === 'admin') {
         $updateIssue = Feedback::where('complain_reference_code', $complain_reference_code)->first();
 
         if ($updateIssue) {
@@ -424,7 +424,7 @@ public function countUserAddedToExpense($refundmeId)
                 $updateIssue->save();
 	    return response([
                     'message' => 'Status updated to successfully',
-                    'data' => $updateIssue 
+                    'data' => $updateIssue
                 ], 200);
         } else {
             return response([
@@ -432,9 +432,29 @@ public function countUserAddedToExpense($refundmeId)
             ], 404);
         }
     } else {
-        return response()->json('Auth user is not an admin', 403); 
+        return response()->json('Auth user is not an admin', 403);
     }
 }
+
+
+    public function getAllUsers(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $perPage = $request->input('per_page', 10);
+        $users = User::paginate($perPage);
+
+        return response()->json($users);
+    }
+
+    public function getUserById($id): \Illuminate\Http\JsonResponse
+    {
+        $user = User::find($id);
+
+        if ($user) {
+            return response()->json($user);
+        } else {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+    }
 
 
 }

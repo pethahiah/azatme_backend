@@ -32,4 +32,13 @@ class ReferralSettingController extends Controller
 
         return response()->json($updatedReferral);
     }
+
+    public function getAllReferralSettings(): \Illuminate\Http\JsonResponse
+    {
+        $adminId = Auth::user()->getAuthIdentifier();
+
+        $referralSettings = ReferralSetting::where('admin_id', $adminId)->get();
+
+        return response()->json($referralSettings);
+    }
 }

@@ -8,6 +8,7 @@ use App\ReferralSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -76,13 +77,10 @@ class Referrals
 
         if ($updatePoint && $referralSettings) {
             $newPoint = is_null($updatePoint->point) ? $referralSettings->point_limit : $updatePoint->point + $referralSettings->point_limit;
-
             $updatePoint->update(['point' => $newPoint]);
-
-            return response()->json(['message' => 'Referral points updated successfully']);
+            Log::info('Referral points updated successfully');
         }
-
-        return response()->json(['message' => 'No referral found for the specified product or referral settings not found for the specified point limit']);
+        Log::warning('No referral found for the specified product or referral settings not found for the specified point limit');
     }
 
 

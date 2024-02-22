@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @method checkSettingEnquiry(string $modelType)
+ * @method static where(string $string, $id)
  */
 class Referral extends Model
 {

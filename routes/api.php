@@ -4,6 +4,7 @@ use App\Http\Controllers\API\ReferralSettingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ReferralController;
+use App\Http\Controllers\API\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -101,6 +102,10 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('count-all-active-users-kontributes', 'AdminController@countActiveKontribtes');
     Route::put('/admin/update-feedback/{complain_reference_code}', 'AdminController@updateIssue');
     Route::post('/set-ref', [ReferralSettingController::class, 'createReferral']);
+    Route::put('/update-ref/{referralId}', [ReferralSettingController::class, 'updateReferral']);
+    Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
+    Route::get('/all-users', [AdminController::class, 'getAllUsers']);
+    Route::get('/users/{id}', [AdminController::class, 'getUserById']);
     });
 
 
@@ -301,7 +306,7 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
 
     // Referrals
     Route::get('/generate-link', [ReferralController::class, 'generateReferralUrl']);
-
+    Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
        });
 
     });
