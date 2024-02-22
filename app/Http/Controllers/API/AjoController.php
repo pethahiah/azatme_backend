@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\ReferralSetting;
+use App\Services\Referrals;
 use Illuminate\Http\Request;
 use App\Services\PaythruService;
 use App\Services\PaymentLinkService;
@@ -33,12 +35,14 @@ class AjoController extends Controller
     //
 
     public $paythruService;
+    public $referral;
     public $paymentLinkService;
 
-    public function __construct(PaythruService $paythruService, PaymentLinkService $paymentLinkService)
+    public function __construct(PaythruService $paythruService, PaymentLinkService $paymentLinkService, Referrals $referral)
     {
         $this->paythruService = $paythruService;
         $this->paymentLinkService = $paymentLinkService;
+        $this->referral = $referral;
     }
 
 
@@ -451,6 +455,12 @@ public function webhookAjoResponse(Request $request)
         if ($data->notificationType == 1) {
             if (is_null($data->transactionDetails->paymentReference)) {
          $invitation = Invitation::where('merchantReference', $data->transactionDetails->merchantReference)->first();
+                $referral = ReferralSetting::where('status', 'active')
+                    ->latest('updated_at')
+                    ->first();
+                if ($referral) {
+                    $this->referral->checkSettingEnquiry($modelType);
+                }
 	if ($invitation) {
 	$AjoContributor = new AjoContributor([
            'payThruReference' => $data->transactionDetails->payThruReference,
@@ -492,7 +502,12 @@ public function webhookAjoResponse(Request $request)
 
                 // Update withdrawal
                 $withdrawal = AjoWithdrawal::where('transactionReference', $transactionReferences)->first();
-
+                $referral = ReferralSetting::where('status', 'active')
+                    ->latest('updated_at')
+                    ->first();
+                if ($referral) {
+                    $this->referral->checkSettingEnquiry($modelType);
+                }
                 if ($withdrawal) {
                     $uniqueId = $withdrawal->uniqueId;
 

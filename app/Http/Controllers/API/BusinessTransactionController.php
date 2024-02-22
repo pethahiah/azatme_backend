@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 
 use App\Http\Controllers\Controller;
+use App\ReferralSetting;
+use App\Services\Referrals;
 use Illuminate\Http\Request;
 use App\Http\Requests\ExpenseRequest;
 use App\Product;
@@ -40,24 +42,26 @@ class BusinessTransactionController extends Controller
 {
     //
 
+    public $referral;
     public $paythruService;
 
-    public function __construct(PaythruService $paythruService)
+    public function __construct(PaythruService $paythruService, Referrals $referral)
     {
         $this->paythruService = $paythruService;
+        $this->referral = $referral;
     }
 
      public function creatProduct(Request $request)
 {
     $user = Auth::user();
     $userId = $user->id;
-    
+
     $products = $request->products;
 
     // Check if $products is an array
     if (is_array($products)) {
         $createdProducts = [];
-        $commonUniqueCode = Str::random(10); 
+        $commonUniqueCode = Str::random(10);
 
         foreach ($products as $productData) {
             // Add validation here to ensure required keys are present in $productData
@@ -95,7 +99,7 @@ class BusinessTransactionController extends Controller
         return response()->json($product);
     }
 }
- 
+
 
      public function getAllProductsPerBusinessMerchant()
     {
@@ -308,26 +312,26 @@ public function startBusinessTransaction(Request $request, $business_code)
                 $product = Product::where('unique_code', $uniqueCodes)->first();
                 $quantity = is_numeric($quantities[0]) ? $quantities[0] : 0;
                 $amount = is_numeric($product->amount) ? $product->amount : 0;
-                
+
                 $vatAmount = $amount * $quantity * $vat;
                 $grandTotal = ($amount * $quantity) + $vatAmount;
                 $totalAmount = $grandTotal;
-                
+
                 if ($request['moto_id'] == 1) {
                     $token = $this->paythruService->handle();
                     if (!$token) {
                         return "Token retrieval failed";
                     }
-                    
+
                     $data = $this->paymentData($totalAmount, $product);
                     $url = $prodUrl;
                     $urls = $url . '/transaction/create';
-                    
+
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
                         'Authorization' => $token,
                     ])->post($urls, $data);
-                    
+
                     if ($response->failed()) {
                         return response()->json(['error' => 'Your request is unsucceefull at this time,Please try again'], 500);
                     } else {
@@ -338,7 +342,7 @@ public function startBusinessTransaction(Request $request, $business_code)
                         if ($paylink) {
                             $getLastString = explode('/', $paylink);
                             $now = end($getLastString);
-                            
+
                             $info = BusinessTransaction::create([
                                 'owner_id' => Auth::user()->id,
                                 'name' => $product->name,
@@ -365,11 +369,11 @@ public function startBusinessTransaction(Request $request, $business_code)
                     $quantity = is_numeric($quantities[0]) ? $quantities[0] : 0;
                    // return $quantity;
                     $amount = is_numeric($product->amount) ? $product->amount : 0;
-                    
+
                     $vatAmount = $amount * $quantity * $vat;
                     $grandTotal = ($amount * $quantity) + $vatAmount;
                     $totalAmount = $grandTotal;
-                    
+
                     $latest = BusinessTransaction::latest()->first();
                     $invoice_number = "";
                    if (empty($latest)) {
@@ -385,16 +389,16 @@ public function startBusinessTransaction(Request $request, $business_code)
                     } elseif (is_string($token) && strpos($token, '403') !== false) {
                         return response()->json(['error' => 'Access denied. You do not have permission to access this resource.'], 403);
                     }
-                    
+
                     $data = $this->paymentData($totalAmount, $product);
                     $url = $prodUrl;
                     $urls = $url . '/transaction/create';
-                    
+
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
                         'Authorization' => $token,
                     ])->post($urls, $data);
-                    
+
                     if ($response->failed()) {
                         return response()->json(['error' => 'Your request is unsucceefull at this time,Please try again'], 500);
                     } else {
@@ -427,9 +431,9 @@ public function startBusinessTransaction(Request $request, $business_code)
                             'paymentReference' => $now,
                             'product_code' => $this->generateUniqueCode()
                         ]);
-        
+
                      //   return $invoice;
-                        
+
                         $getBusiness = User::where('id', Auth::user()->id)->first();
                         $business = Business::where('owner_id', Auth::user()->id)->first();
                         $InvoiceTran = BusinessTransaction::where('product_code', $invoice->product_code)->first();
@@ -438,15 +442,15 @@ public function startBusinessTransaction(Request $request, $business_code)
                         $cusInvoEmail = $InvoiceTran->email;
                         $getUserInvo = Customer::where('customer_email', $cusInvoEmail)->first();
                         //$word = $this->numberToWord($totalAmount);
-                        
+
                        $pdf = PDF::loadView('generate/invo', compact('invoice', 'getBusiness', 'getUserInvo', 'paylink', 'business'));
-                        
+
                         $filename = 'invoice_' . '_' . time() . '.pdf';
-                        
+
                         \Storage::disk('public')->put($filename, $pdf->output());
-                        
+
                         $pdf_url = \Storage::disk('public')->url($filename);
-                        
+
                         return response()->json([
                             'status' => 'Successful',
                             'link' => $pdf_url
@@ -457,38 +461,38 @@ public function startBusinessTransaction(Request $request, $business_code)
             $totalAmount = 0;
             $totalVatAmount = 0;
             $totalQuantity = 0;
-        
+
             $idCode = $this->generateUniqueCode();
-        
+
             foreach ($uniqueCodes as $index => $uniqueCode) {
                 $quantity = $quantities[$index];
                 //return $quantity;
                 $product = Product::where('unique_code', $uniqueCode)->first();
-        
+
                 if ($product) {
                     $vat = ($getBusinessVatOption->vat_option == 'yes') ? 0.075 : 0;
-        
+
                     $amount = is_numeric($product->amount) ? $product->amount : 0;
-        
+
                     // Calculate VAT and grand total for the product
                     $vatAmount = $amount * $quantity * $vat;
                     $grandTotal = ($amount * $quantity) + $vatAmount;
-        
+
                     $totalAmount += $grandTotal;
                     $totalVatAmount += $vatAmount;
                     $totalQuantity += $quantity;
                }
-           
-              
+
+
 
                 if ($request['moto_id'] == 1) {
-                    
+
                     //return $info;
                     $token = $this->paythruService->handle();
                     $data = $this->paymentData($totalAmount, $product);
                     $url = $prodUrl;
                     $urls = $url . '/transaction/create';
-		
+
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
                         'Authorization' => $token,
@@ -532,7 +536,7 @@ public function startBusinessTransaction(Request $request, $business_code)
                                 'product_code' => $idCode
                             ]);
                         }
-		//	echo $totalQuantity; 
+		//	echo $totalQuantity;
 		//	echo $totalAmount;
 			 $InvoiceTran = businessTransaction::where('product_code', $info->product_code)->get();
 //                        return $InvoiceTran;
@@ -575,7 +579,7 @@ if (empty($latest)) {
                         return false;
                     } else {
                         $transaction = json_decode($response->body(), true);
-                       
+
                        $transaction;
                         $paylink = $transaction['payLink'];
                         $getLastString = (explode('/', $paylink));
@@ -609,7 +613,7 @@ if (empty($latest)) {
 
                     }
                   //  $nqr = $this->generateDynamicQrCode($request, $totalAmount, $invoice_number, $vat, $product, $now, $merchantNumber);
-                
+
                 }
 
             }
@@ -630,8 +634,8 @@ if (empty($latest)) {
             $InvoiceTran = businessTransaction::where('product_code', $idCode)->get();
             $invoiceInfo = $InvoiceTran[0];
             $word = $this->numberToWord($totalAmount);
-           
-        
+
+
             $cusInvoEmail = $InvoiceTran[0]->email;
             $getUserInvo = Customer::where('customer_email', $cusInvoEmail)->first();
 
@@ -644,7 +648,7 @@ if (empty($latest)) {
 
             // Get the public URL of the saved PDF
             $pdf_url = \Storage::disk('public')->url($filename);
-  
+
 
 
         return response()->json([
@@ -676,7 +680,7 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
                 $hundreds = (int)($num_part / 100);
                 $hundreds = ($hundreds ? ' ' . $list1[$hundreds] . ' Hundred' . ($hundreds == 1 ? '' : 's') . ' and' : '');
                 $tens = (int)($num_part % 100);
-                $singles = ''; 
+                $singles = '';
                 if ($tens < 20) {
                     $tens = ($tens ? ' ' . $list1[$tens] . ' ' : '');
                 } else {
@@ -823,11 +827,17 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
     Log::info("Starting webhookBusinessResponse", ['data' => $data, 'modelType' => $modelType]);
     if ($data->notificationType == 1) {
         $buisness = businessTransaction::where('paymentReference', $data->transactionDetails->paymentReference)->first();
+        $referral = ReferralSetting::where('status', 'active')
+            ->latest('updated_at')
+            ->first();
+        if ($referral) {
+            $this->referral->checkSettingEnquiry($modelType);
+        }
 //	$minus_residual = $business->minus_residual;
         if ($buisness) {
 //	    $existing_minus_residual = $buisness->minus_residual ?? 0;
   //          $new_minus_residual = $existing_minus_residual + $data->transactionDetails->residualAmount;
-		
+
             $buisness->payThruReference = $data->transactionDetails->payThruReference;
             $buisness->fiName = $data->transactionDetails->fiName;
             $buisness->status = $data->transactionDetails->status;
@@ -864,7 +874,7 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
         }
 
         http_response_code(200);
-        
+
     } elseif ($data->notificationType == 2) {
       if (isset($data->transactionDetails->transactionReferences[0])) {
           Log::info("Transaction references: " . json_encode($data->transactionDetails->transactionReferences));
@@ -876,12 +886,19 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
 		'uniqueId' => $upda->uniqueId
 		])->first();
 
+          $referral = ReferralSetting::where('status', 'active')
+              ->latest('updated_at')
+              ->first();
+          if ($referral) {
+              $this->referral->checkSettingEnquiry($modelType);
+          }
+
           if ($updatePaybackWithdrawal) {
               $updatePaybackWithdrawal->paymentAmount = $data->transactionDetails->paymentAmount;
               $updatePaybackWithdrawal->recordDateTime = $data->transactionDetails->recordDateTime;
 	      // Set the status to "success"
               $updatePaybackWithdrawal->status = 'success';
-	
+
               $updatePaybackWithdrawal->save();
 
               Log::info("Business withdrawal updated");
@@ -914,7 +931,7 @@ public function AzatBusinessCollection(Request $request)
 
     $requestAmount = $request->amount;
 
-   
+
     $latestWithdrawal = BusinessTransaction::where('owner_id', auth()->user()->id)
         ->where('stat', 1)
         ->latest()
@@ -926,21 +943,21 @@ public function AzatBusinessCollection(Request $request)
         }
 
     if ($latestWithdrawal !== null) {
-    
+
         if ($requestAmount > $latestWithdrawal) {
-       
+
             return response()->json(['message' => 'You do not have sufficient amount in your RefundMe A'], 400);
         }
-     
+
         $minusResidual = $latestWithdrawal - $requestAmount;
     }
     $acct = $request->account_number;
-    
+
    $getBankReferenceId = Bank::where('user_id', Auth::user()->id)->where('account_number', $acct)->first();
    //return $getBankReferenceId;
-   
+
    $beneficiaryReferenceId = $getBankReferenceId->referenceId;
- 
+
       $data = [
             'productId' => $productId,
             'amount' => $requestAmount - $charges,
@@ -948,7 +965,7 @@ public function AzatBusinessCollection(Request $request)
             'nameEnquiryReference' => $beneficiaryReferenceId
             ],
         ];
-        
+
         $token = $this->paythruService->handle();
       	  if (!$token) {
         return "Token retrieval failed";
@@ -960,7 +977,7 @@ public function AzatBusinessCollection(Request $request)
         $url = $prodUrl;
         $urls = $url.'/transaction/settlement';
 
-        
+
          $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,
@@ -970,7 +987,7 @@ public function AzatBusinessCollection(Request $request)
         return false;
       }else{
        // $collection = json_decode($response->body(), true);
-       
+
         BusinessTransaction::where('owner_id', auth()->user()->id)->where('stat', 1)
             ->latest()->update(['minus_residual' => $minusResidual]);
 
@@ -1020,10 +1037,10 @@ public function AzatBusinessCollection(Request $request)
         return response()->json($getAllInvoiceByABusiness);
 
     }
-    
+
     public function getAllCustomersUnderABusinessOwner()
     {
-        
+
         $getUser = Auth::user()->id;
         $pageNumber = 50;
         $getAllInvoiceByASpecificBusiness = businessTransaction::where('owner_id', $getUser)->where('business_code', $business_code)->latest()->paginate($pageNumber);
@@ -1031,7 +1048,7 @@ public function AzatBusinessCollection(Request $request)
 
     }
 
-    
+
       public function countAllInvoiceByABusinessOwner()
     {
         $getUser = Auth::user()->id;
@@ -1040,16 +1057,16 @@ public function AzatBusinessCollection(Request $request)
 
     }
     //Business specific
-    
+
      public function getAllInvoiceByASpecificBusiness($business_code)
     {
-        
+
         $getUser = Auth::user()->id;
         $pageNumber = 50;
         $getAllInvoiceByASpecificBusiness = businessTransaction::where('owner_id', $getUser)->where('business_code', $business_code)->latest()->paginate($pageNumber);
         return response()->json($getAllInvoiceByASpecificBusiness);
     }
-    
+
      public function getAllTransactionsByASpecificBusiness($business_code)
     {
         $getUser = Auth::user()->id;
@@ -1057,16 +1074,16 @@ public function AzatBusinessCollection(Request $request)
         $getAllInvoiceByASpecificBusiness = businessTransaction::where('owner_id', $getUser)->where('business_code', $business_code)->latest()->paginate($pageNumber);
         return response()->json($getAllInvoiceByASpecificBusiness);
     }
-    
+
     public function getAllCustomersUnderASpecificBusiness($business_code)
     {
         $getUser = Auth::user()->id;
-    
+
         $getAllCustomersUnderASpecificBusiness = Customer::where('owner_id', $getUser)->where('customer_code', $business_code)->select('customer_name', 'customer_email', 'customer_phone')->latest()->get();
-        
+
         return response()->json($getAllCustomersUnderASpecificBusiness);
     }
-    
+
     //Get all business customers
     public function getAllInvoiceSentToAParticularCustomer($customerEmail)
     {

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Referral;
 use App\Services\Referrals;
-use App\ReferralSettings;
+use App\ReferralSetting;
 use Illuminate\Http\Request;
 use App\Expense;
 use App\User;
@@ -391,7 +391,7 @@ public function webhookExpenseResponse(Request $request)
 
         if ($data->notificationType == 1) {
             $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->first();
-            $referral = ReferralSettings::where('status', 'active')
+            $referral = ReferralSetting::where('status', 'active')
                 ->latest('updated_at')
                 ->first();
             if ($referral) {
@@ -438,7 +438,7 @@ public function webhookExpenseResponse(Request $request)
 
             http_response_code(200);
         } elseif ($data->notificationType == 2) {
-            $referral = ReferralSettings::where('status', 'active')
+            $referral = ReferralSetting::where('status', 'active')
                 ->latest('updated_at')
                 ->first();
 
