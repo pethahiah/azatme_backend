@@ -19,7 +19,7 @@ class Product extends Model
         'amount',
         'user_id',
         'business_id',
-        'business_code'
-    
+        'business_code',
+	'quantity'
         ];
 }

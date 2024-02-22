@@ -86,7 +86,14 @@ public function ngnBanksApiList()
 {
     $prodUrl = env('PayThru_Base_Live_Url');
     $token = $this->paythruService->handle();
-     // return $token;
+
+    if (!$token) {
+        return "Token retrieval failed";
+    } elseif (is_string($token) && strpos($token, '403') !== false) {
+        return response()->json([
+            'error' => 'Access denied. You do not have permission to access this resource.'
+        ], 403);
+    }
      $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,

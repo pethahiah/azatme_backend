@@ -38,8 +38,20 @@ class UserGroup extends Model
         'residualAmount',
         'resultCode',
         'responseDescription',
-
-        
+	'uidd',
+	'first_name',
+	'last_name',
+	'minus_residual',
+	'has_updated_minus_residual',
+	'stat',
+	'name',
+	'paymentType',
+	'providedEmail',
+        'providedName',
+        'remarks',
+	'consent',
+	'merchantReference',
+	'negative_amount'
     ];
 
 

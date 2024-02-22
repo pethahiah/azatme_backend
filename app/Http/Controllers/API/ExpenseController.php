@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Referral;
+use App\Services\Referrals;
+use App\ReferralSettings;
 use Illuminate\Http\Request;
 use App\Expense;
 use App\User;
@@ -12,9 +15,9 @@ use App\Withdrawal;
 use App\UserGroup;
 use App\Bank;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Auth;
-use Mail;
+use Illuminate\Support\Facades\Mail;
 use App\Mail\SendUserInviteMail;
 use App\Http\Requests\ExpenseRequest;
 use App\Http\Requests\userExpenseRequest;
@@ -26,23 +29,29 @@ use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Exception\GuzzleException;
 use Datetime;
 use App\Exports\ExpenseExport;
-use Excel;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Setting;
-use Storage;
+use App\Invited;
+use App\Active;
+use Illuminate\Support\Facades\Storage;
 use App\Services\PaythruService;
+use Illuminate\Database\QueryException;
 
 
 class ExpenseController extends Controller
 {
     //
-public $paythruService;
+    //
+    public $referral;
+    public $paythruService;
 
-public function __construct(PaythruService $paythruService)
+public function __construct(PaythruService $paythruService, Referrals $referral)
     {
         $this->paythruService = $paythruService;
+        $this->referral = $referral;
     }
 
 
@@ -50,7 +59,8 @@ public function createExpense(ExpenseRequest $request)
     {
 
         $expense = Expense::create([
-            'name' => $request->name,
+
+       'name' => $request->name,
             'description' => $request->description,
             'uique_code' => Str::random(10),
             'category_id' => $request->category_id,
@@ -65,13 +75,59 @@ public function createExpense(ExpenseRequest $request)
 
     }
 
-    
+public function add(Request $request)
+{
+
+//	return response()->json($request->input());
+	$auth = Auth::user();
+        // Check if a user with the given auth id already exists
+        $existingUser = Invited::where('auth_id', $auth->id)->where('email', $request->email)->first();
+
+        if ($existingUser) {
+            return response([
+                'message' => 'Invited user already exit with this authourized user'
+            ], 409);
+        }
+
+        $invitedUser = new Invited([
+            'type' => $request->type,
+            'email' => $request->email,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'auth_id' => Auth::user()->id,
+        ]);
+	$invitedUser->save();
+        return response()->json($invitedUser);
+
+}
+
+public function getInvitedUsers()
+{
+	$auth = Auth::user();
+	$getAllInvited = Invited::where('auth_id', $auth->id)->get();
+        return response()->json($getAllInvited);
+}
+
+
+
+public function getAllRefundMeCreatedt(Request $request)
+{
+        $auth = Auth::user();
+	$perPage = $request->input('per_page', 10);
+    	$page = $request->input('page', 1);
+        $getRefund = Expense::where('user_id', $auth->id)->whereNotNull('category_id')->whereNotNull('subcategory_id')->where('confirm', 0)->paginate($perPage, ['*'], 'page', $page);
+        return response()->json($getRefund);
+}
+
+
+
+
+
     public function inviteUserToExpense(Request $request, $expenseUniqueCode)
     {
       //return response()->json($request->input());
-      $expense = expense::findOrFail($expenseUniqueCode);
-      $input['email'] = $request->input('email');
-     
+       $expense = expense::findOrFail($expenseUniqueCode);
+       $input['email'] = $request->input('email');
        $ProductId = env('PayThru_expense_productid');
        $current_timestamp= now();
        $timestamp = strtotime($current_timestamp);
@@ -80,30 +136,42 @@ public function createExpense(ExpenseRequest $request)
        $amt = $expense->amount;
        $hashSign = hash('sha512', $amt . $secret);
        $PayThru_AppId = env('PayThru_ApplicationId');
+//       $prodUrl = env('igreeSandbox');
        $prodUrl = env('PayThru_Base_Live_Url');
-       $token = $this->paythruService->handle();
+       if ($expense) {
+    	$expense->confirm = 1;
+      	$expense->save();
+	} else {
+    	Log::info('confim in expense mot updated.');
+	}
 
-       //return "AppId ".  $PayThru_AppId;
+
+
+       $token = $this->paythruService->handle();
+        if (!$token) {
+        return "Token retrieval failed";
+    } elseif (is_string($token) && strpos($token, '403') !== false) {
+        return response()->json([
+            'error' => 'Access denied. You do not have permission to access this resource.'
+        ], 403);
+    }
        $emails = $request->email;
        //return $emails;
        if($emails)
        {
        $emailArray = (explode(';', $emails));
        $count = count($emailArray);
-      // return response()->json($emailArray);
-   //       return $expense->amount;
        $payers = [];
        $totalpayable = 0;
        foreach ($emailArray as $key => $em) {
            //process each user here as each iteration gives you each email
-           $user = User::where('email', $em)->first();
-   
+	 $user = Invited::where('auth_id', Auth::user()->id)->where('email', $em)->first();
          $payable = 0;
 
         if($request['split_method_id'] == 3)
         {
             $payable = $expense->amount;
-  
+
         } elseif($request['split_method_id'] == 1)
         {
           if(isset($request->percentage))
@@ -111,27 +179,50 @@ public function createExpense(ExpenseRequest $request)
             $payable = $expense->amount*$request->percentage/100;
           }elseif(isset($request->percentage_per_user))
           {
-             
+
             $ppu = json_decode($request->percentage_per_user);
             //return $em;
-            
+
             $payable = $ppu->$em*$expense->amount/100;
           }
         }elseif($request['split_method_id'] == 2)
         {
            //$payable = $expense->amount/$count;
             $payable = round(($expense->amount / $count), 2);
-         
+
             if ($key == $count - 1) {
-        $payable = $expense->amount - (round($payable, 2) * ($count - 1));
+//        $payable = $expense->amount - (round($payable, 2) * ($count - 1));
+	  $payable = round($expense->amount - (round($payable, 2) * ($count - 1)), 2);
         }
-            
+
         }elseif($request['split_method_id'] == 4)
         {
             $payable = $expense->amount/$count;
         }
-        
+
    $paylink_expiration_time = Carbon::now()->addHours(23);
+   $userExpense = userExpense::where('principal_id', Auth::user()->id)
+      ->where('expense_id', $expenseUniqueCode)
+     ->whereNull('paymentReference')
+      ->selectRaw('SUM(payable) AS checkAmountPayable, SUM(residualAmount) AS totalResidual')
+      ->first();
+
+   $checkAmountPayable = $userExpense->checkAmountPayable;
+   $totalResidual = $userExpense->totalResidual;
+
+  if ($expense->amount == $checkAmountPayable) {
+      if ($totalResidual == $expense->amount) {
+          // Payment is completely paid
+          return response([
+              'message' => 'Your payment is already completed.'
+          ], 422);
+      } else {
+          // Refundme is completed
+          return response([
+              'message' => 'You cannot request for an amount greater than your refundMe. Refundme is completed.'
+          ], 422);
+      }
+  }
 
   // return  $response()->json("got here");
 
@@ -144,31 +235,23 @@ public function createExpense(ExpenseRequest $request)
             'description' => $expense['description'],
             'split_method_id' => $request['split_method_id'],
             'payable' => $payable,
-            'linkExpireDateTime'=> $paylink_expiration_time,
+            'first_name'=> $user->first_name,
+	    'last_name' => $user->last_name,
             'actualAmount' => $expense->actual_amount,
             'bankName' => $request['bankName'],
             'account_name' => $request['account_name'],
             'bankCode' => $request['bankCode'],
             'account_number' => $request['account_number'],
+//	    'uidd'=> Str::random(10),
           ]);
           //return $info
-         
-         $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->payable];
+
+         $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->payable, "payerName" => $user->first_name];
          $totalpayable = $totalpayable + $info->payable;
-         
+
       }
-	//Check for payable sum
 
-	 $checkAmontPayable = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $expenseUniqueCode)->sum('payable');
-//return $checkAmontPayable;
-        if($checkAmontPayable > $expense->amount)
-            {
-              return response([
-                'message' => 'You cannot request for an amount greater than your refundMe, kindly create another refundMe for this trasaction'
-            ], 422);
-            }
-
-      // Send payment request to paythru  
+      // Send payment request to paythru
       $data = [
         'amount' => $expense->amount,
         'productId' => $ProductId,
@@ -176,7 +259,7 @@ public function createExpense(ExpenseRequest $request)
         'paymentDescription' => $expense->description,
         'paymentType' => 1,
         'sign' => $hashSign,
-        'expireDateTime'=> $paylink_expiration_time,
+       // 'expireDateTime'=> $paylink_expiration_time,
         'displaySummary' => true,
         // 'splitPayInfo' => [
         //     'inviteSome' => false,
@@ -193,13 +276,8 @@ public function createExpense(ExpenseRequest $request)
             ];
         }
 
-        //
-        
-       //return $data;
-        
-      
-      //return $token;
-        $url = $prodUrl;
+//      return $data;
+         $url = $prodUrl;
         $urls = $url.'/transaction/create';
 
        $response = Http::withHeaders([
@@ -214,19 +292,21 @@ public function createExpense(ExpenseRequest $request)
         $transaction = json_decode($response->body(), true);
         if(!$transaction['successful'])
         {
-          return "Whoops! ". json_encode($transaction);
+
+         // return "Whoops! ". json_encode($transaction);
+	return response()->json(['message' => 'Whoops! ' . json_encode($transaction['message'])], 400);
         }
-        //return $transaction;
-        
+
         if($count > 1)
         {
           $splitResult = $transaction['splitPayResult']['result'];
           foreach($splitResult as $key => $slip)
           {
-  
-            $authmail = Auth::user(); 
-            Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
-            
+	$userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
+            $authmail = Auth::user();
+	     $uxer = $userss->first_name;
+//            Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
+ 	    Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new SendUserInviteMail($slip, $authmail, $uxer));
              $paylink = $slip['paylink'];
          // return $paylink;
               if($paylink)
@@ -237,39 +317,42 @@ public function createExpense(ExpenseRequest $request)
           $userExpenseReference = userExpense::where(['email' => $slip['receipient'], 'expense_id' => $expense->id, 'principal_id' => Auth::user()->id])->update([
               'paymentReference' => $now,
           ]);
-                
-              }     
-          } 
+
+              }
+          }
         }
         else{
          // {"successIndicator":"9nbau1894ef9dg5q","payLink":"https://apps.paythru.ng/services/cardfree/pay/683112951682882400","bankTransferInstruction":null,"splitPayResult":{"isMultiple":true,"result":[{"paylink":"https://apps.paythru.ng/services/cardfree/pay/661361651682882400","amount":10000.0,"receipient":"lumiged4u@gmail.com","isActive":true,"bankPaymentDetails":null,"emvCode":null},{"paylink":"https://apps.paythru.ng/services/cardfree/pay/665979241682882400","amount":10000.0,"receipient":"sunday4oged@yahoo.com","isActive":true,"bankPaymentDetails":null,"emvCode":null}]},"emvCode":null,"code":0,"message":"Successful","data":null,"successful":true
 
          $paylink = $transaction['payLink'];
          $slip = ['paylink'=> $paylink, 'amount'=> $data['amount'], 'receipient' => $request->email ];
-         
-              $authmail = Auth::user(); 
-              Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
 
+
+           $userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
+            $authmail = Auth::user();
+	    $uxer = $userss->first_name;
+           //   Mail::to($slip['receipient'], $authmail['name'], $InvitedUserName['first_name'])->send(new SendUserInviteMail($slip, $authmail, $InvitedUserName));
+            Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new SendUserInviteMail($slip, $authmail, $uxer));
               if($paylink)
               {
                 $getLastString = (explode('/', $paylink));
                 $now = end($getLastString);
                 //return $now;
-          $userExpenseReference = userExpense::where(['email' => $slip['receipient'], 'expense_id' => $expense->id, 'principal_id' => Auth::user()->id])->update([
+          $userExpenseReference = userExpense::where(['email' => $slip['receipient'], 'expense_id' => $expense->id,'uidd' => $info->uidd,'principal_id' => Auth::user()->id])->update([
               'paymentReference' => $now,
 //return response()->json($slip);
-          ]);		
-                                 
-              } 
-            
+          ]);
+
+              }
+
         }
       }
       return response()->json($transaction);
-      
+
     }
     }
-    
-    
+
+
     public function UpdateTransactionRequest(Request $request, $transactionId)
     {
       $transaction = userExpense::findOrFail($transactionId);
@@ -287,67 +370,194 @@ public function createExpense(ExpenseRequest $request)
           return response([
                 'message' => 'You cannot edit this transaction anymore'
             ], 422);
-      }
-      
+
     }
-    
-    
-         //Calling PayThru gateway for transaction response updates
-     public function webhookExpenseResponse(Request $request)
-   {
-        $response = $request->all();
-//        $dataEncode = json_encode($response);
-        $data = json_decode($response);
-        Log::info("starting refundme response");
-	$notificationType = $data->notificationType;
-        if($notificationType == 1){
-         // return "good";
-        $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->update([
-            'payThruReference' => $data->transactionDetails->payThruReference,
-            'fiName' => $data->transactionDetails->fiName,
-            'status' => $data->transactionDetails->status,
-            'amount' => $data->transactionDetails->amount,
-            'responseCode' => $data->transactionDetails->responseCode,
-            'paymentMethod' => $data->transactionDetails->paymentMethod,
-            'commission' => $data->transactionDetails->commission,
-            'residualAmount' => $data->transactionDetails->residualAmount,
-            'resultCode' => $data->transactionDetails->resultCode,
-            'responseDescription' => $data->transactionDetails->responseDescription,
-        ]);
-          Log::info("done");
-          http_response_code(200);
-
-        }else
-       return response([
-                'message' => 'Notification type is not 1'
-            ], 401);
-    }
-
- 
-  private function userEmailToId($email){
-      return User::select('id')->where('email',$email)->first()->value('id');  
-  }
-  
-
-public function getUserExpense()
-{
-   
-$pageNumber = 50;
-$getAuthUser = Auth::user();
-$getUserExpense = Expense::where('user_id', $getAuthUser->id)->whereNotNull('subcategory_id')->paginate($pageNumber);
-$getUserExpenseAddedTransactions = userExpense::where('email', $getAuthUser->email)->paginate($pageNumber);
-return response()->json([
-                'getAuthUserExpensesCreated' => $getUserExpense,
-                'getExpensesInvitedTo' => $getUserExpenseAddedTransactions,
-            ]);
 }
 
-public function allExpensesPerUser()
+
+// Calling PayThru gateway for transaction response updates
+public function webhookExpenseResponse(Request $request)
+{
+    try {
+        $productId = env('PayThru_expense_productid');
+        $response = $request->all();
+        $dataEncode = json_encode($response);
+        $data = json_decode($dataEncode);
+	    $modelType = "RefundMe";
+
+
+        Log::info("Starting webhookExpenseResponse", ['data' => $data, 'modelType' => $modelType]);
+        Log::info("Starting webhookExpenseResponse");
+
+        if ($data->notificationType == 1) {
+            $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->first();
+            $referral = ReferralSettings::where('status', 'active')
+                ->latest('updated_at')
+                ->first();
+            if ($referral) {
+                $this->referral->checkSettingEnquiry($modelType);
+            }
+
+            if ($userExpense) {
+
+
+                $userExpense->payThruReference = $data->transactionDetails->payThruReference;
+                $userExpense->fiName = $data->transactionDetails->fiName;
+                $userExpense->status = $data->transactionDetails->status;
+                $userExpense->amount = $data->transactionDetails->amount;
+                $userExpense->responseCode = $data->transactionDetails->responseCode;
+                $userExpense->paymentMethod = $data->transactionDetails->paymentMethod;
+                $userExpense->commission = $data->transactionDetails->commission;
+		// Check if residualAmount is negative
+		if ($data->transactionDetails->residualAmount < 0) {
+    		$userExpense->negative_amount = $data->transactionDetails->residualAmount;
+		} else {
+    		$userExpense->negative_amount = 0;
+		}
+		$userExpense->residualAmount = $data->transactionDetails->residualAmount ?? 0;
+               // $userExpense->residualAmount = $data->transactionDetails->residualAmount;
+                $userExpense->resultCode = $data->transactionDetails->resultCode;
+                $userExpense->responseDescription = $data->transactionDetails->responseDescription;
+		$userExpense->providedEmail = $data->transactionDetails->customerInfo->providedEmail;
+            	$userExpense->providedName = $data->transactionDetails->customerInfo->providedName;
+            	$userExpense->remarks = $data->transactionDetails->customerInfo->remarks;
+//		$userExpense->minus_residual = $new_minus_residual;
+                $userExpense->save();
+	       $activePayment = new Active([
+                    'paymentReference' => $data->transactionDetails->paymentReference,
+                    'product_id' => $productId,
+                    'product_type' => $modelType
+                ]);
+           $activePayment->save();
+                Log::info("Payment reference saved in ActivePayment table");
+	//	Log::info("minus_residual updated" . $userExpense->minus_residual);
+                Log::info("User expense updated");
+            } else {
+                Log::info("User expense not found for payment reference: " . $data->transactionDetails->paymentReference);
+            }
+
+            http_response_code(200);
+        } elseif ($data->notificationType == 2) {
+            $referral = ReferralSettings::where('status', 'active')
+                ->latest('updated_at')
+                ->first();
+
+            if ($referral) {
+                $this->referral->checkSettingEnquiry($modelType);
+            }
+            if (isset($data->transactionDetails->transactionReferences[0])) {
+                $transactionReferences = $data->transactionDetails->transactionReferences[0];
+                Log::info("Received withdrawal notification for transaction references: " . $transactionReferences);
+
+                // Update withdrawal
+                $withdrawal = Withdrawal::where('transactionReferences', $transactionReferences)->first();
+
+                if ($withdrawal) {
+                    $uniqueId = $withdrawal->uniqueId;
+
+                    $updatePaybackWithdrawal = Withdrawal::where([
+                        'transactionReferences' => $transactionReferences,
+                        'uniqueId' => $uniqueId
+                    ])->first();
+
+                    if ($updatePaybackWithdrawal) {
+                        $updatePaybackWithdrawal->paymentAmount = $data->transactionDetails->paymentAmount;
+                        $updatePaybackWithdrawal->recordDateTime = $data->transactionDetails->recordDateTime;
+			// Set the status to "success"
+                        $updatePaybackWithdrawal->status = 'success';
+
+                        $updatePaybackWithdrawal->save();
+
+                        Log::info("Payback withdrawal updated");
+                    } else {
+                        Log::info("Payback withdrawal not found for transaction references: " . $transactionReferences);
+                    }
+                } else {
+                    Log::info("Withdrawal not found for transaction references: " . $transactionReferences);
+                }
+            } else {
+                Log::info("Transaction references not found in the webhook data");
+            }
+        }
+
+        http_response_code(200);
+    } catch (\Illuminate\Database\QueryException $e) {
+        Log::error($e->getMessage());
+        return response()->json(['error' => 'An error occurred'], 500);
+    }
+}
+
+
+
+  private function userEmailToId($email){
+      return User::select('id')->where('email',$email)->first()->value('id');
+  }
+
+
+public function getExpenseWithdrawalTransaction()
+        {
+        $getWithdrawalTransaction = Withdrawal::where('beneficiary_id', Auth::user()->id)->get();
+        if($getWithdrawalTransaction->count() > 0)
+        {
+        return response()->json($getWithdrawalTransaction);
+        }else{
+         return response([
+                'message' => 'transaction not found for this user'
+            ], 404);
+                }
+       }
+
+public function getUserExpense(Request $request)
+{
+    $perPage = $request->input('per_page', 10);
+    $page = $request->input('page', 1);
+    $getAuthUser = Auth::user();
+    $expenseIds = DB::table('expenses')
+        ->join('user_expenses', function ($join) {
+            $join->on('expenses.user_id', '=', 'user_expenses.principal_id')
+                ->on('expenses.id', '=', 'user_expenses.expense_id');
+        })
+        ->select('expenses.id')
+        ->where('expenses.user_id', '=', $getAuthUser->id)
+        ->whereNotNull('expenses.subcategory_id')
+        ->whereNull('expenses.deleted_at')
+        ->where('expenses.confirm', '=', 1)
+        ->groupBy('expenses.id')
+        ->pluck('expenses.id');
+
+    $getUserExpense = DB::table('expenses')
+        ->join('user_expenses', function ($join) {
+            $join->on('expenses.user_id', '=', 'user_expenses.principal_id')
+                ->on('expenses.id', '=', 'user_expenses.expense_id');
+        })
+        ->select('expenses.*', DB::raw('SUM(user_expenses.residualAmount) as total_paid'))
+        ->whereIn('expenses.id', $expenseIds)
+        ->whereNull('expenses.deleted_at')
+        ->where('expenses.confirm', '=', 1)
+        ->groupBy('expenses.id')
+	->orderBy('expenses.created_at', 'desc')
+        ->paginate($perPage, ['*'], 'page', $page);
+
+    $getUserExpenseAddedTransactions = UserExpense::where('email', $getAuthUser->email)
+        ->whereNull('deleted_at')
+	->orderBy('created_at', 'desc')
+        ->paginate($perPage, ['*'], 'page', $page);
+
+    return response()->json([
+        'getAuthUserExpensesCreated' => $getUserExpense,
+        'getExpensesInvitedTo' => $getUserExpenseAddedTransactions,
+    ]);
+}
+
+
+
+public function allExpensesPerUser(Request $request)
 {
 
-  $pageNumber = 50;
+  $perPage = $request->input('per_page', 10);
+  $page = $request->input('page', 1);
   $getAuthUser = Auth::user();
-  $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->latest()->paginate($pageNumber);
+  $getUserExpenses = UserExpense::where('principal_id', $getAuthUser->id)->latest()->paginate($perPage, ['*'], 'page', $page);
   return response()->json($getUserExpenses);
 
 }
@@ -392,12 +602,12 @@ public function updateExpense(Request $request, $id)
     if($now != $user)
     {
          return response()->json(['You dont have edit right over this expense'], 422);
-    
-        
+
+
     }else{
         $update = Expense::find($id);
         $update->update($request->all());
-        return response()->json($update);   
+        return response()->json($update);
 }
 }
 
@@ -423,7 +633,7 @@ public function deleteExpense($id)
 
 public function BulkUploadInviteUsersToExpense(Request $request, $expenseId)
     {
-      
+
         $expense = expense::findOrFail($expenseId);
         $request->validate([
           'file' => 'required|file'
@@ -450,6 +660,7 @@ public function exportExpenseToExcel(Request $request)
     {
       $fileName = 'azatme_report'.'_'.Carbon::now() . '.' . 'xlsx';
       $userExpense = userExpense::getuserExpense($request);
+	return $userExpense;
       Log::info($userExpense);
       ob_end_clean();
       return Excel::download(new ExpenseExport($userExpense), $fileName);
@@ -460,167 +671,161 @@ public function exportExpenseToExcel(Request $request)
       $fileName = 'azatme_report'.'_'.Carbon::now() . '.' . 'csv';
       $userExpense = userExpense::getuserExpense($request);
       Log::info($userExpense);
+return $userExpense;
       ob_end_clean();
       return Excel::download(new ExpenseExport($userExpense), $fileName);
     }
-    
-    public function AzatIndividualCollection(Request $request, $transactionId)
+
+
+public function AzatIndividualCollection(Request $request)
     {
-      $current_timestamp= now();
-     // return $current_timestamp;
-      $timestamp = strtotime($current_timestamp);
-      $secret = env('PayThru_App_Secret');
-      $productId = env('PayThru_expense_productid');
-      //return $productId;
-      $hash = hash('sha512', $timestamp . $secret);
-      //return $hash;
-      $AppId = env('PayThru_ApplicationId');
-      $prodUrl = env('PayThru_Base_Live_Url');
+        $current_timestamp = now();
+        $timestamp = strtotime($current_timestamp);
+        $secret = env('PayThru_App_Secret');
+        $productId = env('PayThru_expense_productid');
+        $hash = hash('sha512', $timestamp . $secret);
+        $AppId = env('PayThru_ApplicationId');
+        $prodUrl = env('PayThru_Base_Live_Url');
+        $charges = env('PayThru_Withdrawal_Charges');
 
-      $expenseAmount = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $transactionId)->whereNotNull('actualAmount')->first();
-      $amount = $expenseAmount->actualAmount;
-   // return $amount;
-   // return Auth::user()->id;
-    
-      $withdrawal = new Withdrawal([
-        
-        'account_number' => $request->account_number,
-        'description' => $request->description,
-        'expense_id' => $expenseAmount->id,
-        'beneficiary_id' => Auth::user()->id,
-        'amount' => $request->amount,
-        'bank' => $request->bank
-        ]);
-        
-        
-        $getUserExpenseTransactions = userExpense::where('principal_id', Auth::user()->id)->sum('residualAmount');
-        
-        if(($request->amount) > $amount)
-        {
-            if(($request->amount) > $getUserExpenseTransactions)
-            {
-                return response([
-            'message' => 'You dont not have sufficient amount in your RefundMe'
-        ], 403);
-            }else{
-          return response([
-            'message' => 'Please enter correct refund amount'
-        ], 403);
-        }
-        }
-              $withdrawal->save();
-              
-              $acct = $request->account_number;
-    
-   $getBankReferenceId = Bank::where('user_id', Auth::user()->id)->where('account_number', $acct)->first();
-   $getAccountName = $getBankReferenceId->account_name;
-   //return $getAccountName;
-   
-   $beneficiaryReferenceId = $getBankReferenceId->referenceId;
+        $requestAmount = $request->amount;
 
-   $token = $this->paythruService->handle();
-   //return $beneficiaryReferenceId;
-      $data = [
+        $latestWithdrawal = UserExpense::where('principal_id', auth()->user()->id)
+            ->where('stat', 1)
+            ->latest()
+            ->pluck('minus_residual')
+            ->first();
+	if ($requestAmount < 130) {
+            return response()->json(['message' => 'You cannot withdraw an amount less than 100 after commission'], 400);
+        }
+
+
+        if ($latestWithdrawal !== null) {
+
+            if ($requestAmount > $latestWithdrawal) {
+                return response()->json(['message' => 'You do not have sufficient amount in your RefundMe A'], 400);
+            }
+            $minusResidual = $latestWithdrawal - $requestAmount;
+        }
+
+        $refundmeAmountWithdrawn = $requestAmount - $charges;
+        $acct = $request->account_number;
+
+        $bank = Bank::where('user_id', auth()->user()->id)
+            ->where('account_number', $acct)
+            ->first();
+
+        if (!$bank) {
+            return response()->json(['message' => 'Bank account not found'], 404);
+        }
+
+        $beneficiaryReferenceId = $bank->referenceId;
+
+        $token = $this->paythruService->handle();
+
+        if (!$token) {
+            return "Token retrieval failed";
+        } elseif (is_string($token) && strpos($token, '403') !== false) {
+            return response()->json([
+                'error' => 'Access denied. You do not have permission to access this resource.'
+            ], 403);
+        }
+
+        $data = [
             'productId' => $productId,
-            'amount' => $amount,
+            'amount' => $refundmeAmountWithdrawn,
             'beneficiary' => [
-            'nameEnquiryReference' => $beneficiaryReferenceId
+                'nameEnquiryReference' => $beneficiaryReferenceId
             ],
         ];
-   //return $data;
-      //return $token;
-        $url = $prodUrl;
-        $urls = $url.'/transaction/settlement';
-    
-         $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Authorization' => $token,
-      ])->post($urls, $data );
-     //return $response->transactionReference;
-      if($response->failed())
-      {
-        return false;
-      }else{
-          
-        //$collection = json_decode($response->body(), true);
-        //dd($collection);
-        $collection = $response->object();
-        $saveTransactionReference = Withdrawal::where(['expense_id' => $expenseAmount->id, 'beneficiary_id' => Auth::user()->id])->update([
-            'transactionReference' => $collection->transactionReference,
+
+        $url = $prodUrl . '/transaction/settlement';
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => $token,
+        ])->post($url, $data);
+
+        if ($response->failed()) {
+            return response()->json(['message' => 'Settlement request failed'], 500);
+        }
+
+
+        UserExpense::where('principal_id', auth()->user()->id)->where('stat', 1)
+            ->latest()->update(['minus_residual' => $minusResidual]);
+
+        // Save the withdrawal details
+        $withdrawal = new Withdrawal([
+            'account_number' => $request->account_number,
+            'description' => $request->description,
+            'beneficiary_id' => auth()->user()->id,
+            'amount' => $requestAmount - $charges,
+            'bank' => $request->bank,
+            'charges' => $charges,
+            'uniqueId' => Str::random(10),
         ]);
-       // $collection->transactionReference;
-      return response()->json($collection);
-    
-  }
-}
 
+        $withdrawal->save();
 
-public function refundmeSettlementWebhookResponse(Request $request)
-   {
-       
-        $productId = env('PayThru_expense_productid');
-       
-        $response = $request->all();
-       // $dataEncode = json_encode($response);
-        $data = json_decode($response);
-        if($data->notificationType == 2){
-         // return "good";
-        $updatePaybackWithdrawal = Withdrawal::where(['transactionReferences'=> $data->transactionDetails->transactionReferences, $productId => $data->transactionDetails->productId])->update([
-            'paymentAmount' => $data->transactionDetails->paymentAmount,
-            'recordDateTime' => $data->transactionDetails->recordDateTime,
-        ]);
-          Log::info("payback settlement done");
-          http_response_code(200);
+        $collection = $response->json();
 
-        }else
-       return response([
-                'message' => 'Notification type is not 2'
-            ], 401);
+        Log::info('API response: ' . json_encode($collection));
+        $saveTransactionReference = Withdrawal::where('beneficiary_id', Auth::user()->id)
+            ->where('uniqueId', $withdrawal->uniqueId)
+            ->update([
+                'transactionReferences' => $collection['transactionReference'],
+                'status' => $collection['message'],
+
+            ]);
+
+        return response()->json($saveTransactionReference, 200);
     }
+
+
+
+
+
 
 
 public function accountVerification(Request $request)
 {
 
-$user = Auth::user()->id;
-//return $user;
-$prodUrl = env('PayThru_Base_Live_Url');
-$account = $request->account_number;
-$bankCode = $request->bankCode;
+    $user = Auth::user()->id;
 
-//$param = Setting::where('id', 1)->first();
-//$token = $param->token;
-$getLastName = User::where('id', $user)->first();
-$last = $getLastName->last_name;
-$first = $getLastName->first_name;
-$middle_name = $getLastName->middle_name;
-$fullName = $last.' '.$first.' '.$middle_name;
-$fullNames =$first.' '.$middle_name.' '.$last;
-    
-$token = $this->paythruService->handle();
+    $prodUrl = env('PayThru_Base_Live_Url');
+    $account = $request->account_number;
+    $bankCode = $request->bankCode;
 
-//return $fullName;
-   $response = Http::withHeaders([
+    $getLastName = User::where('id', $user)->first();
+    $last = $getLastName->last_name;
+    $first = $getLastName->first_name;
+    $middle_name = $getLastName->middle_name;
+    $fullName = $last.' '.$first.' '.$middle_name;
+    $fullNames = $first.' '.$middle_name.' '.$last;
+
+    $token = $this->paythruService->handle();
+      if (!$token) {
+        return "Token retrieval failed";
+    } elseif (is_string($token) && strpos($token, '403') !== false) {
+        return response()->json([
+            'error' => 'Access denied. You do not have permission to access this resource.'
+        ], 403);
+    }
+    $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,
-  ])->get("https://services.paythru.ng/cardfree/bankinfo/nameInfo/$account/$bankCode");
-  if($response->Successful())
-  //return $response;
-    {   
-        
-  $details = $response->object();
-  
-  $getData = $details->data;
- 
- return response()->json($details);
-    
- //}
-    
-  }
-    return null;
-    
+    ])->get("https://services.paythru.ng/cardfree/bankinfo/nameInfo/$account/$bankCode");
+
+    if ($response->successful()) {
+        $details = $response->object();
+        $getData = $details->data;
+        return response()->json($details);
+    }
+
+    return response()->json(['error' => 'Account verification failed'], 400);
+
 }
- 
+
     public function getAllMemebersOfAnExpense($expenseId)
 {
         $getExpenseMember = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $expenseId)->select('email')->get();
@@ -633,5 +838,148 @@ $token = $this->paythruService->handle();
         $UserAmountsPaid = userExpense::where('principal_id', Auth::user()->id)->where('expense_id', $expenseId)->get();
         return response()->json($UserAmountsPaid);
     }
-       
+
+
+
+
+public function reinitiateTransaction(Request $request, $expenseId, $id)
+  {
+
+    $expense = Expense::findOrFail($expenseId);
+    $existingUserExpense = userExpense::findOrFail($id);
+//    $getUniqueId = userExpense::findorFail($id);
+    // Find the existing UserExpense record with the desired uidd
+  //  $existingUserExpense = UserExpense::where('principal_id', Auth::user()->id)
+//	->where('id', $id)
+       // ->first();
+if ($expense->user_id !== Auth::user()->id) {
+        return response([
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
+    }
+
+
+
+ if ($existingUserExpense->principal_id !== Auth::user()->id) {
+        return response([
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
+    }
+
+
+
+//	$getUniqueId = $existingUserExpense->id;
+//dd($getUniqueId);
+//	 Log::info("re-initiate refundme not found for refundId : " . $getUniqueId);
+
+    if (!$existingUserExpense) {
+        // If the UserExpense with the desired uidd is not found, return an error response
+        return response([
+            'message' => 'Invalid id. Please provide a valid id for the existing transaction.',
+        ], 422);
+    }
+//	return $existingUserExpense;
+
+    // Fetch the invited user's first and last name based on their email address
+    $invitedUser = Invited::where('email', $existingUserExpense->email)->first();
+    $firstName = $invitedUser->first_name ?? 'Unknown';
+    $lastName = $invitedUser->last_name ?? '';
+
+    // Calculate the payable amount for the new transaction
+    $payable = $existingUserExpense->payable - $existingUserExpense->residualAmount;
+
+        $current_timestamp = now();
+        $timestamp = strtotime($current_timestamp);
+
+        $productId = env('PayThru_expense_productid');
+        $prodUrl = env('PayThru_Base_Live_Url');
+
+        $data = [
+            'amount' => $payable,
+            'productId' => $productId,
+            'transactionReference' => time() . $expenseId,
+            'paymentDescription' => $expense->description,
+            'paymentType' => 1,
+            'sign' => hash('sha512', $payable . env('PayThru_App_Secret')),
+            'displaySummary' => true,
+        ];
+//return $data;
+        $token = $this->paythruService->handle();
+	  if (!$token) {
+        return "Token retrieval failed";
+    } elseif (is_string($token) && strpos($token, '403') !== false) {
+        return response()->json([
+            'error' => 'Access denied. You do not have permission to access this resource.'
+        ], 403);
+    }
+        $url = $prodUrl . '/transaction/create';
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => $token,
+        ])->post($url, $data);
+        if ($response->failed()) {
+            return false;
+        } else {
+            $transaction = json_decode($response->body(), true);
+            if (!$transaction['successful']) {
+                return response("Whoops! " . json_encode($transaction), 422);
+            }
+            $paylink = $transaction['payLink'];
+//$user = Invited::where('auth_id', Auth::user()->id)->where('email', $em)->first();
+            $slip = ['paylink' => $paylink, 'amount' => $data['amount'], 'receipient' => $existingUserExpense->email];
+            $authmail = Auth::user();
+//$userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
+$uxer = $invitedUser->first_name;
+Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new SendUserInviteMail($slip, $authmail, $uxer));
+ // Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
+            if ($paylink) {
+                $getLastString = explode('/', $paylink);
+                $now = end($getLastString);
+
+		// Create a new UserExpense record for the new transaction with the first and last name of the invited user
+    $info = UserExpense::create([
+        'principal_id' => Auth::user()->id,
+        'expense_id' => $expenseId,
+        'name' => $firstName . ' ' . $lastName,
+        'uique_code' => $expense->uique_code,
+        'email' => $existingUserExpense->email,
+        'description' => $expense->description,
+        'first_name' => $firstName,
+        'last_name' => $lastName,
+        'split_method_id' => $request['split_method_id'],
+        'payable' => $payable,
+        'actualAmount' => $expense->actual_amount,
+        'bankName' => $request['bankName'],
+        'account_name' => $request['account_name'],
+        'bankCode' => $request['bankCode'],
+        'account_number' => $request['account_number'],
+        'uidd' => Str::random(10),
+	'paymentReference' => $now
+    ]);
+            }
+            return response()->json($transaction);
+        }
+    }
+
+
+
+ public function checkResidual($expenseId)
+    {
+      $checkAmountPayable = UserExpense::where('principal_id', Auth::user()->id)
+      ->where('expense_id', $expenseId)
+      ->sum('payable');
+      $totalResidual = UserExpense::where('principal_id', Auth::user()->id)
+      ->where('expense_id', $expenseId)
+      ->sum('residualAmount');
+
+  return $totalResidual;
+  if($totalResidual != 0)
+    {
+      $remainingPayablee = $checkAmountPayable - $totalResidual;
+      return $remainingPayablee;
+    }else{
+      return response()->json(['message' => 'No credit yet.'], 422);
+    }
+    }
+
 }

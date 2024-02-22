@@ -5,6 +5,8 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Models\Customer;
+use App\Console\Commands\GeneratePaymentLinksCommand;
+
 
 
 class Kernel extends ConsoleKernel
@@ -16,7 +18,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         //
- 	Commands\SendDeletedCustomersEmail::class,
+ 	Commands\GeneratePaymentLinksCommand::class,
     ];
 
     /**
@@ -27,12 +29,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
- 	$schedule->call(function () {
-            // Your logic to update the customer table
-            Customer::where('flagged', 1)->delete();
-        })->->everyFiveMinutes();
-	$schedule->command('send-deleted-customers-email')->everyFiveMinutes();
+        $schedule->command('payment-links:generate')
+             ->dailyAt('00:00')
+	      ->name('ajo-payment-link');
     }
 
     /**

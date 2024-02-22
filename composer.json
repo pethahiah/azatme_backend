@@ -15,9 +15,12 @@
         "guzzlehttp/guzzle": "^7.5",
         "laravel/framework": "^7.29",
         "laravel/passport": "~9.0",
+        "laravel/telescope": "*",
         "laravel/tinker": "^2.5",
         "league/flysystem-aws-s3-v3": "*",
         "maatwebsite/excel": "^3.1",
+        "predis/predis": "*",
+        "simplesoftwareio/simple-qrcode": "*",
         "twilio/sdk": "^6.43"
     },
     "require-dev": {
