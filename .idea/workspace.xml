@@ -5,33 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4766af5b-6ef6-4d18-9fcc-41fabafc7530" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/Azat_pay.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/2024_03_03_221955_create_surveys_table.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/Survey.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/SurveyController.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Services/ChargeService.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/azatme_backend.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/migrations.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/AdminController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/AdminController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/AjoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/AjoController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/AuthController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/AuthController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/BusinessTransactionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/BusinessTransactionController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/ExpenseController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/ExpenseController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/GroupController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/GroupController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/ReferralController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/ReferralController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/old_ExpenseController.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Middleware/VerifyCsrfToken.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Middleware/VerifyCsrfToken.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Referral.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Referral.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/ReferralSetting.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/ReferralSetting.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Services/ReferralSettings.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/ReferralSettings.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Services/Referrals.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/Referrals.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/User.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/User.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/migrations.zip" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/api.php" beforeDir="false" afterPath="$PROJECT_DIR$/routes/api.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -207,7 +181,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "new-branch",
+    "git-widget-placeholder": "Referral-charges",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -242,7 +216,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1711821981272</updated>
-      <workItem from="1711821991512" duration="19735000" />
+      <workItem from="1711821991512" duration="21093000" />
     </task>
     <servers />
   </component>
