@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SurveyController">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/Http/Controllers/API/SurveyController.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

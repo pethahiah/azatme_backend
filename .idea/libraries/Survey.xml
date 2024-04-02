@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="migrations">
+  <library name="Survey">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/database/migrations.zip!/" />
+      <root url="jar://$PROJECT_DIR$/app/Survey.zip!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

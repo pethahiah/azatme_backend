@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Services\Referrals;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Requests\LoginRequest;
 use Carbon\Carbon;
 use App\User;
-use Mail;
-use Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\BusinessRequest;
 use App\Business;
@@ -28,9 +29,40 @@ use Illuminate\Support\Facades\DB;
 class AuthController extends Controller
 {
 
+
+//      public function register(Request $request){
+//         $this->validate($request, [
+//         'name' => 'required|min:3|max:50',
+//         'email' => 'required|email|unique:users',
+//         'usertype' => 'required|string',
+//         'company_name' => 'string',
+//         'phone' => 'string|unique:users|required',
+//         'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
+//         'password_confirmation' => 'required|same:password',
+//     ]);
+
+//         $user = new User([
+//             'name' => $request->name,
+//             'email' => $request->email,
+//             'usertype' => $request->usertype,
+//             'company_name' => $request->company_name,
+//             'phone'=> $request->phone,
+//             'password' => Hash::make($request->password)
+//         ]);
+//         $user->save();
+//         return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);
+// }
+
+
+    public $referral;
+
+    public function __construct(Referrals $referral)
+    {
+        $this->referral = $referral;
+    }
+    
+    
      //Register
-
-
      public function register(Request $request){
         $this->validate($request, [
         'name' => 'required|min:3|max:50',
@@ -41,7 +73,19 @@ class AuthController extends Controller
         'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
         'password_confirmation' => 'required|same:password',
     ]);
+         if ($url = $request->url) {
+             $result = $this->referral->processReferral($url);
 
+             if($result['success']) {
+
+               Log::info($result['message']);
+
+             } else {
+
+                 Log::error($result['error']);
+
+             }
+         }
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
@@ -53,6 +97,9 @@ class AuthController extends Controller
         $user->save();
         return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);
 }
+
+
+
 
     //login function
 
@@ -186,9 +233,10 @@ public function loginViaOtp(Request $request)
                 'bvn' => 'string|min:11|max:11',
                 'country' => 'string',
                 'state' => 'string',
-		'age' => 'string',
-		'gender' => 'string',
-		'lga_of_origin' => 'string',
+		        'age' => 'string',
+		        'gender' => 'string',
+		        'lga_of_origin' => 'string',
+		        'maiden'=> 'string',
             ]);
 
 
@@ -209,6 +257,7 @@ public function loginViaOtp(Request $request)
                     $user->age = $request->age;
                     $user->gender = $request->gender;
                     $user->lga_of_origin = $request->lga_of_origin;
+                    $user->maiden = $request->maiden_name;
                     // $user->image = $request->image;
                    //return $user;
                             $user->update();
@@ -395,16 +444,26 @@ public function getBVNDetails(Request $request)
 
 
 
+
 private function areUserDetailsMatching($user, $validationData)
 {
+    $surnameMatch = strtoupper($user->last_name) === $validationData['surname'];
+   
+    if (!$surnameMatch && isset($user->maiden)) {
+        $maidenMatch = strtoupper($user->maiden) === $validationData['surname'];
+        if ($maidenMatch) {
+            $surnameMatch = true;
+        }
+    }
+
     return (
-        isset($validationData['surname']) &&
+        $surnameMatch &&
         isset($validationData['first_name']) &&
-        strtoupper($user->last_name) === $validationData['surname'] &&
         strtoupper($user->first_name) === $validationData['first_name'] &&
         ucfirst($user->gender) === $validationData['gender']
     );
 }
+
 
 
 

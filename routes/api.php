@@ -1,10 +1,10 @@
 <?php
 
 use App\Http\Controllers\API\ReferralSettingController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ReferralController;
 use App\Http\Controllers\API\AdminController;
+use App\Http\Controllers\API\ChargesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,7 +40,7 @@ Route::namespace('API')->group(function () {
     Route::post('/agowebhook', 'AjoController@webhookAjoResponse');
     Route::get('get-ajo-user-bank-details/{id}', 'AjoController@getUsersWithBankInfo');
     Route::get('get-ajo-by-id/{ajoId}', 'AjoController@getAjoByIdd');
-
+    Route::post('/process-data', 'SurveyController@handle');
 
 
     //Complain
@@ -105,7 +105,11 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::put('/update-ref/{referralId}', [ReferralSettingController::class, 'updateReferral']);
     Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
     Route::get('/all-users', [AdminController::class, 'getAllUsers']);
-    Route::get('/users/{id}', [AdminController::class, 'getUserById']);
+    Route::get('/users/{email}', [AdminController::class, 'getUserById']);
+    Route::post('/charges', [ChargesController::class, 'createCharges']);
+    Route::get('/charges', [ChargesController::class, 'readCharges']);
+    Route::put('/charges/{id}', [ChargesController::class, 'updateCharge']);
+    Route::delete('/charges/{id}', [ChargesController::class, 'deleteCharge']);
     });
 
 

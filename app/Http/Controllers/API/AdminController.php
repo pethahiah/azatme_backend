@@ -445,9 +445,9 @@ public function countUserAddedToExpense($refundmeId)
         return response()->json($users);
     }
 
-    public function getUserById($id): \Illuminate\Http\JsonResponse
+    public function getUserById($email): \Illuminate\Http\JsonResponse
     {
-        $user = User::find($id);
+        $user = User::find($email);
 
         if ($user) {
             return response()->json($user);
