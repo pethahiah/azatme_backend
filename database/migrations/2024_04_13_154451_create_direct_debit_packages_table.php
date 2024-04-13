@@ -15,17 +15,11 @@ class CreateDirectDebitPackagesTable extends Migration
     {
         Schema::create('direct_debit_packages', function (Blueprint $table) {
             $table->id();
+            $table->string('productName')->nullable();
+            $table->foreignId('productId')->nullable();
+            $table->string('description')->nullable();
             $table->timestamps();
-        });
-    }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::dropIfExists('direct_debit_packages');
+        });
     }
 }
