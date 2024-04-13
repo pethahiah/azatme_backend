@@ -4,6 +4,8 @@ namespace App\Services;
 
 
 use App\Referral;
+use App\ReferralBy;
+use App\User;
 use App\ReferralSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -35,8 +37,14 @@ class Referrals
         if (!$referral) {
             return 'No referral found for the user';
         }
+        $referralSetting = ReferralSetting::where('status', 'active')->latest()->first();
 
-        if ($this->isReferralOngoing($referral)) {
+        if (!$referralSetting) {
+            return 'No active referral setting found';
+        }
+
+
+        if ($this->isReferralOngoing($referralSetting)) {
             $this->updateReferralPoint($modelType);
             return 'Referral program is active';
         }
@@ -49,14 +57,15 @@ class Referrals
         return Referral::where('user_id', Auth::id())->first();
     }
 
-    private function isReferralOngoing($referral)
+    private function isReferralOngoing($referralSetting): bool
     {
-        return $referral->duration === 'evergreen' || $this->isFixedReferralOngoing($referral);
+
+        return $referralSetting->duration === 'evergreen' || $this->isFixedReferralOngoing($referralSetting);
     }
 
-    private function isFixedReferralOngoing($referral)
+    private function isFixedReferralOngoing($referralSetting)
     {
-        $referralEndDate = Carbon::parse($referral->end_date);
+        $referralEndDate = Carbon::parse($referralSetting->end_date);
         $currentDate = Carbon::now();
 
         return $referralEndDate->lessThanOrEqualTo($currentDate)
@@ -81,6 +90,44 @@ class Referrals
             Log::info('Referral points updated successfully');
         }
         Log::warning('No referral found for the specified product or referral settings not found for the specified point limit');
+    }
+
+
+     public function processReferral($url): array
+     {
+
+        $parsedUrl = parse_url($url);
+
+
+        if (isset($parsedUrl['query'])) {
+            parse_str($parsedUrl['query'], $queryParams);
+
+            // Check if the required parameters are present
+            if (isset($queryParams['userName']) && isset($queryParams['ref_code'])) {
+                $userName = $queryParams['userName'];
+                $refCode = $queryParams['ref_code'];
+
+                // Fetch the user from the user table
+                $user = User::where('name', $userName)->first();
+
+                // Check if the user exists
+                if ($user) {
+                    // Save user details in the referral_by table
+                    ReferralBy::create([
+                        'user_id' => $user->id,
+                        'ref_code' => $refCode,
+                    ]);
+
+                    return ['success' => true, 'message' => 'User details saved successfully'];
+                } else {
+                    return ['success' => false, 'error' => 'User not found'];
+                }
+            } else {
+                return ['success' => false, 'error' => 'Invalid URL parameters'];
+            }
+        } else {
+            return ['success' => false, 'error' => 'No query parameters found in the URL'];
+        }
     }
 
 

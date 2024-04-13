@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @method checkSettingEnquiry(string $modelType)
  * @method static where(string $string, $id)
+ * @method static create(array $data)
  */
 class Referral extends Model
 {
@@ -17,6 +18,8 @@ class Referral extends Model
         'ref_code',
         'ref_by',
         'point',
-        'product'
+        'product',
+        'end_date',
+        'referral_duration',
     ];
 }

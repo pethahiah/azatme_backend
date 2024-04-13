@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static where(string $string, $referralId)
  * @method static create(array $array)
  * @method static whereNotNull(string $string)
+ * @method static orderBy(string $string, string $string1)
  */
 class ReferralSetting extends Model
 {
@@ -20,6 +21,7 @@ class ReferralSetting extends Model
         'point_conversion',
         'status',
         'end_date',
-        'start_date'
+        'start_date',
+        'duration'
     ];
 }

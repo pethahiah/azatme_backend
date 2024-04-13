@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API;
 
 
+use App\charge;
 use App\Http\Controllers\Controller;
 use App\ReferralSetting;
+use App\Services\ChargeService;
 use App\Services\Referrals;
 use Illuminate\Http\Request;
 use App\Http\Requests\ExpenseRequest;
@@ -19,7 +21,7 @@ use Auth;
 use App\Bank;
 use Mail;
 use Illuminate\Support\Str;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Notifications\BusinessNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Http;
@@ -45,10 +47,13 @@ class BusinessTransactionController extends Controller
     public $referral;
     public $paythruService;
 
-    public function __construct(PaythruService $paythruService, Referrals $referral)
+    public $chargeService;
+
+    public function __construct(PaythruService $paythruService, Referrals $referral, ChargeService $chargeService)
     {
         $this->paythruService = $paythruService;
         $this->referral = $referral;
+        $this->chargeService = $chargeService;
     }
 
      public function creatProduct(Request $request)
@@ -927,8 +932,9 @@ public function AzatBusinessCollection(Request $request)
     $hash = hash('sha512', $timestamp . $secret);
     $AppId = env('PayThru_ApplicationId');
     $prodUrl = env('PayThru_Base_Live_Url');
-    $charges = env('PayThru_Withdrawal_Charges');
 
+    $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
+    $applyCharges = $this->chargeService->applyCharges($latestCharge);
     $requestAmount = $request->amount;
 
 
@@ -960,7 +966,7 @@ public function AzatBusinessCollection(Request $request)
 
       $data = [
             'productId' => $productId,
-            'amount' => $requestAmount - $charges,
+            'amount' => $requestAmount - $latestCharge->charges,
             'beneficiary' => [
             'nameEnquiryReference' => $beneficiaryReferenceId
             ],
@@ -991,16 +997,29 @@ public function AzatBusinessCollection(Request $request)
         BusinessTransaction::where('owner_id', auth()->user()->id)->where('stat', 1)
             ->latest()->update(['minus_residual' => $minusResidual]);
 
-    // Save the withdrawal details
-    $BusinessWithdrawal = new BusinessWithdrawal([
-        'account_number' => $request->account_number,
-        'description' => $request->description,
-        'beneficiary_id' => auth()->user()->id,
-        'amount' => $requestAmount - $charges,
-        'bank' => $request->bank,
-        'charges' => $charges,
-        'uniqueId' => Str::random(10),
-    ]);
+
+          if ($applyCharges) {
+              // Save the withdrawal details with charges
+              $BusinessWithdrawal = new BusinessWithdrawal([
+                  'account_number' => $request->account_number,
+                  'description' => $request->description,
+                  'beneficiary_id' => auth()->user()->id,
+                  'amount' => $requestAmount - $latestCharge->charges,
+                  'bank' => $request->bank,
+                  'charges' => $latestCharge->charges,
+                  'uniqueId' => Str::random(10),
+              ]);
+          } else {
+              // Save the withdrawal details without charges
+              $BusinessWithdrawal = new BusinessWithdrawal([
+                  'account_number' => $request->account_number,
+                  'description' => $request->description,
+                  'beneficiary_id' => auth()->user()->id,
+                  'amount' => $requestAmount,
+                  'bank' => $request->bank,
+                  'uniqueId' => Str::random(10),
+              ]);
+          }
 
     $BusinessWithdrawal->save();
 
@@ -1038,7 +1057,7 @@ public function AzatBusinessCollection(Request $request)
 
     }
 
-    public function getAllCustomersUnderABusinessOwner()
+    public function getAllCustomersUnderABusinessOwner(): \Illuminate\Http\JsonResponse
     {
 
         $getUser = Auth::user()->id;
@@ -1053,7 +1072,7 @@ public function AzatBusinessCollection(Request $request)
     {
         $getUser = Auth::user()->id;
         $countAllInvoiceByABusinessOwner = businessTransaction::where('owner_id', $getUser)->count();
-        return response()->json($countAllInvoiceByABusinessOnwer);
+        return response()->json($countAllInvoiceByABusinessOwner);
 
     }
     //Business specific

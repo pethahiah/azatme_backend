@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\charge;
 use App\Http\Controllers\Controller;
 use App\ReferralSetting;
+use App\Services\ChargeService;
 use App\Services\Referrals;
 use Illuminate\Http\Request;
 use App\Http\Requests\GroupRequest;
@@ -47,11 +49,13 @@ class GroupController extends Controller
 
     public $referral;
     public $paythruService;
+    public $chargeService;
 
-    public function __construct(PaythruService $paythruService, Referrals $referral)
+    public function __construct(PaythruService $paythruService, Referrals $referral, ChargeService $chargeService)
     {
         $this->paythruService = $paythruService;
         $this->referral = $referral;
+        $this->chargeService = $chargeService;
     }
 
 public function getFundDonor(Request $request, $transactionReference)
@@ -690,7 +694,9 @@ public function AzatGroupCollection(Request $request)
     $hash = hash('sha512', $timestamp . $secret);
     $AppId = env('PayThru_ApplicationId');
     $prodUrl = env('PayThru_Base_Live_Url');
-    $charges = env('PayThru_Withdrawal_Charges');
+
+    $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
+    $applyCharges = $this->chargeService->applyCharges($latestCharge);
 
     $requestAmount = $request->amount;
 
@@ -727,7 +733,7 @@ public function AzatGroupCollection(Request $request)
         $minusResidual = $kontributeTransactions - $requestAmount;
     }
 
-    $kontributeAmountWithdrawn = $requestAmount - $charges;
+    $kontributeAmountWithdrawn = $requestAmount - $latestCharge->charges;
     $acct = $request->account_number;
 
     $bank = Bank::where('user_id', auth()->user()->id)
@@ -777,16 +783,29 @@ public function AzatGroupCollection(Request $request)
 	'action' => 'debit',
     ]);
 
-    // Save the withdrawal details
-    $withdrawal = new GroupWithdrawal([
-        'account_number' => $request->account_number,
-        'description' => $request->description,
-        'beneficiary_id' => auth()->user()->id,
-        'amount' => $requestAmount - $charges,
-        'bank' => $request->bank,
-        'charges' => $charges,
-        'uniqueId' => Str::random(10),
-    ]);
+
+    if ($applyCharges) {
+        // Save the withdrawal details with charges
+        $withdrawal = new GroupWithdrawal([
+            'account_number' => $request->account_number,
+            'description' => $request->description,
+            'beneficiary_id' => auth()->user()->id,
+            'amount' => $requestAmount - $latestCharge->charges,
+            'bank' => $request->bank,
+            'charges' => $latestCharge->charges,
+            'uniqueId' => Str::random(10),
+        ]);
+    } else {
+        // Save the withdrawal details without charges
+        $withdrawal = new GroupWithdrawal([
+            'account_number' => $request->account_number,
+            'description' => $request->description,
+            'beneficiary_id' => auth()->user()->id,
+            'amount' => $requestAmount,
+            'bank' => $request->bank,
+            'uniqueId' => Str::random(10),
+        ]);
+    }
 
     $withdrawal->save();
 

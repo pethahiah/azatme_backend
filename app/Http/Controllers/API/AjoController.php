@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\charge;
 use App\Http\Controllers\Controller;
 use App\ReferralSetting;
+use App\Services\ChargeService;
 use App\Services\Referrals;
 use Illuminate\Http\Request;
 use App\Services\PaythruService;
@@ -30,6 +32,7 @@ use Illuminate\Support\Carbon;
 use App\AjopaymentSent;
 use App\AjoWithdrawal;
 
+
 class AjoController extends Controller
 {
     //
@@ -37,12 +40,14 @@ class AjoController extends Controller
     public $paythruService;
     public $referral;
     public $paymentLinkService;
+    public $chargeService;
 
-    public function __construct(PaythruService $paythruService, PaymentLinkService $paymentLinkService, Referrals $referral)
+    public function __construct(PaythruService $paythruService, PaymentLinkService $paymentLinkService, Referrals $referral, ChargeService $chargeService)
     {
         $this->paythruService = $paythruService;
         $this->paymentLinkService = $paymentLinkService;
         $this->referral = $referral;
+        $this->chargeService = $chargeService;
     }
 
 
@@ -377,12 +382,6 @@ public function declineInvitation(Request $request)
     }
 }
 
-
-
-
-
-
-
 public function getAllAjoCreatedPerUser(Request $request)
 {
     $perPage = $request->input('per_page', 10);
@@ -484,13 +483,6 @@ public function webhookAjoResponse(Request $request)
 	$invitation->residualAmount += $AjoContributor->residualAmount;
         $invitation->save();
 }
-//        $activeOpenPayment = new OpenActive([
-  //          'transactionReference' => $data->transactionDetails->merchantReference,
-    //        'product_id' => $productId,
-      //      'product_type' => $modelType
-      //  ]);
-       // $activeOpenPayment->save();
-
         Log::info("Ajo Contributor saved in Contributor table");
         Log::info("Invitation updated");
 
@@ -590,14 +582,13 @@ public function AjoPayout(Request $request)
         $hash = hash('sha512', $timestamp . $secret);
         $AppId = env('PayThru_ApplicationId');
         $prodUrl = env('PayThru_Base_Live_Url');
-        $charges = env('PayThru_Withdrawal_Charges');
+
+
+        $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
+        $applyCharges = $this->chargeService->applyCharges($latestCharge);
+
 
         $requestAmount = $request->amount;
-
-        //$latestWithdrawal = AjoBalanace::where('user_id', auth()->user()->id)
-          //  ->latest()
-           // ->pluck('balance')
-           // ->first();
 	$AjoBalance = AjoWithdrawal::where('beneficiary_id', Auth::user()->id)->whereNotNull('status')->sum('amount');
    	$getAjoTransactions = Invitation::where('email', Auth::user()->email)->sum('residualAmount');
     	$AjoTransactions = $getAjoTransactions - $AjoBalance;
@@ -612,7 +603,7 @@ public function AjoPayout(Request $request)
             }
         $minusResidual = $AjoTransactions - $requestAmount;
 	}
-        $refundmeAmountWithdrawn = $requestAmount - $charges;
+        $refundmeAmountWithdrawn = $requestAmount - $latestCharge->charges;
         $acct = $request->account_number;
 
         $bank = Bank::where('account_number', $acct)
@@ -623,7 +614,7 @@ public function AjoPayout(Request $request)
         }
 
         $beneficiaryReferenceId = $bank->referenceId;
-	$benefit = $bank->user_id;
+	    $benefit = $bank->user_id;
         $token = $this->paythruService->handle();
 
         if (!$token) {
@@ -653,27 +644,34 @@ public function AjoPayout(Request $request)
             return response()->json(['message' => 'Payout request failed'], 500);
         }
 
-
-       // Invitation::where('email', auth()->user()->email)->where('stat', 1)
-         //   ->latest()->update(['minus_residual' => $minusResidual]);
-
 	 AjoBalanace::create([
         	'user_id' => Auth::user()->id,
         	'balance' => $minusResidual,
-		'action' => 'debit',
+		    'action' => 'debit',
     	]);
 
-
-        // Save the withdrawal details
-        $withdrawal = new AjoWithdrawal([
-            'accountNumber' => $request->accountNumber,
-            'description' => $request->description,
-            'beneficiary_id' => $benefit,
-            'amount' => $requestAmount - $charges,
-            'bank' => $request->bank,
-            'charges' => $charges,
-            'uniqueId' => Str::random(10),
-        ]);
+        if ($applyCharges) {
+            // Save the withdrawal details with charges
+            $withdrawal = new AjoWithdrawal([
+                'account_number' => $request->account_number,
+                'description' => $request->description,
+                'beneficiary_id' => auth()->user()->id,
+                'amount' => $requestAmount - $latestCharge->charges,
+                'bank' => $request->bank,
+                'charges' => $latestCharge->charges,
+                'uniqueId' => Str::random(10),
+            ]);
+        } else {
+            // Save the withdrawal details without charges
+            $withdrawal = new AjoWithdrawal([
+                'account_number' => $request->account_number,
+                'description' => $request->description,
+                'beneficiary_id' => auth()->user()->id,
+                'amount' => $requestAmount,
+                'bank' => $request->bank,
+                'uniqueId' => Str::random(10),
+            ]);
+        }
 
         $withdrawal->save();
 
