@@ -15,17 +15,21 @@ class CreateDirectDebitProductsTable extends Migration
     {
         Schema::create('direct_debit_products', function (Blueprint $table) {
             $table->id();
+            $table->string('productName')->nullable();
+            $table->boolean('isPacketBased')->default(0);
+            $table->boolean('isUserResponsibleForCharges')->default(0);
+            $table->boolean('partialCollectionEnabled')->default(0);
+            $table->string('collectionAccountId')->nullable();
+            $table->string('productDescription')->nullable();
+            $table->enum('classification', array('SubscriptionService', 'FixedContract'))->nullable();
+            $table->string('remarks')->nullable();
+            $table->enum('feeType', array('FixedAmount', 'Variable', 'Both'))->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::dropIfExists('direct_debit_products');
-    }
+
+
+
+
 }
