@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\DirectDebitController;
 use App\Http\Controllers\API\ReferralSettingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ReferralController;
@@ -41,7 +42,7 @@ Route::namespace('API')->group(function () {
     Route::get('get-ajo-user-bank-details/{id}', 'AjoController@getUsersWithBankInfo');
     Route::get('get-ajo-by-id/{ajoId}', 'AjoController@getAjoByIdd');
     Route::post('/process-data', 'SurveyController@handle');
-Route::get('/get-lastUpdated-charges', [ChargesController::class, 'getLastUpdatedCharge']);
+    Route::get('/get-lastUpdated-charges', [ChargesController::class, 'getLastUpdatedCharge']);
 
     //Complain
     Route::get('/auth', 'AuthController@initiateBvnConsent');
@@ -110,9 +111,8 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('/charges', [ChargesController::class, 'readCharges']);
     Route::put('/charges/{id}', [ChargesController::class, 'updateCharge']);
     Route::delete('/charges/{id}', [ChargesController::class, 'deleteCharge']);
+    Route::post('/create-mandate-product', [DirectDebitController::class, 'addProduct']);
     });
-
-
 
 Route::middleware(['auth:api', 'user.status'])->group(function () {
     // User Update
@@ -312,9 +312,9 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('/generate-link', [ReferralController::class, 'generateReferralUrl']);
     Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
        });
-       
+
     //Charges
-     
+
 
     });
 
