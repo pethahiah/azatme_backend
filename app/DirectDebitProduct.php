@@ -8,6 +8,7 @@ class DirectDebitProduct extends Model
 {
     //
     protected $fillable = [
+        'productId',
         'isPacketBased',
         'productName',
         'isUserResponsibleForCharges',
