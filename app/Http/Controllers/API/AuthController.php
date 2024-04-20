@@ -60,8 +60,8 @@ class AuthController extends Controller
     {
         $this->referral = $referral;
     }
-    
-    
+
+
      //Register
      public function register(Request $request){
         $this->validate($request, [
@@ -213,7 +213,8 @@ public function loginViaOtp(Request $request)
 
     //logout function
 
-    public function logout() {
+    public function logout(): \Illuminate\Http\JsonResponse
+    {
 
         if(Auth::check()) {
         Auth::user()->token()->revoke();
@@ -448,7 +449,7 @@ public function getBVNDetails(Request $request)
 private function areUserDetailsMatching($user, $validationData)
 {
     $surnameMatch = strtoupper($user->last_name) === $validationData['surname'];
-   
+
     if (!$surnameMatch && isset($user->maiden)) {
         $maidenMatch = strtoupper($user->maiden) === $validationData['surname'];
         if ($maidenMatch) {

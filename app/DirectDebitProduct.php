@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @method static where(mixed $productId, mixed $productId1)
+ * @property mixed $productId
  */
 class DirectDebitProduct extends Model
 {

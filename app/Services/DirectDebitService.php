@@ -6,7 +6,6 @@ use App\DirectDebitProduct;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 
 
 class DirectDebitService
@@ -27,9 +26,12 @@ class DirectDebitService
             $product->partialCollectionEnabled = false;
             $product->save();
 
-            // Send data to third-party API
+            // Serialize product object into JSON
+            $productData = json_encode($product);
+
+            // Send product data to third-party API
             $apiUrl = env("Paythru_Direct_Debt_Test_Url");
-            $response = Http::post($apiUrl, $requestData);
+            $response = Http::post($apiUrl, ['product' => $productData]);
 
             // Check if API call was successful
             if ($response->successful()) {
@@ -42,29 +44,28 @@ class DirectDebitService
                     $productId = $responseData['data']['productId'];
 
                     // Update product with API-provided product ID
-                    $product->productID = $productId;
+                    $product->productId = $productId;
                     $product->save();
 
                     // Log the response
-                    Log::info('Response from third-party API: ' . $response->body());
-
+                    Log::info('Response from paythru API: ' . $response->body());
                 } else {
                     // Log the error response
-                    Log::error('Error response from third-party API: ' . $response->body());
+                    Log::error('Error response from paythru API: ' . $response->body());
 
                     // Throw an exception with the error message from the API response
-                    throw new Exception('Failed to create product. Third-party API returned an error: ' . $responseData['message']);
+                    throw new Exception('Failed to create product. paythru returned an error: ' . $responseData['message']);
                 }
             } else {
                 // Log the error response
-                Log::error('Error response from third-party API: ' . $response->body());
+                Log::error('Error response from paythru: ' . $response->body());
 
                 // Throw an exception if the API call was not successful
-                throw new Exception('Failed to create product. Third-party API returned an error.');
+                throw new Exception('Failed to create product. paythru returned an error.');
             }
         } catch (Exception $e) {
             // Log the exception
-            Log::error('Error sending data to third-party API: ' . $e->getMessage());
+            Log::error('Error sending data to paythru: ' . $e->getMessage());
 
             // If product was created before the exception, delete it
             if ($product && $product->exists) {
@@ -73,9 +74,9 @@ class DirectDebitService
             // Re-throw the exception to be caught by the caller
             throw $e;
         }
-        // Return the created product if successful
         return $product;
     }
+
 
 
     public function createMandate()
