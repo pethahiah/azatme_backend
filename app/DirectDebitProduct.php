@@ -4,6 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @method static where(mixed $productId, mixed $productId1)
+ */
 class DirectDebitProduct extends Model
 {
     //
