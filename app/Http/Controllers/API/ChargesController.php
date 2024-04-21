@@ -73,9 +73,9 @@ class ChargesController extends Controller
 
         return response()->json(['message' => 'Charge updated successfully', 'data' => $charge], 200);
     }
-    
-  public function getLastUpdatedCharge()
-{
+
+  public function getLastUpdatedCharge(): \Illuminate\Http\JsonResponse
+  {
     // Retrieve the last updated charge
     $lastUpdatedCharge = Charge::latest()->first();
     return response()->json($lastUpdatedCharge);

@@ -107,11 +107,13 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
     Route::get('/all-users', [AdminController::class, 'getAllUsers']);
     Route::get('/users/{email}', [AdminController::class, 'getUserById']);
+
+
     Route::post('/create-charges', [ChargesController::class, 'createCharges']);
     Route::get('/charges', [ChargesController::class, 'readCharges']);
     Route::put('/charges/{id}', [ChargesController::class, 'updateCharge']);
     Route::delete('/charges/{id}', [ChargesController::class, 'deleteCharge']);
-    Route::post('/create-mandate-product', [DirectDebitController::class, 'addProduct']);
+
     });
 
 Route::middleware(['auth:api', 'user.status'])->group(function () {
@@ -307,14 +309,15 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('get-ajo-withdrawal', 'AjoController@getAjoWithdrawalTransaction');
     Route::post('test-auto', 'AjoController@sendPaymentLinkToUsers');
 
-
     // Referrals
     Route::get('/generate-link', [ReferralController::class, 'generateReferralUrl']);
     Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
        });
 
-    //Charges
+    // Direct Debit
+    Route::post('/create-mandate-product', [DirectDebitController::class, 'addProduct']);
+    Route::post('/create-dd-mandate', [DirectDebitController::class, 'createMandate']);
+    Route::post('/get-dd-bankList', [DirectDebitController::class, 'getDDBankList']);
 
-
-    });
+});
 

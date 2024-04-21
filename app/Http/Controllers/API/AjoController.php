@@ -209,7 +209,7 @@ public function inviteUserToAjo(Request $request, $ajoId)
 
                 // Calculate the next payment dates based on starting date and frequency for this user
                 $nextPaymentDates = [];
-                $paymentDate = $startingDate; // Initial payment date
+                $paymentDate = $startingDate;
 
                 for ($i = 0; $i < $permittedMember; $i++) {
                     $nextPaymentDates[] = $paymentDate;
