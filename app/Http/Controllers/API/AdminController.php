@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 
+use App\Feedback;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -454,6 +455,20 @@ public function countUserAddedToExpense($refundmeId)
         } else {
             return response()->json(['message' => 'User not found'], 404);
         }
+    }
+
+
+    public function markAsCompleted(Request $request, $complainId): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|string|in:unresolved,resolved',
+        ]);
+        // Find the feedback record
+        $feedback = Feedback::findOrFail($complainId);
+        // Update the status
+        $feedback->status = $request->status;
+        $feedback->save();
+        return response()->json(['message' => 'Feedback status updated to completed', 'data' => $feedback], 200);
     }
 
 

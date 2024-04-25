@@ -107,13 +107,11 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
     Route::get('/all-users', [AdminController::class, 'getAllUsers']);
     Route::get('/users/{email}', [AdminController::class, 'getUserById']);
-
-
     Route::post('/create-charges', [ChargesController::class, 'createCharges']);
     Route::get('/charges', [ChargesController::class, 'readCharges']);
     Route::put('/charges/{id}', [ChargesController::class, 'updateCharge']);
     Route::delete('/charges/{id}', [ChargesController::class, 'deleteCharge']);
-
+    Route::put('/admin/update-complain/{complainId}', [AdminController::class,'markAsCompleted']);
     });
 
 Route::middleware(['auth:api', 'user.status'])->group(function () {
