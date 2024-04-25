@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 use App\UserExpense;
 use Auth;
 use App\UserGroup;
-use App\BusinessTransaction; 
-use Illuminate\Support\Facades\Auth;
+use App\BusinessTransaction;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\ActivePayment;
@@ -49,7 +48,7 @@ class BalanceUpdateController extends Controller
                     $updateTable = 'businessTransaction'; // To track which table to update later
                 } else {
                     Log::error("Payment reference not found in userExpense, userGroup, or BusinessTransaction table.");
-               
+
                 }
             }
         }
