@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+
 use App\charge;
 use App\Http\Controllers\Controller;
 use App\ReferralSetting;
@@ -37,10 +38,10 @@ class AjoController extends Controller
 {
     //
 
-    public $paythruService;
-    public $referral;
     public $paymentLinkService;
+    public $referral;
     public $chargeService;
+
 
     public function __construct(PaythruService $paythruService, PaymentLinkService $paymentLinkService, Referrals $referral, ChargeService $chargeService)
     {
@@ -126,11 +127,9 @@ public function getAjoContributors(Request $request, $ajo_id) {
     }
 }
 
-
-
-
 public function createAjo(Request $request)
     {
+
         $acct = $request->input('account_number');
         $bank = Bank::where('user_id', auth()->user()->id)
             ->where('account_number', $acct)
@@ -141,6 +140,7 @@ public function createAjo(Request $request)
         }
 
         $ajo = Ajo::create([
+
             'name' => $request->input('name'),
             'account_number' => $request->input('account_number'),
             'description' => $request->input('description'),
@@ -209,7 +209,8 @@ public function inviteUserToAjo(Request $request, $ajoId)
 
                 // Calculate the next payment dates based on starting date and frequency for this user
                 $nextPaymentDates = [];
-                $paymentDate = $startingDate;
+
+                $paymentDate = $startingDate; // Initial payment date
 
                 for ($i = 0; $i < $permittedMember; $i++) {
                     $nextPaymentDates[] = $paymentDate;
@@ -286,7 +287,9 @@ public function inviteUserToAjo(Request $request, $ajoId)
 
 public function acceptInvitation(Request $request)
 {
-    //$this->paymentLinkService->sendPaymentLinkToUsers();
+
+   // $this->paymentLinkService->sendPaymentLinkToUsers();
+
     $inviteLink = $request->input('inviteLink');
 
     if (strpos($inviteLink, 'action=accept') !== false) {
@@ -350,7 +353,9 @@ public function getAjoById(Request $request, $id)
 
 public function declineInvitation(Request $request)
 {
+
     $inviteLink = $request->input('inviteLink');
+
 
     if (strpos($inviteLink, 'action=decline') !== false) {
         // Extract the token from the inviteLink
@@ -450,7 +455,6 @@ public function webhookAjoResponse(Request $request)
 	$modelType = "Ajo";
 
 	Log::info("Starting webhookAjoResponse", ['data' => $data, 'modelType' => $modelType]);
-
         if ($data->notificationType == 1) {
             if (is_null($data->transactionDetails->paymentReference)) {
          $invitation = Invitation::where('merchantReference', $data->transactionDetails->merchantReference)->first();
@@ -463,7 +467,7 @@ public function webhookAjoResponse(Request $request)
 	if ($invitation) {
 	$AjoContributor = new AjoContributor([
            'payThruReference' => $data->transactionDetails->payThruReference,
-	    'ajo_id' => $invitation->ajo_id,
+            'ajo_id' => $invitation->ajo_id,
             'transactionReference' => $data->transactionDetails->merchantReference,
             'fiName' => $data->transactionDetails->fiName,
             'status' => $data->transactionDetails->status,
@@ -483,6 +487,7 @@ public function webhookAjoResponse(Request $request)
 	$invitation->residualAmount += $AjoContributor->residualAmount;
         $invitation->save();
 }
+
         Log::info("Ajo Contributor saved in Contributor table");
         Log::info("Invitation updated");
 
@@ -494,6 +499,7 @@ public function webhookAjoResponse(Request $request)
 
                 // Update withdrawal
                 $withdrawal = AjoWithdrawal::where('transactionReference', $transactionReferences)->first();
+
                 $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
@@ -546,7 +552,6 @@ public function getUsersWithBankInfo($ajo_id) {
         ->where('invitations.ajo_id', $ajo_id)
         ->get();
 
-
    // $queries = DB::getQueryLog();
    return response()->json(['message' => 'successfully','Data' => $invitations]);
    // return ['invitations' => $invitations, 'queries' => $queries];
@@ -582,6 +587,9 @@ public function AjoPayout(Request $request)
         $hash = hash('sha512', $timestamp . $secret);
         $AppId = env('PayThru_ApplicationId');
         $prodUrl = env('PayThru_Base_Live_Url');
+        $charges = env('PayThru_Withdrawal_Charges');
+
+        $requestAmount = $request->amount;
 
 
         $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
@@ -644,6 +652,27 @@ public function AjoPayout(Request $request)
             return response()->json(['message' => 'Payout request failed'], 500);
         }
 
+
+       // Invitation::where('email', auth()->user()->email)->where('stat', 1)
+         //   ->latest()->update(['minus_residual' => $minusResidual]);
+
+	 AjoBalanace::create([
+        	'user_id' => Auth::user()->id,
+        	'balance' => $minusResidual,
+		'action' => 'debit',
+    	]);
+
+
+        // Save the withdrawal details
+            $withdrawal = new AjoWithdrawal([
+            'accountNumber' => $request->accountNumber,
+            'description' => $request->description,
+            'beneficiary_id' => $benefit,
+            'amount' => $requestAmount - $charges,
+            'bank' => $request->bank,
+            'charges' => $charges,
+            'uniqueId' => Str::random(10),
+        ]);
 	 AjoBalanace::create([
         	'user_id' => Auth::user()->id,
         	'balance' => $minusResidual,
@@ -700,6 +729,7 @@ public function getAjoWithdrawalTransaction(Request $request)
     } else {
         return response([
             'message' => 'Transaction not found for this user'
+
         ], 404);
    }
 }
@@ -744,7 +774,7 @@ public function sendPaymentLinkToUsers()
         foreach ($users as $user) {
             $email = $user->invitation->email;
             $status = $user->invitation->status;
-$day = $today->toDateString();
+            $day = $today->toDateString();
 
             $emailAlreadySent = AjopaymentSent::where([
                 'email' => $email,

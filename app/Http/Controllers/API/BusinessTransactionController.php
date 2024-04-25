@@ -56,53 +56,53 @@ class BusinessTransactionController extends Controller
         $this->chargeService = $chargeService;
     }
 
-     public function creatProduct(Request $request)
-{
-    $user = Auth::user();
-    $userId = $user->id;
+    public function creatProduct(Request $request)
+    {
+        $user = Auth::user();
+        $userId = $user->id;
 
-    $products = $request->products;
+        $products = $request->products;
 
-    // Check if $products is an array
-    if (is_array($products)) {
-        $createdProducts = [];
-        $commonUniqueCode = Str::random(10);
+        // Check if $products is an array
+        if (is_array($products)) {
+            $createdProducts = [];
+            $commonUniqueCode = Str::random(10);
 
-        foreach ($products as $productData) {
-            // Add validation here to ensure required keys are present in $productData
+            foreach ($products as $productData) {
+                // Add validation here to ensure required keys are present in $productData
 
+                $product = Product::create([
+                    'name' => $productData['name'],
+                    'description' => $productData['description'],
+                    'unique_code' => $commonUniqueCode, // Use the common unique code
+                    'business_code' => $productData['business_code'],
+                    'category_id' => $productData['category_id'],
+                    'subcategory_id' => $productData['subcategory_id'],
+                    'amount' => $productData['amount'],
+                    'quantity' => $productData['quantity'],
+                    'user_id' => $userId,
+                ]);
+
+                $createdProducts[] = $product;
+            }
+
+            return response()->json($createdProducts);
+        } else {
+            // Assuming that the single product data is in the request as separate keys
             $product = Product::create([
-                'name' => $productData['name'],
-                'description' => $productData['description'],
-                'unique_code' => $commonUniqueCode, // Use the common unique code
-                'business_code' => $productData['business_code'],
-                'category_id' => $productData['category_id'],
-                'subcategory_id' => $productData['subcategory_id'],
-                'amount' => $productData['amount'],
-		'quantity' => $productData['quantity'],
+                'name' => $request->name,
+                'description' => $request->description,
+                'unique_code' => Str::random(10), // Generate a unique code for a single product
+                'business_code' => $request->business_code,
+                'category_id' => $request->category_id,
+                'subcategory_id' => $request->subcategory_id,
+                'amount' => $request->amount,
+                'quantity' => $request->quantity,
                 'user_id' => $userId,
             ]);
 
-            $createdProducts[] = $product;
+            return response()->json($product);
         }
-
-        return response()->json($createdProducts);
-    } else {
-        // Assuming that the single product data is in the request as separate keys
-        $product = Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'unique_code' => Str::random(10), // Generate a unique code for a single product
-            'business_code' => $request->business_code,
-            'category_id' => $request->category_id,
-            'subcategory_id' => $request->subcategory_id,
-            'amount' => $request->amount,
-	    'quantity' => $request->quantity,
-            'user_id' => $userId,
-        ]);
-
-        return response()->json($product);
-    }
 }
 
 
@@ -332,6 +332,7 @@ public function startBusinessTransaction(Request $request, $business_code)
                     $url = $prodUrl;
                     $urls = $url . '/transaction/create';
 
+
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
                         'Authorization' => $token,
@@ -379,6 +380,7 @@ public function startBusinessTransaction(Request $request, $business_code)
                     $grandTotal = ($amount * $quantity) + $vatAmount;
                     $totalAmount = $grandTotal;
 
+
                     $latest = BusinessTransaction::latest()->first();
                     $invoice_number = "";
                    if (empty($latest)) {
@@ -403,7 +405,6 @@ public function startBusinessTransaction(Request $request, $business_code)
                         'Content-Type' => 'application/json',
                         'Authorization' => $token,
                     ])->post($urls, $data);
-
                     if ($response->failed()) {
                         return response()->json(['error' => 'Your request is unsucceefull at this time,Please try again'], 500);
                     } else {
@@ -437,7 +438,6 @@ public function startBusinessTransaction(Request $request, $business_code)
                             'product_code' => $this->generateUniqueCode()
                         ]);
 
-                     //   return $invoice;
 
                         $getBusiness = User::where('id', Auth::user()->id)->first();
                         $business = Business::where('owner_id', Auth::user()->id)->first();
@@ -456,6 +456,15 @@ public function startBusinessTransaction(Request $request, $business_code)
 
                         $pdf_url = \Storage::disk('public')->url($filename);
 
+                       $pdf = PDF::loadView('generate/invo', compact('invoice', 'getBusiness', 'getUserInvo', 'paylink', 'business'));
+
+                        $filename = 'invoice_' . '_' . time() . '.pdf';
+
+                        \Storage::disk('public')->put($filename, $pdf->output());
+
+                        $pdf_url = \Storage::disk('public')->url($filename);
+
+
                         return response()->json([
                             'status' => 'Successful',
                             'link' => $pdf_url
@@ -468,6 +477,7 @@ public function startBusinessTransaction(Request $request, $business_code)
             $totalQuantity = 0;
 
             $idCode = $this->generateUniqueCode();
+
 
             foreach ($uniqueCodes as $index => $uniqueCode) {
                 $quantity = $quantities[$index];
@@ -483,6 +493,7 @@ public function startBusinessTransaction(Request $request, $business_code)
                     $vatAmount = $amount * $quantity * $vat;
                     $grandTotal = ($amount * $quantity) + $vatAmount;
 
+
                     $totalAmount += $grandTotal;
                     $totalVatAmount += $vatAmount;
                     $totalQuantity += $quantity;
@@ -490,13 +501,15 @@ public function startBusinessTransaction(Request $request, $business_code)
 
 
 
+
                 if ($request['moto_id'] == 1) {
 
-                    //return $info;
+
                     $token = $this->paythruService->handle();
                     $data = $this->paymentData($totalAmount, $product);
                     $url = $prodUrl;
                     $urls = $url . '/transaction/create';
+
 
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
@@ -541,10 +554,10 @@ public function startBusinessTransaction(Request $request, $business_code)
                                 'product_code' => $idCode
                             ]);
                         }
-		//	echo $totalQuantity;
-		//	echo $totalAmount;
+
+
 			 $InvoiceTran = businessTransaction::where('product_code', $info->product_code)->get();
-//                        return $InvoiceTran;
+
                     }
                 } elseif ($request['moto_id'] == 2) {
 
@@ -640,7 +653,6 @@ if (empty($latest)) {
             $invoiceInfo = $InvoiceTran[0];
             $word = $this->numberToWord($totalAmount);
 
-
             $cusInvoEmail = $InvoiceTran[0]->email;
             $getUserInvo = Customer::where('customer_email', $cusInvoEmail)->first();
 
@@ -686,6 +698,7 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
                 $hundreds = ($hundreds ? ' ' . $list1[$hundreds] . ' Hundred' . ($hundreds == 1 ? '' : 's') . ' and' : '');
                 $tens = (int)($num_part % 100);
                 $singles = '';
+
                 if ($tens < 20) {
                     $tens = ($tens ? ' ' . $list1[$tens] . ' ' : '');
                 } else {
@@ -832,12 +845,14 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
     Log::info("Starting webhookBusinessResponse", ['data' => $data, 'modelType' => $modelType]);
     if ($data->notificationType == 1) {
         $buisness = businessTransaction::where('paymentReference', $data->transactionDetails->paymentReference)->first();
+
         $referral = ReferralSetting::where('status', 'active')
             ->latest('updated_at')
             ->first();
         if ($referral) {
             $this->referral->checkSettingEnquiry($modelType);
         }
+
 //	$minus_residual = $business->minus_residual;
         if ($buisness) {
 //	    $existing_minus_residual = $buisness->minus_residual ?? 0;
@@ -898,6 +913,7 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
               $this->referral->checkSettingEnquiry($modelType);
           }
 
+
           if ($updatePaybackWithdrawal) {
               $updatePaybackWithdrawal->paymentAmount = $data->transactionDetails->paymentAmount;
               $updatePaybackWithdrawal->recordDateTime = $data->transactionDetails->recordDateTime;
@@ -932,6 +948,11 @@ public function AzatBusinessCollection(Request $request)
     $hash = hash('sha512', $timestamp . $secret);
     $AppId = env('PayThru_ApplicationId');
     $prodUrl = env('PayThru_Base_Live_Url');
+    $charges = env('PayThru_Withdrawal_Charges');
+
+    $requestAmount = $request->amount;
+
+
 
     $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
     $applyCharges = $this->chargeService->applyCharges($latestCharge);
@@ -950,6 +971,13 @@ public function AzatBusinessCollection(Request $request)
 
     if ($latestWithdrawal !== null) {
 
+
+        if ($requestAmount > $latestWithdrawal) {
+
+            return response()->json(['message' => 'You do not have sufficient amount in your RefundMe A'], 400);
+        }
+
+
         if ($requestAmount > $latestWithdrawal) {
 
             return response()->json(['message' => 'You do not have sufficient amount in your RefundMe A'], 400);
@@ -966,6 +994,7 @@ public function AzatBusinessCollection(Request $request)
 
       $data = [
             'productId' => $productId,
+
             'amount' => $requestAmount - $latestCharge->charges,
             'beneficiary' => [
             'nameEnquiryReference' => $beneficiaryReferenceId
@@ -994,6 +1023,22 @@ public function AzatBusinessCollection(Request $request)
       }else{
        // $collection = json_decode($response->body(), true);
 
+
+        BusinessTransaction::where('owner_id', auth()->user()->id)->where('stat', 1)
+            ->latest()->update(['minus_residual' => $minusResidual]);
+
+    // Save the withdrawal details
+    $BusinessWithdrawal = new BusinessWithdrawal([
+        'account_number' => $request->account_number,
+        'description' => $request->description,
+        'beneficiary_id' => auth()->user()->id,
+        'amount' => $requestAmount - $charges,
+        'bank' => $request->bank,
+        'charges' => $charges,
+        'uniqueId' => Str::random(10),
+    ]);
+
+
         BusinessTransaction::where('owner_id', auth()->user()->id)->where('stat', 1)
             ->latest()->update(['minus_residual' => $minusResidual]);
 
@@ -1020,6 +1065,7 @@ public function AzatBusinessCollection(Request $request)
                   'uniqueId' => Str::random(10),
               ]);
           }
+
 
     $BusinessWithdrawal->save();
 
