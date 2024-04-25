@@ -7,6 +7,7 @@ use App\Services\Referrals;
 use Illuminate\Support\Facades\Auth;
 use App\Referral;
 use App\ReferralSetting;
+use Illuminate\Http\Request;
 
 class ReferralController extends Controller
 {
@@ -49,4 +50,19 @@ class ReferralController extends Controller
 
         return response()->json($referral);
     }
+
+    public function countReferralPerUser(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // Call the method from the referral service
+        $referralCount = $this->referral->countReferralPerUser();
+
+        // Check if referral count is available
+        if ($referralCount !== null) {
+            return response()->json(['referral_count' => $referralCount], 200);
+        } else {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+    }
+
+
 }

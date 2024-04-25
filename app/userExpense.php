@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use DB;
 use Illuminate\Http\Request;
-use Auth;
-use Expense;
+use Illuminate\Support\Facades\Auth;
+use App\Expense;
 use Carbon\Carbon;
 
 
@@ -66,7 +66,7 @@ class userExpense extends Model
         return $this->belongsTo(Expense::class, 'expense_id');
     }
 
-   
+
     public function Uxerexpense()
     {
         return $this->hasOne(splittingMethod::class, 'split_method_id');
@@ -80,10 +80,10 @@ class userExpense extends Model
 //        $user = Auth::user()->id;
   //      $dateStart = Carbon::parse($request->startDate)
     //                         ->toDateTimeString();
-                             
+
       //  $dateEnd = Carbon::parse($request->endDate)
         //                     ->toDateTimeString();
-        
+
     $getAuthUser = Auth::user();
     $startDate = $request->start_date; // Specify your start date
     $endDate = $request->end_date;   // Specify your end date
@@ -111,9 +111,9 @@ class userExpense extends Model
 //->select('expenses.*', 'user_expenses.*')
   //      ->whereIn('expenses.id', $expenseIds)
     //    ->whereBetween('expenses.created_at', [$startDate, $endDate])
-      //  ->get();                     
+      //  ->get();
                             // return $user;
-                             
+
                            //  return [$dateStart,$dateEnd];
         //$Auth_user = Auth::user()->id;
 $expenseIds = DB::table('expenses')

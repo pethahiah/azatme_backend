@@ -93,42 +93,38 @@ class Referrals
     }
 
 
-     public function processReferral($url): array
-     {
+    public function processReferral($uniqueCode): array
+    {
+        // Fetch the referral from the referral table using the unique code
+        $referral = Referral::where('ref_code', $uniqueCode)->first();
 
-        $parsedUrl = parse_url($url);
+        // Check if the referral exists
+        if ($referral) {
+            // Save user details in the referral_by table
+            ReferralBy::create([
+                'user_id' => $referral->user_id,
+                'ref_code' => $uniqueCode,
+            ]);
 
-
-        if (isset($parsedUrl['query'])) {
-            parse_str($parsedUrl['query'], $queryParams);
-
-            // Check if the required parameters are present
-            if (isset($queryParams['userName']) && isset($queryParams['ref_code'])) {
-                $userName = $queryParams['userName'];
-                $refCode = $queryParams['ref_code'];
-
-                // Fetch the user from the user table
-                $user = User::where('name', $userName)->first();
-
-                // Check if the user exists
-                if ($user) {
-                    // Save user details in the referral_by table
-                    ReferralBy::create([
-                        'user_id' => $user->id,
-                        'ref_code' => $refCode,
-                    ]);
-
-                    return ['success' => true, 'message' => 'User details saved successfully'];
-                } else {
-                    return ['success' => false, 'error' => 'User not found'];
-                }
-            } else {
-                return ['success' => false, 'error' => 'Invalid URL parameters'];
-            }
+            return ['success' => true, 'message' => 'Referral processed successfully'];
         } else {
-            return ['success' => false, 'error' => 'No query parameters found in the URL'];
+            return ['success' => false, 'message' => 'Referral not found'];
         }
     }
+
+    public function countReferralPerUser()
+    {
+        // Get the authenticated user
+        $authenticatedUser = auth()->user();
+        // If the user is authenticated
+        if ($authenticatedUser) {
+            return ReferralBy::where('user_id', $authenticatedUser->id)->count();
+        }
+        return null;
+    }
+
+
+
 
 
 }

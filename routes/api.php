@@ -53,15 +53,15 @@ Route::namespace('API')->group(function () {
 
 
 Route::middleware(['auth:api'])->group(function () {
-        Route::get('getProfile', 'AuthController@getProfile');
-        Route::get('logout', 'AuthController@logout');
-        Route::put('updateProfile', 'AuthController@updateProfile');
-        Route::post('image', 'AuthController@uploadImage');
-        Route::put('updateUsertype', 'AuthController@updateUsertype');
-    	Route::get('/getBvnConsent', 'AuthController@getBvnConsent');
-	Route::put('get-verifiedd', 'AuthController@getBVNDetails');
-	Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
-	Route::post('makeComplain', 'ComplainController@makeComplain');
+    Route::get('getProfile', 'AuthController@getProfile');
+    Route::get('logout', 'AuthController@logout');
+    Route::put('updateProfile', 'AuthController@updateProfile');
+    Route::post('image', 'AuthController@uploadImage');
+    Route::put('updateUsertype', 'AuthController@updateUsertype');
+    Route::get('/getBvnConsent', 'AuthController@getBvnConsent');
+    Route::put('get-verifiedd', 'AuthController@getBVNDetails');
+    Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
+    Route::post('makeComplain', 'ComplainController@makeComplain');
 	      // Comment
     Route::post('create/comment/{feedbackId}', 'ComplainController@storeComment');
     Route::get('/feedback-by-id/{feedbackId}', 'ComplainController@getFeedbackById');
@@ -73,6 +73,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('create/reply/{commentId}', 'ComplainController@storeReply');
     Route::put('update/reply/{replyId}/{commentId}', 'ComplainController@updateReply');
     Route::delete('/delete/comment/{replyId}/{commentId}', 'ComplainController@destroyReply');
+    Route::get('get-referred-count', [ReferralController::class, 'countReferralPerUser']);
     });
 
 Route::middleware(['auth:api', 'admin'])->group(function () {

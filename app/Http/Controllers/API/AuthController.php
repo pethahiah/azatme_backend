@@ -29,31 +29,6 @@ use Illuminate\Support\Facades\DB;
 class AuthController extends Controller
 {
 
-
-//      public function register(Request $request){
-//         $this->validate($request, [
-//         'name' => 'required|min:3|max:50',
-//         'email' => 'required|email|unique:users',
-//         'usertype' => 'required|string',
-//         'company_name' => 'string',
-//         'phone' => 'string|unique:users|required',
-//         'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
-//         'password_confirmation' => 'required|same:password',
-//     ]);
-
-//         $user = new User([
-//             'name' => $request->name,
-//             'email' => $request->email,
-//             'usertype' => $request->usertype,
-//             'company_name' => $request->company_name,
-//             'phone'=> $request->phone,
-//             'password' => Hash::make($request->password)
-//         ]);
-//         $user->save();
-//         return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);
-// }
-
-
     public $referral;
 
     public function __construct(Referrals $referral)
@@ -63,47 +38,44 @@ class AuthController extends Controller
 
 
      //Register
-     public function register(Request $request){
+    public function register(Request $request): \Illuminate\Http\JsonResponse
+    {
         $this->validate($request, [
-        'name' => 'required|min:3|max:50',
-        'email' => 'required|email|unique:users',
-        'usertype' => 'required|string',
-        'company_name' => 'string',
-        'phone' => 'string|unique:users|required',
-        'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
-        'password_confirmation' => 'required|same:password',
-    ]);
-         if ($url = $request->url) {
-             $result = $this->referral->processReferral($url);
+            'name' => 'required|min:3|max:50',
+            'email' => 'required|email|unique:users',
+            'usertype' => 'required|string',
+            'company_name' => 'string',
+            'phone' => 'string|unique:users|required',
+            'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
+            'password_confirmation' => 'required|same:password',
+        ]);
 
-             if($result['success']) {
+        $uniqueCode = $request->unique_code;
 
-               Log::info($result['message']);
+        $result = $this->referral->processReferral($uniqueCode);
 
-             } else {
+        if ($result['success']) {
+            Log::info($result['message']);
+        } else {
+            Log::error($result['error']);
+        }
 
-                 Log::error($result['error']);
-
-             }
-         }
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
             'usertype' => $request->usertype,
             'company_name' => $request->company_name,
-            'phone'=> $request->phone,
-            'password' => Hash::make($request->password)
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'unique_code' => $uniqueCode, // Save unique_code in the user table
         ]);
         $user->save();
-        return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);
-}
-
-
-
+        return response()->json(['message' => 'User has been registered', 'data' => $user], 200);
+    }
 
     //login function
 
-public function getRequesterIP()
+private function getRequesterIP(): ?string
 {
     return request()->ip();
 }

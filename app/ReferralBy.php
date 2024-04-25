@@ -9,9 +9,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ReferralBy extends Model
 {
-    //
     protected $fillable = [
         'user_id',
         'ref_code',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

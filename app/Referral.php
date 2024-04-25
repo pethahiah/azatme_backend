@@ -22,4 +22,6 @@ class Referral extends Model
         'end_date',
         'referral_duration',
     ];
+
+
 }
