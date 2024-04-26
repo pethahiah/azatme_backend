@@ -237,8 +237,8 @@ public function getAllRefundMeCreatedt(Request $request)
             'description' => $expense['description'],
             'split_method_id' => $request['split_method_id'],
             'payable' => $payable,
-            'first_name'=> $user->first_name,
-	    'last_name' => $user->last_name,
+            'first_name'=> "olu",
+	        'last_name' => "mide",
             'actualAmount' => $expense->actual_amount,
             'bankName' => $request['bankName'],
             'account_name' => $request['account_name'],
@@ -248,7 +248,7 @@ public function getAllRefundMeCreatedt(Request $request)
           ]);
           //return $info
 
-         $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->payable, "payerName" => $user->first_name];
+         $payers[] =  ["payerEmail" => $em, "paymentAmount" => $info->payable, "payerName" => "olu"];
          $totalpayable = $totalpayable + $info->payable;
 
       }
@@ -278,7 +278,7 @@ public function getAllRefundMeCreatedt(Request $request)
             ];
         }
 
-//      return $data;
+      //return $data;
          $url = $prodUrl;
         $urls = $url.'/transaction/create';
 
@@ -286,7 +286,7 @@ public function getAllRefundMeCreatedt(Request $request)
         'Content-Type' => 'application/json',
         'Authorization' => $token,
       ])->post($urls, $data );
-      //return $response->body();
+      return $response->body();
       if($response->failed())
       {
         return false;

@@ -90,6 +90,12 @@
             text-align: center;
         }
 
+        .social-icons.center {
+            display: flex;
+            justify-content: center; /* Center aligns social icons */
+        }
+
+
 
 
         /* Mobile Responsive Styles */
@@ -129,16 +135,17 @@
 
     <!-- Footer with social media links -->
     <div class="footer">
-        <p>Follow us on social media:</p>
+        <p style="text-align: center !important;">Follow us on social media</p>
         <div class="social-icons">
-            <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/1QfW8snv5yETjhPlWPDYODXPjWfTrIN4kdCVwn2W.jpg" alt="Facebook"></a>
+            <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/1QfW8snv5yETjhPlWPDYODXPjWfTrIN4kdCVwn2W.jpg" alt="Facebook" style="width: 30px !important; height: 30px !important;"></a>
             <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/5MI8cWhvXgQRuwmS2gy3Dy0R75qMlojG3403gstr.jpg" alt="Twitter"></a>
             <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/fNPOlac1mDuLHreE9mF4UPB2ZFdPaqCnphl4zWvN.jpg" alt="Instagram"></a>
         </div>
 
-        <p class="center"
+        <p style="text-align: center !important;">
             © 2023<span id="currentYear"></span> <a href="www.paythru.ng">PayThru</a>. All rights reserved.
         </p>
+
     </div>
 </div>
 </body>
