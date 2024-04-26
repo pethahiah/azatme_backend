@@ -71,7 +71,7 @@ class AuthController extends Controller
 
         $uniqueCode = $request->unique_code;
 
-        $result = $this->referral->processReferral($uniqueCode);
+        $result = $this->referral->processReferral($uniqueCode, $request->name, $request->email);
 
         if ($result['success']) {
             Log::info($result['message']);

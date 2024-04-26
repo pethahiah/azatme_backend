@@ -93,7 +93,7 @@ class Referrals
     }
 
 
-    public function processReferral($uniqueCode): array
+    public function processReferral($uniqueCode, $refereeName, $refereeEmail): array
     {
         // Fetch the referral from the referral table using the unique code
         $referral = Referral::where('ref_code', $uniqueCode)->first();
@@ -104,6 +104,8 @@ class Referrals
             ReferralBy::create([
                 'user_id' => $referral->user_id,
                 'ref_code' => $uniqueCode,
+                'referee_name' => $refereeName,
+                'referee_email' => $refereeEmail,
             ]);
 
             return ['success' => true, 'message' => 'Referral processed successfully'];
@@ -116,12 +118,21 @@ class Referrals
     {
         // Get the authenticated user
         $authenticatedUser = auth()->user();
+
         // If the user is authenticated
         if ($authenticatedUser) {
-            return ReferralBy::where('user_id', $authenticatedUser->id)->count();
+            // Paginate the referrals for the authenticated user
+            $referrals = ReferralBy::where('user_id', $authenticatedUser->id)->paginate(10);
+
+            // Count the total number of referrals for the authenticated user
+            $referralCount = ReferralBy::where('user_id', $authenticatedUser->id)->count();
+
+            return ['referrals' => $referrals, 'total_referrals' => $referralCount];
         }
+
         return null;
     }
+
 
 
 

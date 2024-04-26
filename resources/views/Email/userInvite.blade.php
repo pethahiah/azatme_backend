@@ -242,26 +242,22 @@ body {
         }
 
         .social-icons {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .social-icon {
-            margin: 0 10px;
-        }
-
-        .social-icon img {
-            width: 40px;
-            height: 40px;
-        }
-
-
-
-        .centerx {
             text-align: center;
         }
 
+        .social-icons a {
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .social-icons img {
+            max-width: 30px;
+            height: auto;
+        }
+
+        .center {
+            text-align: center;
+        }
 
         /* Mobile Responsive Styles */
         @media screen and (max-width: 600px) {
@@ -298,14 +294,14 @@ body {
 
     <!-- Footer with social media links -->
     <div class="footer">
-        <p>Follow us on social media:</p>
+        <p style="text-align: center !important;">Follow us on social media</p>
         <div class="social-icons">
-            <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/1QfW8snv5yETjhPlWPDYODXPjWfTrIN4kdCVwn2W.jpg" alt="Facebook"></a>
+            <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/1QfW8snv5yETjhPlWPDYODXPjWfTrIN4kdCVwn2W.jpg" alt="Facebook" style="width: 30px !important; height: 30px !important;"></a>
             <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/5MI8cWhvXgQRuwmS2gy3Dy0R75qMlojG3403gstr.jpg" alt="Twitter"></a>
             <a href="#" target="_blank"><img src="https://api.azatme.com/storage/profiles/fNPOlac1mDuLHreE9mF4UPB2ZFdPaqCnphl4zWvN.jpg" alt="Instagram"></a>
         </div>
 
-        <p class="center">
+        <p style="text-align: center !important;">
             © 2023<span id="currentYear"></span> <a href="www.paythru.ng">PayThru</a>. All rights reserved.
         </p>
     </div>

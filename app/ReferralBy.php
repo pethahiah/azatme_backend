@@ -12,6 +12,8 @@ class ReferralBy extends Model
     protected $fillable = [
         'user_id',
         'ref_code',
+        'referee_email',
+        'referee_name'
     ];
 
     public function user()

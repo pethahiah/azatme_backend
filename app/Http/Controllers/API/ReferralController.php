@@ -54,15 +54,15 @@ class ReferralController extends Controller
     public function countReferralPerUser(Request $request): \Illuminate\Http\JsonResponse
     {
         // Call the method from the referral service
-        $referralCount = $this->referral->countReferralPerUser();
-
-        // Check if referral count is available
-        if ($referralCount !== null) {
-            return response()->json(['referral_count' => $referralCount], 200);
+        $referralData = $this->referral->countReferralPerUser();
+        // Check if referral data is available
+        if ($referralData !== null) {
+            return response()->json(['referrals' => $referralData['referrals'], 'total_referrals' => $referralData['total_referrals']], 200);
         } else {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
     }
+
 
 
 }
