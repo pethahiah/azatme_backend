@@ -37,10 +37,11 @@ use Illuminate\Support\Facades\DB;
 use App\Setting;
 use App\Invited;
 use App\Active;
-use Illuminate\Support\Facades\Storage;
+use Storage;
 use App\Services\PaythruService;
 use Illuminate\Database\QueryException;
 use App\Services\ChargeService;
+
 
 
 class ExpenseController extends Controller
@@ -147,8 +148,6 @@ public function getAllRefundMeCreatedt(Request $request)
     	Log::info('confim in expense mot updated.');
 	}
 
-
-
        $token = $this->paythruService->handle();
         if (!$token) {
         return "Token retrieval failed";
@@ -254,6 +253,7 @@ public function getAllRefundMeCreatedt(Request $request)
       }
 
       // Send payment request to paythru
+
       $data = [
         'amount' => $expense->amount,
         'productId' => $ProductId,
@@ -331,7 +331,9 @@ public function getAllRefundMeCreatedt(Request $request)
 
 
            $userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
+
             $authmail = Auth::user();
+
 	    $uxer = $userss->first_name;
            //   Mail::to($slip['receipient'], $authmail['name'], $InvitedUserName['first_name'])->send(new SendUserInviteMail($slip, $authmail, $InvitedUserName));
             Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new SendUserInviteMail($slip, $authmail, $uxer));
@@ -385,7 +387,7 @@ public function webhookExpenseResponse(Request $request)
         $response = $request->all();
         $dataEncode = json_encode($response);
         $data = json_decode($dataEncode);
-	    $modelType = "RefundMe";
+	$modelType = "RefundMe";
 
 
         Log::info("Starting webhookExpenseResponse", ['data' => $data, 'modelType' => $modelType]);
@@ -393,15 +395,12 @@ public function webhookExpenseResponse(Request $request)
 
         if ($data->notificationType == 1) {
             $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->first();
-            $referral = ReferralSetting::where('status', 'active')
-                ->latest('updated_at')
-                ->first();
-            if ($referral) {
-                $this->referral->checkSettingEnquiry($modelType);
-            }
+//	    $minus_residual  =  $userExpense->minus_residual;
 
             if ($userExpense) {
-
+                // Update user expense
+//		$existing_minus_residual = $userExpense->minus_residual ?? 0;
+  //          	$new_minus_residual = $existing_minus_residual + $data->transactionDetails->residualAmount;
 
                 $userExpense->payThruReference = $data->transactionDetails->payThruReference;
                 $userExpense->fiName = $data->transactionDetails->fiName;
@@ -440,13 +439,6 @@ public function webhookExpenseResponse(Request $request)
 
             http_response_code(200);
         } elseif ($data->notificationType == 2) {
-            $referral = ReferralSetting::where('status', 'active')
-                ->latest('updated_at')
-                ->first();
-
-            if ($referral) {
-                $this->referral->checkSettingEnquiry($modelType);
-            }
             if (isset($data->transactionDetails->transactionReferences[0])) {
                 $transactionReferences = $data->transactionDetails->transactionReferences[0];
                 Log::info("Received withdrawal notification for transaction references: " . $transactionReferences);
@@ -552,6 +544,55 @@ public function getUserExpense(Request $request)
 }
 
 
+
+
+
+// Calling PayThru gateway for transaction response updates
+
+
+
+
+public function getUserExpenses(Request $request)
+{
+    $perPage = $request->input('per_page', 10);
+    $page = $request->input('page', 1);
+    $getAuthUser = Auth::user();
+    $expenseIds = DB::table('expenses')
+        ->join('user_expenses', function ($join) {
+            $join->on('expenses.user_id', '=', 'user_expenses.principal_id')
+                ->on('expenses.id', '=', 'user_expenses.expense_id');
+        })
+        ->select('expenses.id')
+        ->where('expenses.user_id', '=', $getAuthUser->id)
+        ->whereNotNull('expenses.subcategory_id')
+        ->whereNull('expenses.deleted_at')
+        ->where('expenses.confirm', '=', 1)
+        ->groupBy('expenses.id')
+        ->pluck('expenses.id');
+
+    $getUserExpense = DB::table('expenses')
+        ->join('user_expenses', function ($join) {
+            $join->on('expenses.user_id', '=', 'user_expenses.principal_id')
+                ->on('expenses.id', '=', 'user_expenses.expense_id');
+        })
+        ->select('expenses.*', DB::raw('SUM(user_expenses.residualAmount) as total_paid'))
+        ->whereIn('expenses.id', $expenseIds)
+        ->whereNull('expenses.deleted_at')
+        ->where('expenses.confirm', '=', 1)
+        ->groupBy('expenses.id')
+	->orderBy('expenses.created_at', 'desc')
+        ->paginate($perPage, ['*'], 'page', $page);
+
+    $getUserExpenseAddedTransactions = UserExpense::where('email', $getAuthUser->email)
+        ->whereNull('deleted_at')
+	->orderBy('created_at', 'desc')
+        ->paginate($perPage, ['*'], 'page', $page);
+
+    return response()->json([
+        'getAuthUserExpensesCreated' => $getUserExpense,
+        'getExpensesInvitedTo' => $getUserExpenseAddedTransactions,
+    ]);
+}
 
 public function allExpensesPerUser(Request $request)
 {
@@ -663,6 +704,7 @@ public function exportExpenseToExcel(Request $request)
       $fileName = 'azatme_report'.'_'.Carbon::now() . '.' . 'xlsx';
       $userExpense = userExpense::getuserExpense($request);
 	return $userExpense;
+
       Log::info($userExpense);
       ob_end_clean();
       return Excel::download(new ExpenseExport($userExpense), $fileName);
@@ -678,8 +720,7 @@ return $userExpense;
       return Excel::download(new ExpenseExport($userExpense), $fileName);
     }
 
-
-public function AzatIndividualCollection(Request $request)
+    public function AzatIndividualCollection(Request $request)
     {
         $current_timestamp = now();
         $timestamp = strtotime($current_timestamp);
@@ -689,31 +730,37 @@ public function AzatIndividualCollection(Request $request)
         $AppId = env('PayThru_ApplicationId');
         $prodUrl = env('PayThru_Base_Live_Url');
 
-        $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
-        $applyCharges = $this->chargeService->applyCharges($latestCharge);
-
+        $charges = env('PayThru_Withdrawal_Charges');
 
         $requestAmount = $request->amount;
+
+        $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
+
+        $applyCharges = false; // Default value until logic determines whether charges should be applied
+
+        if ($latestCharge) {
+            $applyCharges = $this->chargeService->applyCharges($latestCharge);
+        }
 
         $latestWithdrawal = UserExpense::where('principal_id', auth()->user()->id)
             ->where('stat', 1)
             ->latest()
             ->pluck('minus_residual')
             ->first();
-	if ($requestAmount < 130) {
+
+        if ($requestAmount < 130) {
             return response()->json(['message' => 'You cannot withdraw an amount less than 100 after commission'], 400);
         }
 
-
         if ($latestWithdrawal !== null) {
-
             if ($requestAmount > $latestWithdrawal) {
                 return response()->json(['message' => 'You do not have sufficient amount in your RefundMe A'], 400);
             }
             $minusResidual = $latestWithdrawal - $requestAmount;
         }
 
-        $refundmeAmountWithdrawn = $requestAmount - $latestCharge->charges;
+        $refundmeAmountWithdrawn = $requestAmount - $charges;
+
         $acct = $request->account_number;
 
         $bank = Bank::where('user_id', auth()->user()->id)
@@ -755,36 +802,20 @@ public function AzatIndividualCollection(Request $request)
             return response()->json(['message' => 'Settlement request failed'], 500);
         }
 
-
         UserExpense::where('principal_id', auth()->user()->id)->where('stat', 1)
             ->latest()->update(['minus_residual' => $minusResidual]);
 
-
-        if ($applyCharges) {
-            // Save the withdrawal details with charges
-            $withdrawal = new Withdrawal([
-                'account_number' => $request->account_number,
-                'description' => $request->description,
-                'beneficiary_id' => auth()->user()->id,
-                'amount' => $requestAmount - $latestCharge->charges,
-                'bank' => $request->bank,
-                'charges' => $latestCharge->charges,
-                'uniqueId' => Str::random(10),
-            ]);
-        } else {
-            // Save the withdrawal details without charges
-            $withdrawal = new Withdrawal([
-                'account_number' => $request->account_number,
-                'description' => $request->description,
-                'beneficiary_id' => auth()->user()->id,
-                'amount' => $requestAmount,
-                'bank' => $request->bank,
-                'uniqueId' => Str::random(10),
-            ]);
-        }
+        $withdrawal = new Withdrawal([
+            'account_number' => $request->account_number,
+            'description' => $request->description,
+            'beneficiary_id' => auth()->user()->id,
+            'amount' => $refundmeAmountWithdrawn,
+            'bank' => $request->bank,
+            'charges' => $applyCharges ? $latestCharge->charges : 0,
+            'uniqueId' => Str::random(10),
+        ]);
 
         $withdrawal->save();
-
 
         $collection = $response->json();
 
@@ -794,11 +825,14 @@ public function AzatIndividualCollection(Request $request)
             ->update([
                 'transactionReferences' => $collection['transactionReference'],
                 'status' => $collection['message'],
-
             ]);
 
         return response()->json($saveTransactionReference, 200);
     }
+
+
+
+
 
 public function accountVerification(Request $request)
 {
@@ -836,6 +870,7 @@ public function accountVerification(Request $request)
     }
 
     return response()->json(['error' => 'Account verification failed'], 400);
+
 
 }
 
@@ -879,12 +914,6 @@ if ($expense->user_id !== Auth::user()->id) {
         ], 403);
     }
 
-
-
-//	$getUniqueId = $existingUserExpense->id;
-//dd($getUniqueId);
-//	 Log::info("re-initiate refundme not found for refundId : " . $getUniqueId);
-
     if (!$existingUserExpense) {
         // If the UserExpense with the desired uidd is not found, return an error response
         return response([
@@ -907,6 +936,7 @@ if ($expense->user_id !== Auth::user()->id) {
         $productId = env('PayThru_expense_productid');
         $prodUrl = env('PayThru_Base_Live_Url');
 
+
         $data = [
             'amount' => $payable,
             'productId' => $productId,
@@ -916,7 +946,7 @@ if ($expense->user_id !== Auth::user()->id) {
             'sign' => hash('sha512', $payable . env('PayThru_App_Secret')),
             'displaySummary' => true,
         ];
-//return $data;
+
         $token = $this->paythruService->handle();
 	  if (!$token) {
         return "Token retrieval failed";
@@ -943,8 +973,9 @@ if ($expense->user_id !== Auth::user()->id) {
             $authmail = Auth::user();
 //$userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
 $uxer = $invitedUser->first_name;
+
 Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new SendUserInviteMail($slip, $authmail, $uxer));
- // Mail::to($slip['receipient'], $authmail['name'])->send(new SendUserInviteMail($slip, $authmail));
+
             if ($paylink) {
                 $getLastString = explode('/', $paylink);
                 $now = end($getLastString);
@@ -985,7 +1016,7 @@ Mail::to($slip['receipient'], $authmail['name'], $uxer)->send(new SendUserInvite
       ->where('expense_id', $expenseId)
       ->sum('residualAmount');
 
-  return $totalResidual;
+ // return $totalResidual;
   if($totalResidual != 0)
     {
       $remainingPayablee = $checkAmountPayable - $totalResidual;

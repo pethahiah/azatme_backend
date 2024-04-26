@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Auth;
 use App\Expense;
+
 use Carbon\Carbon;
 
 
@@ -81,8 +82,10 @@ class userExpense extends Model
   //      $dateStart = Carbon::parse($request->startDate)
     //                         ->toDateTimeString();
 
+
       //  $dateEnd = Carbon::parse($request->endDate)
         //                     ->toDateTimeString();
+
 
     $getAuthUser = Auth::user();
     $startDate = $request->start_date; // Specify your start date
@@ -111,7 +114,9 @@ class userExpense extends Model
 //->select('expenses.*', 'user_expenses.*')
   //      ->whereIn('expenses.id', $expenseIds)
     //    ->whereBetween('expenses.created_at', [$startDate, $endDate])
+
       //  ->get();
+
                             // return $user;
 
                            //  return [$dateStart,$dateEnd];

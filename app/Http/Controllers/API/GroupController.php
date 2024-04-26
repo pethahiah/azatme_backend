@@ -47,6 +47,7 @@ class GroupController extends Controller
     //
 
 
+
     public $referral;
     public $paythruService;
     public $chargeService;
@@ -276,6 +277,7 @@ if ($emails && $request->consent == true) {
           }elseif(isset($request->percentage_per_user))
           {
 
+
             $ppu = json_decode($request->percentage_per_user);
             //return $em;
 
@@ -429,12 +431,14 @@ public function webhookGroupResponse(Request $request)
             if (is_null($data->transactionDetails->paymentReference)) {
     // Payment reference is null, check merchantReference
     $userGroup = UserGroup::where('merchantReference', $data->transactionDetails->merchantReference)->first();
+
     $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
                 if ($referral) {
                     $this->referral->checkSettingEnquiry($modelType);
                 }
+
     if ($userGroup) {
         // Merchant reference matches, save to donor table
         $donor = new Donor([
@@ -473,12 +477,14 @@ public function webhookGroupResponse(Request $request)
 	 else {
                 // Payment reference is not null, update UserGroup
                 $userGroup = UserGroup::where('paymentReference', $data->transactionDetails->paymentReference)->first();
+
                 $referral = ReferralSetting::where('status', 'active')
              ->latest('updated_at')
              ->first();
                 if ($referral) {
                 $this->referral->checkSettingEnquiry($modelType);
                      }
+
                 if ($userGroup) {
                     $userGroup->payThruReference = $data->transactionDetails->payThruReference;
                     $userGroup->fiName = $data->transactionDetails->fiName;
@@ -518,12 +524,14 @@ public function webhookGroupResponse(Request $request)
 
                 // Update withdrawal
                 $withdrawal = GroupWithdrawal::where('transactionReferences', $transactionReferences)->first();
+
                 $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
                 if ($referral) {
                     $this->referral->checkSettingEnquiry($modelType);
                 }
+
                 if ($withdrawal) {
                     $uniqueId = $withdrawal->uniqueId;
 
@@ -593,12 +601,13 @@ public function webhookGroupResponse(Request $request)
                             'providedName' => $data->transactionDetails->customerInfo->providedName,
                             'remarks' => $data->transactionDetails->customerInfo->remarks
                         ]);
-
                         // Add donor's residualAmount to userGroup's residualAmount
                         $userGroup->residualAmount += $donor->residualAmount;
 
                         $donor->save();
                         $userGroup->save();
+
+
 
                         $activeOpenPayment = new OpenActive([
                             'transactionReference' => $data->transactionDetails->merchantReference, // Set to null since paymentReference is null
@@ -630,7 +639,9 @@ public function webhookGroupResponse(Request $request)
                         $userGroup->providedName = $data->transactionDetails->customerInfo->providedName;
                         $userGroup->remarks = $data->transactionDetails->customerInfo->remarks;
 
+
                         $userGroup->save();
+
 
                         $activePayment = new Active([
                             'paymentReference' => $data->transactionDetails->paymentReference,
@@ -694,17 +705,16 @@ public function AzatGroupCollection(Request $request)
     $hash = hash('sha512', $timestamp . $secret);
     $AppId = env('PayThru_ApplicationId');
     $prodUrl = env('PayThru_Base_Live_Url');
-
-    $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
-    $applyCharges = $this->chargeService->applyCharges($latestCharge);
+    $charges = env('PayThru_Withdrawal_Charges');
 
     $requestAmount = $request->amount;
 
 
-//    $latestWithdrawal = KontributeBalance::where('user_id', auth()->user()->id)
-  //      ->latest()
-    //    ->pluck('balance')
-      //  ->first();
+    $latestCharge = Charge::orderBy('updated_at', 'desc')->first();
+    $applyCharges = $this->chargeService->applyCharges($latestCharge);
+
+
+
 
     $getUserOpenKontribute = userGroup::where('reference_id', Auth::user()->id)
         ->whereNull('paymentReference')
@@ -734,6 +744,7 @@ public function AzatGroupCollection(Request $request)
     }
 
     $kontributeAmountWithdrawn = $requestAmount - $latestCharge->charges;
+
     $acct = $request->account_number;
 
     $bank = Bank::where('user_id', auth()->user()->id)
@@ -782,7 +793,16 @@ public function AzatGroupCollection(Request $request)
         'balance' => $minusResidual,
 	'action' => 'debit',
     ]);
-
+    // Save the withdrawal details
+    $withdrawal = new GroupWithdrawal([
+        'account_number' => $request->account_number,
+        'description' => $request->description,
+        'beneficiary_id' => auth()->user()->id,
+        'amount' => $requestAmount - $charges,
+        'bank' => $request->bank,
+        'charges' => $charges,
+        'uniqueId' => Str::random(10),
+    ]);
 
     if ($applyCharges) {
         // Save the withdrawal details with charges
@@ -852,6 +872,7 @@ public function AzatGroupCollection(Request $request)
 
         public function getUserGroup(Request $request)
     {
+
 
             $perPage = $request->input('per_page', 10);
     	    $page = $request->input('page', 1);
@@ -964,11 +985,6 @@ public function reinitiateTransactionToGroup(Request $request, $groupId, $id)
         {
      $group = Expense::findOrFail($groupId);
      $existingUserGroup = userExpense::findOrFail($id);
-    // Find the existing UserGroup record with the desired uidd
-//    $existingUserGroup = UserGroup::where('reference_id', Auth::user()->id)
-  //      ->where('group_id', $groupId)
-    //    ->where('id', $id)
-      //  ->first();
 
  if ($existingUserGroup->reference_id !== Auth::user()->id) {
         return response([
@@ -1050,8 +1066,7 @@ $info = UserGroup::create([
                   $paylink = $transaction['payLink'];
                   $slip = ['paylink' => $paylink, 'amount' => $data['amount'], 'receipient' => $existingUserGroup->email];
                   $authmail = Auth::user();
-	//	$userss = Invited::where('auth_id', Auth::user()->id)->where('email', $slip['receipient'])->first();
-	//	$uxer = $userss->first_name;
+
                   Mail::to($slip['receipient'])->send(new KontributMail($slip));
                   if ($paylink) {
                       $getLastString = explode('/', $paylink);
