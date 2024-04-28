@@ -41,13 +41,10 @@ Route::namespace('API')->group(function () {
     Route::post('/agowebhook', 'AjoController@webhookAjoResponse');
     Route::get('get-ajo-user-bank-details/{id}', 'AjoController@getUsersWithBankInfo');
     Route::get('get-ajo-by-id/{ajoId}', 'AjoController@getAjoByIdd');
-<<<<<<< HEAD
 
-
-=======
     Route::post('/process-data', 'SurveyController@handle');
     Route::get('/get-lastUpdated-charges', [ChargesController::class, 'getLastUpdatedCharge']);
->>>>>>> db461c39f8113664d23d80a88431c69b77ccaa72
+
 
     //Complain
     Route::get('/auth', 'AuthController@initiateBvnConsent');
@@ -58,7 +55,7 @@ Route::namespace('API')->group(function () {
 
 
 Route::middleware(['auth:api'])->group(function () {
-<<<<<<< HEAD
+
         Route::get('getProfile', 'AuthController@getProfile');
         Route::get('logout', 'AuthController@logout');
         Route::put('updateProfile', 'AuthController@updateProfile');
@@ -68,7 +65,7 @@ Route::middleware(['auth:api'])->group(function () {
 	Route::put('get-verifiedd', 'AuthController@getBVNDetails');
 	Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
 	Route::post('makeComplain', 'ComplainController@makeComplain');
-=======
+
     Route::get('getProfile', 'AuthController@getProfile');
     Route::get('logout', 'AuthController@logout');
     Route::put('updateProfile', 'AuthController@updateProfile');
@@ -78,7 +75,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('get-verifiedd', 'AuthController@getBVNDetails');
     Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
     Route::post('makeComplain', 'ComplainController@makeComplain');
->>>>>>> db461c39f8113664d23d80a88431c69b77ccaa72
+
 	      // Comment
     Route::post('create/comment/{feedbackId}', 'ComplainController@storeComment');
     Route::get('/feedback-by-id/{feedbackId}', 'ComplainController@getFeedbackById');
@@ -90,10 +87,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('create/reply/{commentId}', 'ComplainController@storeReply');
     Route::put('update/reply/{replyId}/{commentId}', 'ComplainController@updateReply');
     Route::delete('/delete/comment/{replyId}/{commentId}', 'ComplainController@destroyReply');
-<<<<<<< HEAD
-=======
+
     Route::get('get-referred-count', [ReferralController::class, 'countReferralPerUser']);
->>>>>>> db461c39f8113664d23d80a88431c69b77ccaa72
+
     });
 
 Route::middleware(['auth:api', 'admin'])->group(function () {
@@ -123,12 +119,10 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('count-all-added-users-kontribute', 'AdminController@countUserAddedToKontribute');
     Route::get('count-all-active-users-kontributes', 'AdminController@countActiveKontribtes');
     Route::put('/admin/update-feedback/{complain_reference_code}', 'AdminController@updateIssue');
-<<<<<<< HEAD
+
     });
 
 
-
-=======
     Route::post('/set-ref', [ReferralSettingController::class, 'createReferral']);
     Route::put('/update-ref/{referralId}', [ReferralSettingController::class, 'updateReferral']);
     Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
@@ -141,7 +135,6 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::put('/admin/update-complain/{complainId}', [AdminController::class,'markAsCompleted']);
     });
 
->>>>>>> db461c39f8113664d23d80a88431c69b77ccaa72
 Route::middleware(['auth:api', 'user.status'])->group(function () {
     // User Update
     Route::post('category', 'ExpenseCategoryController@category');
@@ -194,11 +187,7 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
 
      Route::post('send-notification/{id}', 'MailTemplateController@mailNotification');
      Route::get('get-customer-mails', 'MailTemplateController@getAllMails');
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> db461c39f8113664d23d80a88431c69b77ccaa72
 
     //Customer
     Route::post('create-customer/{business_code}', 'CustomerController@createCustomer');
@@ -338,19 +327,21 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('get-ajo-contributor/{transactionReference}/{email}', 'AjoController@getTransactionData');
     Route::get('get-ajo-withdrawal', 'AjoController@getAjoWithdrawalTransaction');
     Route::post('test-auto', 'AjoController@sendPaymentLinkToUsers');
-<<<<<<< HEAD
-=======
+
 
     // Referrals
     Route::get('/generate-link', [ReferralController::class, 'generateReferralUrl']);
     Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
->>>>>>> db461c39f8113664d23d80a88431c69b77ccaa72
-       });
 
     // Direct Debit
     Route::post('/create-mandate-product', [DirectDebitController::class, 'addProduct']);
     Route::post('/create-dd-mandate', [DirectDebitController::class, 'createMandate']);
     Route::post('/get-dd-bankList', [DirectDebitController::class, 'getDDBankList']);
+    Route::post('/update-mandate', [DirectDebitController::class, 'updateMandate']);
+
 
 });
+
+
+
 

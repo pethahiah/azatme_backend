@@ -23,6 +23,7 @@ class CreateDirectDebitProductsTable extends Migration
             $table->string('productDescription')->nullable();
             $table->enum('classification', array('SubscriptionService', 'FixedContract'))->nullable();
             $table->string('remarks')->nullable();
+            $table->foreignId('productId')->nullable();
             $table->enum('feeType', array('FixedAmount', 'Variable', 'Both'))->nullable();
             $table->timestamps();
         });
