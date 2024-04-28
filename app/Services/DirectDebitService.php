@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Ajo;
 use App\DirectDebitMandate;
+use App\DirectDebitMandateUpdate;
 use App\DirectDebitProduct;
 use App\Invitation;
 use App\PaymentDate;
@@ -194,10 +195,10 @@ class DirectDebitService
             // Update mandate based on request type
             switch ($requestData['requestType']) {
                 case 'Suspend':
-                    $mandate->status = 'Suspended';
+                    $mandate->requestType = 'Suspended';
                     break;
                 case 'Enable':
-                    $mandate->status = 'Active';
+                    $mandate->requestType = 'Enable';
                     break;
                 case 'Update':
                     $mandate->amountLimit = $requestData['amountLimit'] ?? $mandate->amountLimit;
@@ -206,10 +207,20 @@ class DirectDebitService
                     throw new Exception('Invalid request type');
             }
 
+            // Save the updated mandate in DirectDebitMandateUpdate table
+            $mandateUpdate = new DirectDebitMandateUpdate();
+            $mandateUpdate->mandate_id = $mandate->id;
+            $mandateUpdate->requestType = $mandate->requestType;
+            $mandateUpdate->amount_limit = $mandate->amountLimit;
+            // Add other fields as needed...
+            $mandateUpdate->save();
 
-
-            // Save updated mandate
-            $mandate->save();
+            // Prepare payload for external API
+            $payload = [
+                'mandateId' => $mandate->id,
+                'requestType' => $requestData['requestType'],
+                'amountLimit' => $mandate->amountLimit,
+            ];
 
             // Send updated mandate data to third-party API
             $apiUrl = env("Paythru_Direct_Debt_Test_Url");
@@ -217,7 +228,7 @@ class DirectDebitService
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'Authorization' => $paythruToken,
-            ])->post($apiUrl.'/DirectDebit/mandate/update', ['mandate' => $mandate]);
+            ])->post($apiUrl.'/DirectDebit/mandate/update', $payload);
 
             // Check if API call was successful
             if ($response->successful()) {
