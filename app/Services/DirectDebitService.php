@@ -185,6 +185,74 @@ class DirectDebitService
         return $mandate;
     }
 
+    public function updateMandate($requestData): DirectDebitMandate
+    {
+        // Retrieve existing mandate or create a new one if not found
+        $mandate = DirectDebitMandate::findOrFail($requestData['mandateId'] ?? null);
+
+        try {
+            // Update mandate based on request type
+            switch ($requestData['requestType']) {
+                case 'Suspend':
+                    $mandate->status = 'Suspended';
+                    break;
+                case 'Enable':
+                    $mandate->status = 'Active';
+                    break;
+                case 'Update':
+                    $mandate->amountLimit = $requestData['amountLimit'] ?? $mandate->amountLimit;
+                    break;
+                default:
+                    throw new Exception('Invalid request type');
+            }
+
+
+
+            // Save updated mandate
+            $mandate->save();
+
+            // Send updated mandate data to third-party API
+            $apiUrl = env("Paythru_Direct_Debt_Test_Url");
+            $paythruToken = $this->getPaythruToken();
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => $paythruToken,
+            ])->post($apiUrl.'/DirectDebit/mandate/update', ['mandate' => $mandate]);
+
+            // Check if API call was successful
+            if ($response->successful()) {
+                // Decode JSON response
+                $responseData = $response->json();
+
+                // Check if the API response indicates success
+                if ($responseData['succeed']) {
+                    // Log the response
+                    Log::info('Response from external API: ' . $response->body());
+                } else {
+                    // Log the error response
+                    Log::error('Error response from external API: ' . $response->body());
+
+                    // Throw an exception with the error message from the API response
+                    throw new Exception('Failed to update mandate. External API returned an error: ' . $responseData['message']);
+                }
+            } else {
+                // Log the error response
+                Log::error('Error response from external API: ' . $response->body());
+
+                // Throw an exception if the API call was not successful
+                throw new Exception('Failed to update mandate. External API returned an error.');
+            }
+        } catch (Exception $e) {
+            // Log the exception
+            Log::error('Error updating mandate: ' . $e->getMessage());
+
+            // Re-throw the exception to be caught by the caller
+            throw $e;
+        }
+
+        return $mandate;
+    }
+
 
     public function getBankList()
     {

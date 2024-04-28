@@ -17,6 +17,8 @@ class CreateReferralBiesTable extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable();
             $table->string('ref_code')->nullable();
+            $table->string('referee_email')->nullable();
+            $table->string('referee_name')->nullable();
             $table->timestamps();
         });
     }
