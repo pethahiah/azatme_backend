@@ -206,7 +206,6 @@ class DirectDebitService
                 default:
                     throw new Exception('Invalid request type');
             }
-
             // Save the updated mandate in DirectDebitMandateUpdate table
             $mandateUpdate = new DirectDebitMandateUpdate();
             $mandateUpdate->mandate_id = $mandate->id;

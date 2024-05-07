@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Ajo;
 use App\Http\Controllers\Controller;
-use http\Env\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +42,6 @@ class DirectDebitController extends Controller
             return response()->json(['error' => 'Failed to add product. Please try again later.'], 500);
         }
     }
-
 
     public function createMandate(Request $request, $ajoId): \Illuminate\Http\JsonResponse
     {
@@ -126,9 +124,5 @@ class DirectDebitController extends Controller
         // Call BankListService to add the product
         return $this->directDebitService->getBankList();
     }
-
-
-
-
 
 }
