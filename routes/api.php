@@ -334,9 +334,12 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
 
     // Direct Debit
+   // Route::post('/create-mandate-product', 'DirectDebitController@addProduct');
+
     Route::post('/create-mandate-product', [DirectDebitController::class, 'addProduct']);
-    Route::post('/create-dd-mandate', [DirectDebitController::class, 'createMandate']);
-    Route::post('/get-dd-bankList', [DirectDebitController::class, 'getDDBankList']);
+    Route::post('/create-dd-mandate/{ajoId}', [DirectDebitController::class, 'createMandate']);
+    Route::get('/get-dd-bankList', [DirectDebitController::class, 'getDDBankList']);
+    Route::get('/get-product-list', [DirectDebitController::class, 'productList']);
     Route::post('/update-mandate', [DirectDebitController::class, 'updateMandate']);
 
 
