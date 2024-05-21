@@ -4,12 +4,13 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-
 class DirectDebitMandate extends Model
 {
     //
     protected $fillable = [
         'productId',
+        'mandateId',
+        'email',
         'productName',
         'paymentAmount',
         'customer_phone',
@@ -30,7 +31,7 @@ class DirectDebitMandate extends Model
         'referenceCode',
         'collectionAccountNumber',
         'mandateType',
+	    'remarks',
         'routingOption',
         ];
-
 }

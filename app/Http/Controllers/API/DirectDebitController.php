@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Ajo;
+use App\DirectDebitProduct;
 use App\Http\Controllers\Controller;
+use App\Ajo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use app\Services\DirectDebitService;
+use App\Services\DirectDebit;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -16,7 +18,7 @@ class DirectDebitController extends Controller
     //
     protected $directDebitService;
 
-    public function __construct(DirectDebitService $directDebitService)
+    public function __construct(DirectDebit $directDebitService)
     {
         $this->directDebitService = $directDebitService;
     }
@@ -24,15 +26,20 @@ class DirectDebitController extends Controller
     public function addProduct(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
-            // Validate the incoming request
-            $validatedData = $request->validate([
-                'productName' => 'required|string|max:255',
-                'productDescription' => 'required|string',
+           //  Validate the incoming request
+            // Validate the request data
+            $request->validate([
+                'productName' => 'required',
+                'productDescription' => 'required',
             ]);
+            // Retrieve productName and productDescription from the request
+            $productName = $request->input('productName');
+            $productDescription = $request->input('productDescription');
 
             // Call ProductService to add the product
-            $product = $this->directDebitService->addProduct($validatedData);
-
+            $requestData = $request->only(['productName', 'productDescription']);
+            $product = $this->directDebitService->addProduct($productName, $productDescription);
+            Log::info('product:'.$product);
             return response()->json(['success' => true, 'product' => $product], 201);
         } catch (\Exception $e) {
             // Log the error
@@ -50,23 +57,18 @@ class DirectDebitController extends Controller
             $rules = [
                 'productId' => 'required',
                 'productName' => 'required',
-                'remarks' => 'nullable',
-                'paymentAmount' => 'required|numeric',
-                'customer_phone' => 'required|numeric',
+                'remarks' => 'required',
                 'accountNumber' => 'required|numeric',
                 'bankCode' => 'required|numeric',
                 'accountName' => 'required',
-                'phoneNumber' => 'required|numeric',
                 'homeAddress' => 'required',
                 'fileName' => 'nullable',
                 'description' => 'nullable',
-                'fileBase64String' => 'nullable',
-                'fileExtension' => 'nullable',
+               // 'fileBase64String' => 'nullable',
+               'fileExtension' => 'nullable',
                 'paymentFrequency' => 'required',
-                'packageId' => 'required',
-                'collectionAccountNumber' => 'required|numeric',
-                'mandateType' => 'required',
-                'routingOption' => 'required',
+                'startDate' => 'required|date',
+                'endDate' => 'required|date'
             ];
 
             // Perform validation
@@ -86,6 +88,8 @@ class DirectDebitController extends Controller
 
             // Call ProductService to add the product
             $validatedData = $validator->validated();
+         //   return response()->json(['success' => true, 'product' =>  $validatedData], 201);
+           // Log::info('Response from paythru API: ' . $validatedData);
             $product = $this->directDebitService->createMandate($validatedData, $ajo);
 
             return response()->json(['success' => true, 'product' => $product], 201);
@@ -97,6 +101,7 @@ class DirectDebitController extends Controller
             return response()->json(['error' => 'Failed to add product. Please try again later.'], 500);
         }
     }
+
 
     public function updateMandate(Request $request): \Illuminate\Http\JsonResponse
     {
@@ -123,6 +128,17 @@ class DirectDebitController extends Controller
     {
         // Call BankListService to add the product
         return $this->directDebitService->getBankList();
+    }
+
+    public function productlist(): \Illuminate\Http\JsonResponse
+    {
+        $productList = $this->directDebitService->getProductList();
+
+        if (isset($productList['error'])) {
+            return response()->json(['message' => $productList['error']], 500);
+        }
+
+        return response()->json($productList, 200);
     }
 
 }

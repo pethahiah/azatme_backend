@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Ajo;
+use App\Bank;
 use App\DirectDebitMandate;
 use App\DirectDebitMandateUpdate;
 use App\DirectDebitProduct;
@@ -10,143 +11,177 @@ use App\Invitation;
 use App\PaymentDate;
 use App\Services\PaythruService;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 
-class DirectDebitService
+class DirectDebit
 {
 
     public $paythruService;
+    protected $apiKey;
+    protected $apiUrl;
+
+
 
     public function __construct(PaythruService $paythruService)
     {
         $this->paythruService = $paythruService;
+        $this->apiKey = env('PayThru_ApplicationId');
+        $this->apiUrl = env('Paythru_Direct_Debt_Test_Url');
     }
 
 
-    public function addProduct(array $requestData): DirectDebitProduct
+    public function addProduct($productName, $productDescription)
     {
-        // Initialize product variable
-        $product = null;
-
         try {
+
             // Store data in DirectDebitProduct
             $product = new DirectDebitProduct();
-            $product->productName = $requestData['productName'];
-            $product->isPacketBased = false;
-            $product->productDescription = $requestData['productDescription'];
+            $product->productName = $productName;
+            $product->productDescription = $productDescription;
             $product->isUserResponsibleForCharges = true;
             $product->classification = "FixedContract";
             $product->partialCollectionEnabled = false;
             $product->save();
 
+            // Remove fields before serializing
+            unset($product->updated_at);
+            unset($product->created_at);
+            unset($product->id);
+
             // Serialize product object into JSON
             $productData = json_encode($product);
 
-            // Send product data to third-party API
+            Log::info('Payload sent to gateway: ' . $productData);
+
+            $apiKey = env("PayThru_ApplicationId");
             $apiUrl = env("Paythru_Direct_Debt_Test_Url");
-            $paythruToken = $this->getPaythruToken();
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'Authorization' => $paythruToken,
-            ])->post($apiUrl.'/Product/create', ['product' => $productData]);
-            // Check if API call was successful
+                'ApplicationId' => $apiKey,
+            ])->post($apiUrl . '/Product/create', [
+                'productName' => $productName,
+                'productDescription' => $productDescription,
+            ]);
             if ($response->successful()) {
-                // Decode JSON response
                 $responseData = $response->json();
-
-                // Check if the API response indicates success
                 if ($responseData['succeed']) {
-                    // Retrieve product ID from API response
                     $productId = $responseData['data']['productId'];
-
-                    // Update product with API-provided product ID
                     $product->productId = $productId;
                     $product->save();
-
-                    // Log the response
                     Log::info('Response from paythru API: ' . $response->body());
                 } else {
-                    // Log the error response
                     Log::error('Error response from paythru API: ' . $response->body());
-
-                    // Throw an exception with the error message from the API response
-                    throw new Exception('Failed to create product. paythru returned an error: ' . $responseData['message']);
+                    throw new \Exception('Failed to create product. paythru returned an error: ' . $responseData['message']);
                 }
             } else {
-                // Log the error response
                 Log::error('Error response from paythru: ' . $response->body());
-
-                // Throw an exception if the API call was not successful
-                throw new Exception('Failed to create product. paythru returned an error.');
+                throw new \Exception('Failed to create product. paythru returned an error.');
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Log the exception
             Log::error('Error sending data to paythru: ' . $e->getMessage());
 
             // If product was created before the exception, delete it
-            if ($product && $product->exists) {
+            if (isset($product) && $product->exists) {
                 $product->delete();
             }
+
             // Re-throw the exception to be caught by the caller
             throw $e;
         }
         return $product;
     }
 
-
-
-    public function createMandate($requestData, $ajo): DirectDebitMandate
+    public function createMandate($validatedData, $ajo)
     {
         $apiKey = env("PayThru_ApplicationId");
-       // $user = Auth::user()->email;
+        $user = Auth::user();
+
         $getInvitation = Invitation::where('ajo_id', $ajo->id)->first();
         $getPaymentDate = PaymentDate::where('invitation_id', $getInvitation->id)
             ->whereDate('collection_date', now()->toDateString())->first();
-        // Initialize mandate variable
-        $mandate = null;
+
+        $acct = $validatedData['accountNumber'];
+
+        $bank = Bank::where('account_number', $acct)->first();
+
+        if (!$bank) {
+            return response()->json(['message' => 'Beneficiary Bank account not found'], 404);
+        }
+
+        $beneficiaryReferenceId = $bank->referenceId;
 
         try {
-            // Store data in DirectDebitProduct
+            // Store data in DirectDebitMandate
             $mandate = new DirectDebitMandate();
-            $mandate->productId = $requestData['productId'];
-            $mandate->productName = $requestData['productName'];
-            $mandate->remarks = $requestData['remarks'];
+            $mandate->productId = $validatedData['productId'];
+            $mandate->productName = $validatedData['productName'];
+            $mandate->remarks = $validatedData['remarks'];
             $mandate->paymentAmount = $ajo->amount_per_member;
-            $mandate->customer_phone = $requestData['customer_phone'];
-            $mandate->serviceReference = $apiKey;
-            $mandate->accountNumber= $requestData['accountNumber'];
-            $mandate->bankCode = $requestData['bankCode'];
-            $mandate->accountName = $requestData['accountName'];
-            $mandate->phoneNumber = $requestData['phoneNumber'];
-            $mandate->homeAddress = $requestData['homeAddress'];
-            $mandate->fileName = $requestData['fileName'];
-            $mandate->description= $requestData['description'];
-            $mandate->fileBase64String = $requestData['fileBase64String'];
-            $mandate->fileExtension = $requestData['fileExtension'];
-            $mandate->startDate = $ajo->starting_date;
-            $mandate->endDate = $requestData['endDate'];
-            $mandate->paymentFrequency= $requestData['paymentFrequency'];
-            $mandate->packageId = $requestData['packageId'];
+            $mandate->serviceReference = time() . $validatedData['productId'];
+            $mandate->accountNumber = $validatedData['accountNumber'];
+            $mandate->bankCode = $validatedData['bankCode'];
+            $mandate->accountName = $validatedData['accountName'];
+            $mandate->phoneNumber = $this->formatPhoneNumber($user->phone);
+            $mandate->homeAddress = $validatedData['homeAddress'];
+            $mandate->fileName = $validatedData['fileName'];
+            $mandate->description = $validatedData['description'];
+            $mandate->fileExtension = $validatedData['fileExtension'];
+            $mandate->email = $user->email;
+            $mandate->startDate = $validatedData['startDate'];
+            $mandate->endDate = $validatedData['endDate'];
+            $mandate->paymentFrequency = $validatedData['paymentFrequency'];
             $mandate->referenceCode = Str::random(10);
-            $mandate->collectionAccountNumber = $requestData['collectionAccountNumber'];
-            $mandate->mandateType = "Regular";
+            $mandate->collectionAccountNumber = $beneficiaryReferenceId;
+            $mandate->mandateType = "Instance";
             $mandate->routingOption = "Default";
             $mandate->save();
 
-            // Serialize product object into JSON
-            $mandateData = json_encode($mandate);
+            // Format date fields
+            $startDate = Carbon::parse($validatedData['startDate'])->toIso8601String();
+            $endDate = Carbon::parse($validatedData['endDate'])->toIso8601String();
+
+            // Construct the payload
+            $payload = [
+                'productId' => (string)$validatedData['productId'],
+                'productName' => (string)$validatedData['productName'],
+                'remarks' => (string)$validatedData['remarks'],
+                'paymentAmount' => (string)$ajo->amount_per_member,
+                'serviceReference' => (string)(time() . $validatedData['productId']),
+                'accountNumber' => (string)$validatedData['accountNumber'],
+                'bankCode' => (string)$validatedData['bankCode'],
+                'accountName' => (string)$validatedData['accountName'],
+                'phoneNumber' => (string)$this->formatPhoneNumber($user->phone),
+                'homeAddress' => (string)$validatedData['homeAddress'],
+                'fileName' => (string)$validatedData['fileName'],
+                'description' => (string)$validatedData['description'],
+                'fileExtension' => (string)$validatedData['fileExtension'],
+                'emailAddress' => (string)$user->email,
+                'startDate' => (string)$startDate,
+                'endDate' => (string)$endDate,
+                'paymentFrequency' => (string)$validatedData['paymentFrequency'],
+                'referenceCode' => (string)Str::random(10),
+                'collectionAccountNumber' => (string)$beneficiaryReferenceId,
+                'mandateType' => "Instant",
+                'routingOption' => "Default",
+            ];
+            Log::info('Payload sent to gateway: ' . json_encode($payload));
 
             // Send product data to third-party API
             $apiUrl = env("Paythru_Direct_Debt_Test_Url");
-            $paythruToken = $this->getPaythruToken();
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'Authorization' => $paythruToken,
-            ])->post($apiUrl.'/DirectDebit/mandate/create', ['mandate' => $mandateData]);
+                'ApplicationId' => $apiKey,
+            ])->post($apiUrl . '/DirectDebit/mandate/create', $payload);
+
+            // Log the response from the API
+            Log::info('Response from paythru API: ' . $response->body());
 
             // Check if API call was successful
             if ($response->successful()) {
@@ -155,35 +190,54 @@ class DirectDebitService
 
                 // Check if the API response indicates success
                 if ($responseData['succeed']) {
-
+                    $mandateId = $responseData['data']['mandateId'];
+                    $mandate->mandateId = $mandateId;
+                    $mandate->save();
                     // Log the response
-                    Log::info('Response from paythru API: ' . $response->body());
+                    Log::info('Mandate created successfully: ' . $response->body());
                 } else {
                     // Log the error response
                     Log::error('Error response from paythru API: ' . $response->body());
 
                     // Throw an exception with the error message from the API response
-                    throw new Exception('Failed to create product. paythru returned an error: ' . $responseData['message']);
+                    throw new Exception('Failed to create mandate. paythru returned an error: ' . $responseData['message']);
                 }
             } else {
                 // Log the error response
                 Log::error('Error response from paythru: ' . $response->body());
 
                 // Throw an exception if the API call was not successful
-                throw new Exception('Failed to create product. paythru returned an error.');
+                throw new Exception('Failed to create mandate. paythru returned an error.');
             }
         } catch (Exception $e) {
             // Log the exception
             Log::error('Error sending data to paythru: ' . $e->getMessage());
 
-            // If product was created before the exception, delete it
+            // If mandate was created before the exception, delete it
             if ($mandate && $mandate->exists) {
                 $mandate->delete();
             }
             // Re-throw the exception to be caught by the caller
             throw $e;
         }
+
         return $mandate;
+    }
+
+    private function formatPhoneNumber($phone)
+    {
+        // Check if the phone number starts with '+234' and replace it with '234'
+        if (strpos($phone, '+234') === 0) {
+            return '234' . substr($phone, 4);
+        }
+
+        // Check if the phone number starts with '0' and replace it with '234'
+        if (strpos($phone, '0') === 0) {
+            return '234' . substr($phone, 1);
+        }
+
+        // Return the phone number as is if no formatting is needed
+        return $phone;
     }
 
     public function updateMandate($requestData): DirectDebitMandate
@@ -211,7 +265,6 @@ class DirectDebitService
             $mandateUpdate->mandate_id = $mandate->id;
             $mandateUpdate->requestType = $mandate->requestType;
             $mandateUpdate->amount_limit = $mandate->amountLimit;
-            // Add other fields as needed...
             $mandateUpdate->save();
 
             // Prepare payload for external API
@@ -294,4 +347,28 @@ class DirectDebitService
         }
         return $token;
     }
+
+    public function getProductList()
+    {
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'ApplicationId' => $this->apiKey,
+            ])->get($this->apiUrl . '/Product/list');
+
+            if ($response->successful()) {
+                return $response->json();
+            } else {
+                Log::error('Error response from paythru: ' . $response->body());
+                return ['error' => 'Failed to retrieve products.'];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching products from paythru: ' . $e->getMessage());
+            return ['error' => 'An error occurred while fetching products.'];
+        }
+    }
+
+
+
+
 }

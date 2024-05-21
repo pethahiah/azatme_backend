@@ -3,20 +3,27 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Services\DirectDebit;
 use App\Services\Referrals;
 use Illuminate\Support\Facades\Auth;
 use App\Referral;
 use App\ReferralSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReferralController extends Controller
 {
     public $referral;
+    protected $directDebitService;
 
-    public function __construct(Referrals $referral)
+    public function __construct(Referrals $referral, DirectDebit $directDebitService)
     {
         $this->referral = $referral;
+        $this->directDebitService = $directDebitService;
     }
+
+
+
 
     public function generateReferralUrl(): \Illuminate\Http\JsonResponse
     {
