@@ -21,6 +21,7 @@ class Referral extends Model
         'product',
         'end_date',
         'referral_duration',
+        'status',
     ];
 
 

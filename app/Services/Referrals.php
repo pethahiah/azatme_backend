@@ -82,7 +82,7 @@ class Referrals
 
         $referralSettings = ReferralSetting::whereNotNull('point_limit')
             ->latest('created_at')
-            ->first();
+        ->first();
 
         if ($updatePoint && $referralSettings) {
             $newPoint = is_null($updatePoint->point) ? $referralSettings->point_limit : $updatePoint->point + $referralSettings->point_limit;
