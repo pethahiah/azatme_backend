@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>RefundMe Email</title>
+    <title>Business Email</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -114,7 +114,7 @@
 <body>
 <div class="email-content">
     <img src="https://api.azatme.com/storage/profiles/3kUvALFhEySvs7uOgDA8OfDmsrbvCPrj9e6aUMFD.png" alt="AzatMe Image" class="logo">
-    <p>Dear {{ucfirst($uxer)}},</p>
+    <p>Dear {{ucfirst($cusName)}},</p>
     <p>Further to the business relationship with <b>{{ ucfirst($busName) }}</b>, You are receiving the AzatMe Business payment link from <b>{{ ucfirst($busName) }}</b>. AzatMe Business allows Merchant to generate invoice, facilitate collections, serve as POS, keep track of transactions, and export into 3rd party accounting solutions.</p>
     <p>Please proceed to make the payment using the provided link below:<b><a href="{{$paylink}}" class="pay-now-link">Pay Now</a></b></p>
 

@@ -106,10 +106,9 @@
         <li>Gather contributions from associates/friends/family and make a positive impact!</li>
     </ul>
 
-    <p>Kontribute sends a Request to Pay link to potential contributors, streamlining their support process. They can click the link and contribute effortlessly.
-        Start using Kontribute to make a positive impact. Click the link to start your journey <b><a href="{{$slip['paylink']}}">Pay Now</a></b>.</p>
-    <p>If you can't access the button, you can manually make the payment by following this link: <b><a href="{{$slip['paylink']}}">{{$slip['paylink']}}</a>.</b></p>
-    <p>And also register using this link: <b><a href="https://azatme.com/register">https://azatme.com/register</a></b></p>
+    <p> Wait a minute! You have been invited to make a Kontribute.Click <b><a href="{{$slip['paylink']}}">Pay Now</a></b> to contribute, to the cause.</p>
+    <p>Can't access the button? kindly use the link: <b><a href="{{$slip['paylink']}}">{{$slip['paylink']}}</a>.</b></p>
+    <p>Furthermore, experience the amazing world of AzatMe Products. Join using this link:  <b><a href="https://azatme.com/register">https://azatme.com/register</a></b></p>
     <p>Thank you!</p>
     <p>It’s Us @ Team AzatMe!</p>
 

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ReferralPoint extends Model
 {
     //
+
     protected $fillable = [
         'user_id',
         'ref_code',

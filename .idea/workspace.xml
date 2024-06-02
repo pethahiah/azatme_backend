@@ -6,12 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="5dee2460-3c17-4081-9c28-3f9dbc8f7259" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Referral.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Referral.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/AjoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/AjoController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/API/AuthController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/API/AuthController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/ReferralPoint.php" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Services/Referrals.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/Referrals.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/User.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/User.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/migrations/2024_05_26_175428_create_referral_points_table.php" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/resources/views/Email/businessInvite.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/Email/businessInvite.blade.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/resources/views/Email/userGroup.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/Email/userGroup.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/Email/userGroup.blade.php.save" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/resources/views/Email/userInvite.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/Email/userInvite.blade.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -234,7 +235,7 @@
       <workItem from="1716741250291" duration="3965000" />
       <workItem from="1716986568022" duration="813000" />
       <workItem from="1717123374728" duration="1299000" />
-      <workItem from="1717320047451" duration="432000" />
+      <workItem from="1717320047451" duration="13318000" />
     </task>
     <servers />
   </component>

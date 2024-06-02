@@ -17,10 +17,12 @@ class CreateReferralPointsTable extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable();
             $table->string('ref_code')->nullable();
+            $table->string('point')->nullable();
             $table->string('product')->nullable();
             $table->string('product_action')->nullable();
             $table->timestamps();
         });
     }
+
 
 }

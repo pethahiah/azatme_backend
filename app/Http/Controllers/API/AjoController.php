@@ -458,12 +458,16 @@ public function webhookAjoResponse(Request $request)
         if ($data->notificationType == 1) {
             if (is_null($data->transactionDetails->paymentReference)) {
          $invitation = Invitation::where('merchantReference', $data->transactionDetails->merchantReference)->first();
+
+                $product_action = "withdrawal";
                 $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
                 if ($referral) {
-                    $this->referral->checkSettingEnquiry($modelType);
+                    $this->referral->checkSettingEnquiry($modelType, $product_action);
                 }
+
+
 	if ($invitation) {
 	$AjoContributor = new AjoContributor([
            'payThruReference' => $data->transactionDetails->payThruReference,
