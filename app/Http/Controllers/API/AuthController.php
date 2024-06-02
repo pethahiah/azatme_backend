@@ -211,6 +211,7 @@ public function loginViaOtp(Request $request)
                 'state' => 'string',
 		        'age' => 'string',
 		        'gender' => 'string',
+                'dob' => 'string',
 		        'lga_of_origin' => 'string',
 		        'maiden'=> 'string',
             ]);
@@ -233,6 +234,7 @@ public function loginViaOtp(Request $request)
                     $user->age = $request->age;
                     $user->gender = $request->gender;
                     $user->lga_of_origin = $request->lga_of_origin;
+                    $user->dob = $request->dob;
                     $user->maiden = $request->maiden_name;
 
                             $user->update();
@@ -416,29 +418,28 @@ public function getBVNDetails(Request $request)
 
 
 
-private function areUserDetailsMatching($user, $validationData)
-{
-    $surnameMatch = strtoupper($user->last_name) === $validationData['surname'];
+    private function areUserDetailsMatching($user, $validationData): bool
+    {
+        $surnameMatch = strtoupper($user->last_name) === $validationData['surname'];
 
-    if (!$surnameMatch && isset($user->maiden)) {
-        $maidenMatch = strtoupper($user->maiden) === $validationData['surname'];
-        if ($maidenMatch) {
-            $surnameMatch = true;
+        if (!$surnameMatch && isset($user->maiden)) {
+            $maidenMatch = strtoupper($user->maiden) === $validationData['surname'];
+            if ($maidenMatch) {
+                $surnameMatch = true;
+            }
         }
+
+        $dobMatch = isset($validationData['dateOfBirth']) &&
+            date('Y-m-d', strtotime($user->dob)) === date('Y-m-d', strtotime($validationData['dateOfBirth']));
+
+        return (
+            $surnameMatch &&
+            isset($validationData['first_name']) &&
+            strtoupper($user->first_name) === $validationData['first_name'] &&
+            ucfirst($user->gender) === $validationData['gender'] &&
+            $dobMatch
+        );
     }
-
-    return (
-        $surnameMatch &&
-        isset($validationData['first_name']) &&
-        strtoupper($user->first_name) === $validationData['first_name'] &&
-        ucfirst($user->gender) === $validationData['gender']
-    );
-}
-
-
-
-
-
 
    public function updateUsertype(Request $request)
 {
