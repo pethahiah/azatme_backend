@@ -71,8 +71,45 @@ class Referrals
         return $referralEndDate->greaterThanOrEqualTo($currentDate);
     }
 
+    /**
+     * @param $getUserToReward
+     * @param $pointsToAward
+     * @param $product_action
+     * @param $modelType
+     * @return void
+     */
+    private function addNewReferralPoints($getUserToReward, $pointsToAward, $product_action, $modelType): void
+    {
+        ReferralPoint::create([
+            'user_id' => $getUserToReward->user_id,
+            'points' => $pointsToAward,
+            'product_action' => $product_action,
+            'product' => $modelType,
+        ]);
 
-    private function updateReferralPoint($modelType, $product_action)
+        Log::info('Referral points awarded successfully.');
+
+        // Update points in the Referral table for that user
+        $updatePoint = Referral::where('user_id', $getUserToReward->user_id)
+            ->where('product', $modelType)
+            ->first();
+
+        if ($updatePoint) {
+            $newPoint = $updatePoint->point + $pointsToAward;
+            $updatePoint->update(['point' => $newPoint]);
+            Log::info('Referral points updated successfully.');
+        } else {
+            // If no existing record, create a new one
+            Referral::create([
+                'user_id' => $getUserToReward->user_id,
+                'product' => $modelType,
+                'point' => $pointsToAward,
+            ]);
+            Log::info('Referral points record created successfully.');
+        }
+    }
+
+    private function updateReferralPoint($modelType, $product_action): void
     {
         $userReferral = $this->getUserReferral();
         if (!$userReferral) {
@@ -98,68 +135,58 @@ class Referrals
         // Check if the user has already been awarded points for the product and used_product
         $existingReferralPoint = ReferralPoint::where('user_id', $getUserToReward->user_id)
             ->where('product', $modelType)
-            ->where('used_product', $product_action)
+            ->where('product_action', $product_action)
             ->first();
 
         if ($existingReferralPoint) {
             Log::info('User has already been awarded points for this product and action.');
-            return "inactive";
+            return;
         }
 
-        $pointLimit =  $referralSettings->referral_active_point;
+        $pointLimit = $referralSettings->referral_active_point;
 
         // Check if the user has reached the point limit for the referee
         $totalPoints = ReferralPoint::where('user_id', $getUserToReward->user_id)
-            ->where('used_product', $product_action)
             ->sum('points');
 
         if ($totalPoints >= $pointLimit) {
             Log::info('User has reached the maximum allowed points.');
-            return "inactive";
+            return;
         }
 
         // Determine points to be awarded based on referral settings
         $pointsToAward = 0;
 
         if ($referralSettings->product_getting_point === "A_single_product") {
-            $pointsToAward = $referralSettings->point_limit;
+            // Allow accumulation of points for distinct product actions within a single model type
+            $distinctProductActions = ReferralPoint::where('user_id', $getUserToReward->user_id)
+                ->where('product', $modelType)
+                ->distinct('product_action')
+                ->count();
+
+            if ($distinctProductActions < 5) {
+                $pointsToAward = $referralSettings->point_limit;
+                $this->addNewReferralPoints($getUserToReward, $pointsToAward, $product_action, $modelType);
+            } else {
+                Log::info('User has already accumulated points for all distinct product actions within this model type.');
+                return;
+            }
         } elseif ($referralSettings->product_getting_point === "Accross_All_products") {
-            $pointsToAward = $referralSettings->point_limit / ReferralPoint::where('user_id', $getUserToReward->user_id)->distinct('product')->count();
+            // Allow accumulation of points for distinct product actions across all model types
+            $distinctProductActions = ReferralPoint::where('user_id', $getUserToReward->user_id)
+                ->distinct('product_action')
+                ->count();
+
+            if ($distinctProductActions < 5) {
+                $pointsToAward = $referralSettings->point_limit / 5;
+                $this->addNewReferralPoints($getUserToReward, $pointsToAward, $product_action, $modelType);
+            } else {
+                Log::info('User has already accumulated points for all distinct product actions across all model types.');
+                return;
+            }
         }
 
-        // Add new referral points
-        ReferralPoint::create([
-            'user_id' => $getUserToReward->user_id,
-            'points' => $pointsToAward,
-            'used_product' => $product_action,
-            'product' => $modelType,
-        ]);
-
-        Log::info('Referral points awarded successfully.');
-
-        // Update points in the Referral table for that user
-        $updatePoint = Referral::where('user_id', $getUserToReward->user_id)
-            ->where('product', $modelType)
-            ->first();
-
-        if ($updatePoint) {
-            $newPoint = $updatePoint->point + $pointsToAward;
-            $updatePoint->update(['point' => $newPoint]);
-            Log::info('Referral points updated successfully.');
-        } else {
-            // If no existing record, create a new one
-            Referral::create([
-                'user_id' => $getUserToReward->user_id,
-                'product' => $modelType,
-                'point' => $pointsToAward,
-            ]);
-            Log::info('Referral points record created successfully.');
-        }
-
-        return "active";
     }
-
-
 
     public function processReferral($uniqueCode, $refereeName, $refereeEmail): array
     {
@@ -200,8 +227,6 @@ class Referrals
 
         return null;
     }
-
-
 
 
 
