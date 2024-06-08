@@ -91,21 +91,12 @@ class Referrals
 
         // Update points in the Referral table for that user
         $updatePoint = Referral::where('user_id', $getUserToReward->user_id)
-            ->where('product', $modelType)
             ->first();
 
         if ($updatePoint) {
             $newPoint = $updatePoint->point + $pointsToAward;
             $updatePoint->update(['point' => $newPoint]);
             Log::info('Referral points updated successfully.');
-        } else {
-            // If no existing record, create a new one
-            Referral::create([
-                'user_id' => $getUserToReward->user_id,
-                'product' => $modelType,
-                'point' => $pointsToAward,
-            ]);
-            Log::info('Referral points record created successfully.');
         }
     }
 
@@ -164,7 +155,7 @@ class Referrals
                 ->distinct('product_action')
                 ->count();
 
-            if ($distinctProductActions < 5) {
+            if ($distinctProductActions < $pointLimit) {
                 $pointsToAward = $referralSettings->point_limit;
                 $this->addNewReferralPoints($getUserToReward, $pointsToAward, $product_action, $modelType);
             } else {
@@ -177,8 +168,8 @@ class Referrals
                 ->distinct('product_action')
                 ->count();
 
-            if ($distinctProductActions < 5) {
-                $pointsToAward = $referralSettings->point_limit / 5;
+            if ($distinctProductActions < $pointLimit) {
+                $pointsToAward = $referralSettings->point_limit;
                 $this->addNewReferralPoints($getUserToReward, $pointsToAward, $product_action, $modelType);
             } else {
                 Log::info('User has already accumulated points for all distinct product actions across all model types.');
@@ -209,7 +200,7 @@ class Referrals
         }
     }
 
-    public function countReferralPerUser()
+    public function countReferralPerUser(): ?array
     {
         // Get the authenticated user
         $authenticatedUser = auth()->user();
