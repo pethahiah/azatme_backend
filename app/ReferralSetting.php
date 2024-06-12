@@ -22,6 +22,9 @@ class ReferralSetting extends Model
         'status',
         'end_date',
         'start_date',
-        'duration'
+        'duration',
+        'referral_active_point',
+        'product_getting_point'
+
     ];
 }

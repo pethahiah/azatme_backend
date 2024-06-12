@@ -432,11 +432,12 @@ public function webhookGroupResponse(Request $request)
     // Payment reference is null, check merchantReference
     $userGroup = UserGroup::where('merchantReference', $data->transactionDetails->merchantReference)->first();
 
-    $referral = ReferralSetting::where('status', 'active')
+                $product_action = "payment";
+                $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
                 if ($referral) {
-                    $this->referral->checkSettingEnquiry($modelType);
+                    $this->referral->checkSettingEnquiry($modelType, $product_action);
                 }
 
     if ($userGroup) {
@@ -478,12 +479,13 @@ public function webhookGroupResponse(Request $request)
                 // Payment reference is not null, update UserGroup
                 $userGroup = UserGroup::where('paymentReference', $data->transactionDetails->paymentReference)->first();
 
-                $referral = ReferralSetting::where('status', 'active')
+         $product_action = "withdrawal";
+         $referral = ReferralSetting::where('status', 'active')
              ->latest('updated_at')
              ->first();
-                if ($referral) {
-                $this->referral->checkSettingEnquiry($modelType);
-                     }
+         if ($referral) {
+             $this->referral->checkSettingEnquiry($modelType, $product_action);
+         }
 
                 if ($userGroup) {
                     $userGroup->payThruReference = $data->transactionDetails->payThruReference;

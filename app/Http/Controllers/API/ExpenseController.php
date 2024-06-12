@@ -397,6 +397,13 @@ public function webhookExpenseResponse(Request $request)
             $userExpense = userExpense::where('paymentReference', $data->transactionDetails->paymentReference)->first();
 //	    $minus_residual  =  $userExpense->minus_residual;
 
+            $product_action = "payment";
+            $referral = ReferralSetting::where('status', 'active')
+                ->latest('updated_at')
+                ->first();
+            if ($referral) {
+                $this->referral->checkSettingEnquiry($modelType, $product_action);
+            }
             if ($userExpense) {
                 // Update user expense
 //		$existing_minus_residual = $userExpense->minus_residual ?? 0;
@@ -445,7 +452,13 @@ public function webhookExpenseResponse(Request $request)
 
                 // Update withdrawal
                 $withdrawal = Withdrawal::where('transactionReferences', $transactionReferences)->first();
-
+                $product_action = "withdrawal";
+                $referral = ReferralSetting::where('status', 'active')
+                    ->latest('updated_at')
+                    ->first();
+                if ($referral) {
+                    $this->referral->checkSettingEnquiry($modelType, $product_action);
+                }
                 if ($withdrawal) {
                     $uniqueId = $withdrawal->uniqueId;
 

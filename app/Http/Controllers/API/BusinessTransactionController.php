@@ -846,11 +846,12 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
     if ($data->notificationType == 1) {
         $buisness = businessTransaction::where('paymentReference', $data->transactionDetails->paymentReference)->first();
 
+        $product_action = "payment";
         $referral = ReferralSetting::where('status', 'active')
             ->latest('updated_at')
             ->first();
         if ($referral) {
-            $this->referral->checkSettingEnquiry($modelType);
+            $this->referral->checkSettingEnquiry($modelType, $product_action);
         }
 
 //	$minus_residual = $business->minus_residual;
@@ -906,13 +907,13 @@ private function convertIntegerToWords($num, $list1, $list2, $list3)
 		'uniqueId' => $upda->uniqueId
 		])->first();
 
+          $product_action = "withdrawal";
           $referral = ReferralSetting::where('status', 'active')
               ->latest('updated_at')
               ->first();
           if ($referral) {
-              $this->referral->checkSettingEnquiry($modelType);
+              $this->referral->checkSettingEnquiry($modelType, $product_action);
           }
-
 
           if ($updatePaybackWithdrawal) {
               $updatePaybackWithdrawal->paymentAmount = $data->transactionDetails->paymentAmount;

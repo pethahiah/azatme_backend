@@ -459,7 +459,7 @@ public function webhookAjoResponse(Request $request)
             if (is_null($data->transactionDetails->paymentReference)) {
          $invitation = Invitation::where('merchantReference', $data->transactionDetails->merchantReference)->first();
 
-                $product_action = "withdrawal";
+                $product_action = "payment";
                 $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
@@ -503,12 +503,12 @@ public function webhookAjoResponse(Request $request)
 
                 // Update withdrawal
                 $withdrawal = AjoWithdrawal::where('transactionReference', $transactionReferences)->first();
-
+                $product_action = "withdrawal";
                 $referral = ReferralSetting::where('status', 'active')
                     ->latest('updated_at')
                     ->first();
                 if ($referral) {
-                    $this->referral->checkSettingEnquiry($modelType);
+                    $this->referral->checkSettingEnquiry($modelType, $product_action);
                 }
                 if ($withdrawal) {
                     $uniqueId = $withdrawal->uniqueId;
