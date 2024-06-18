@@ -7,6 +7,7 @@ use App\charge;
 use App\Http\Controllers\Controller;
 use App\ReferralSetting;
 use App\Services\ChargeService;
+use App\Services\MposService;
 use App\Services\Referrals;
 use Illuminate\Http\Request;
 use App\Http\Requests\ExpenseRequest;
@@ -46,14 +47,15 @@ class BusinessTransactionController extends Controller
 
     public $referral;
     public $paythruService;
-
+    public $mPos;
     public $chargeService;
 
-    public function __construct(PaythruService $paythruService, Referrals $referral, ChargeService $chargeService)
+    public function __construct(PaythruService $paythruService, Referrals $referral, ChargeService $chargeService, MposService $mPos)
     {
         $this->paythruService = $paythruService;
         $this->referral = $referral;
         $this->chargeService = $chargeService;
+        $this->mPos = $mPos;
     }
 
     public function creatProduct(Request $request)
@@ -1159,4 +1161,13 @@ public function AzatBusinessCollection(Request $request)
         return response()->json($getAllInvoiceSentToAParticularCustomer);
 
     }
+
+    public function mposPay(Request $request, $business_code)
+    {
+        if (!empty($this->mPos)) {
+           $mposPayment = $this->mPos->mposPay($request, $business_code);
+            return response()->json($mposPayment);
+        }
+    }
+
 }
