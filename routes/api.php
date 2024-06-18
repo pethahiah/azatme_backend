@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\BusinessTransactionController;
 use App\Http\Controllers\API\DirectDebitController;
 use App\Http\Controllers\API\ReferralSettingController;
 use Illuminate\Support\Facades\Route;
@@ -150,7 +151,7 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
 
 
 
-     //Buisness
+     //Business
     Route::post('createBusiness', 'BusinessController@createBusiness');
     Route::get('list-all-business-users', 'AuthController@listAllBusinessUsers');
     Route::put('update-business/{id}', 'BusinessController@updateBusiness');
@@ -159,6 +160,7 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('get-a-single-business-under-owner/{business_code}', 'BusinessController@getABusiness');
     Route::delete('delete-a-business/{id}', 'BusinessController@deleteABusiness');
     Route::get('gac-under-a-specific-business/{customer_code}', 'BusinessController@getAllCustomersUnderABusiness');
+    Route::post('/mpos-payment', [BusinessTransactionController::class, 'mposPay']);
 
 
 

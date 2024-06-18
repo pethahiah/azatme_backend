@@ -507,6 +507,7 @@ public function webhookGroupResponse(Request $request)
                     $userGroup->providedName = $data->transactionDetails->customerInfo->providedName;
                     $userGroup->remarks = $data->transactionDetails->customerInfo->remarks ?? null;
 
+
                     $userGroup->save();
 
          //           $activePayment = new Active([
