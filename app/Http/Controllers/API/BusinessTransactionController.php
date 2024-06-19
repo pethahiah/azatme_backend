@@ -997,7 +997,6 @@ public function AzatBusinessCollection(Request $request)
 
       $data = [
             'productId' => $productId,
-
             'amount' => $requestAmount - $latestCharge->charges,
             'beneficiary' => [
             'nameEnquiryReference' => $beneficiaryReferenceId
@@ -1168,6 +1167,18 @@ public function AzatBusinessCollection(Request $request)
            $mposPayment = $this->mPos->mposPay($request, $business_code);
             return response()->json($mposPayment);
         }
+    }
+
+
+    public function mposOneTimePay(Request $request): \Illuminate\Http\JsonResponse
+    {
+        if (!empty($this->mPos)) {
+            $mposPayment = $this->mPos->mPosOneTimePay($request);
+
+            return response()->json($mposPayment);
+        }
+
+        return response()->json(['message' => 'Payment service is not available.'], 503);
     }
 
 }

@@ -145,4 +145,48 @@ class MposService
         // Generate a unique code for the transaction
         return uniqid();
     }
+
+    public function mPosOneTimePay($request): \Illuminate\Http\JsonResponse
+    {
+        $currentTimestamp = now();
+        $prodUrl = env('PayThru_Base_Live_Url');
+        $amount = $request->input('amount');
+        $productId = env('PayThru_business_productid');
+        $timestamp = strtotime($currentTimestamp);
+        $secret = env('PayThru_App_Secret');
+
+        $hashSign = hash('sha512', $amount . $secret);
+        $token = $this->paythruService->handle();
+        $description = "Mpos payment option";
+
+        $data = [
+            'amount' => $amount,
+            'productId' => $productId,
+            'transactionReference' => time() . $amount->id,
+            'paymentDescription' => $description,
+            'paymentType' => 1,
+            'sign' => $hashSign,
+            'displaySummary' => false,
+        ];
+
+        $url = $prodUrl . '/transaction/create';
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => $token,
+        ])->post($url, $data);
+
+        if ($response->failed()) {
+            return response()->json(['message' => 'Transaction failed.'], 400);
+        } else {
+            $transaction = json_decode($response->body(), true);
+            if (!$transaction['successful']) {
+                return response()->json(['message' => 'Whoops! ' . json_encode($transaction['message'])], 400);
+            }
+        }
+
+        return response()->json($transaction);
+    }
+
+
 }
