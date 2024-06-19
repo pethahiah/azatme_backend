@@ -4,6 +4,7 @@ namespace App\Services;
 
 
 use App\Business;
+use App\BusinessTransaction;
 use App\Customer;
 use App\Product;
 use Illuminate\Support\Facades\Auth;
@@ -178,14 +179,31 @@ class MposService
 
         if ($response->failed()) {
             return response()->json(['message' => 'Transaction failed.'], 400);
-        } else {
-            $transaction = json_decode($response->body(), true);
-            if (!$transaction['successful']) {
-                return response()->json(['message' => 'Whoops! ' . json_encode($transaction['message'])], 400);
-            }
         }
 
-        return response()->json($transaction);
+        $transaction = json_decode($response->body(), true);
+
+        if (!$transaction['successful']) {
+            return response()->json(['message' => 'Whoops! ' . json_encode($transaction['message'])], 400);
+        }
+
+        $paylink = $transaction['payLink'];
+
+        if ($paylink) {
+            $getLastString = explode('/', $paylink);
+            $now = end($getLastString);
+
+            $info = BusinessTransaction::create([
+                'transaction_amount' => $amount,
+                'description' => $description,
+                'paymentReference' => $now,
+                'product_code' => $this->generateUniqueCode()
+            ]);
+
+            return response()->json($transaction);
+        }
+
+        return response()->json(['message' => 'Unexpected error occurred.'], 500);
     }
 
 
