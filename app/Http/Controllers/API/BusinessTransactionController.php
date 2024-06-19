@@ -366,7 +366,7 @@ public function startBusinessTransaction(Request $request, $business_code)
                                 'account_number' => $request['account_number'],
                                 'qty' => $quantity,
                                 'vat' => $vat,
-				'Grand_total' => $grandTotal,
+				                'Grand_total' => $grandTotal,
                                 'paymentReference' => $now,
                                 'product_code' => $this->generateUniqueCode()
                             ]);
@@ -624,7 +624,7 @@ if (empty($latest)) {
                             'vat' => $vatAmount,
                             'Grand_total' => $grandTotal,
                             'due_days' => $request->due_days,
-			    'due_date' => $current->addDays($request->due_days),
+			                'due_date' => $current->addDays($request->due_days),
                             //'due_date' => $current->addDays($request->due_days),
                             'issue_date' => \Carbon\Carbon::now(),
                             'paymentReference' => $now,
@@ -1178,7 +1178,7 @@ public function AzatBusinessCollection(Request $request)
             return response()->json($mposPayment);
         }
 
-        return response()->json(['message' => 'Payment service is not available.'], 503);
+        return response()->json(['message' => 'MPOS Payment service is not available.'], 503);
     }
 
 }
