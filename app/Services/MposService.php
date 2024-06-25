@@ -23,50 +23,55 @@ class MposService
 
     public function mposPay($request, $business_code)
     {
-        $current_timestamp = now();
         $prodUrl = env('PayThru_Base_Live_Url');
-
-        $idCode = $this->generateUniqueCode();
-
-        $uniqueCodes = $request->input('unique_code');
-        $quantities = $request->input('quantity');
-
-        if (!is_array($quantities)) {
-            $quantities = [$quantities];
-        }
-
         $email = $request->input('email');
         $user = Customer::where('customer_email', $email)->first();
 
-        $cusName = $user->customer_name;
-        $vat = 0;
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $uniqueCodes = $request->input('unique_code', []);
+        $quantities = $request->input('quantity', []);
+        $quantities = is_array($quantities) ? $quantities : [$quantities];
+
+        if (empty($uniqueCodes) || empty($quantities)) {
+            return response()->json(['message' => 'Invalid input data'], 400);
+        }
 
         $getBusinessVatOption = Business::where('owner_id', Auth::user()->id)
             ->where('business_code', $business_code)
             ->first();
-        $busName = $getBusinessVatOption->business_name;
+
+        if (!$getBusinessVatOption) {
+            return response()->json(['message' => 'Business not found'], 404);
+        }
 
         if (count($uniqueCodes) === 1 && count($quantities) === 1) {
-            return $this->processSinglePayment($uniqueCodes[0], $quantities[0], $getBusinessVatOption, $prodUrl);
+            return $this->processSinglePayment($uniqueCodes[0], $quantities[0], $getBusinessVatOption, $prodUrl, $user, $business_code);
         } elseif (count($uniqueCodes) === count($quantities) && count($uniqueCodes) > 1) {
-            return $this->processMultiplePayments($uniqueCodes, $quantities, $getBusinessVatOption, $prodUrl);
+            return $this->processMultiplePayments($uniqueCodes, $quantities, $getBusinessVatOption, $prodUrl, $user, $business_code);
         }
 
         return response()->json(['message' => 'Invalid input data'], 400);
     }
 
-    private function processSinglePayment($uniqueCode, $quantity, $getBusinessVatOption, $prodUrl)
+    private function processSinglePayment($uniqueCode, $quantity, $getBusinessVatOption, $prodUrl, $user, $business_code)
     {
         $vat = ($getBusinessVatOption->vat_option == 'yes') ? 0.075 : 0;
         $product = Product::where('unique_code', $uniqueCode)->first();
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
         $quantity = is_numeric($quantity) ? $quantity : 0;
         $amount = is_numeric($product->amount) ? $product->amount : 0;
-
         $vatAmount = $amount * $quantity * $vat;
         $grandTotal = ($amount * $quantity) + $vatAmount;
         $totalAmount = $grandTotal;
 
-        $data = $this->paymentData($totalAmount, $product);
+        $data = $this->paymentData($totalAmount, $product, $prodUrl);
         $url = $prodUrl . '/transaction/create';
         $token = $this->paythruService->handle();
 
@@ -75,14 +80,17 @@ class MposService
             'Authorization' => $token,
         ])->post($url, $data);
 
-        return $this->handleResponse($response);
+        $result = $this->handleResponse($response);
+        if ($result['successful']) {
+            $this->saveTransaction($totalAmount, $user, $business_code, $product, $result['payLink']);
+        }
+
+        return $result;
     }
 
-    private function processMultiplePayments($uniqueCodes, $quantities, $getBusinessVatOption, $prodUrl): \Illuminate\Http\JsonResponse
+    private function processMultiplePayments($uniqueCodes, $quantities, $getBusinessVatOption, $prodUrl, $user, $business_code): \Illuminate\Http\JsonResponse
     {
         $totalAmount = 0;
-        $totalVatAmount = 0;
-        $totalQuantity = 0;
 
         foreach ($uniqueCodes as $index => $uniqueCode) {
             $quantity = $quantities[$index];
@@ -95,22 +103,22 @@ class MposService
                 $grandTotal = ($amount * $quantity) + $vatAmount;
 
                 $totalAmount += $grandTotal;
-                $totalVatAmount += $vatAmount;
-                $totalQuantity += $quantity;
-            }
 
-            $token = $this->paythruService->handle();
-            $data = $this->paymentData($totalAmount, $product);
-            $url = $prodUrl . '/transaction/create';
+                $token = $this->paythruService->handle();
+                $data = $this->paymentData($totalAmount, $product, $prodUrl);
+                $url = $prodUrl . '/transaction/create';
 
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Authorization' => $token,
-            ])->post($url, $data);
+                $response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => $token,
+                ])->post($url, $data);
 
-            $result = $this->handleResponse($response);
-            if ($result instanceof \Illuminate\Http\JsonResponse) {
-                return $result;
+                $result = $this->handleResponse($response);
+                if (!$result['successful']) {
+                    return response()->json(['message' => 'Payment processing failed'], 400);
+                }
+
+                $this->saveTransaction($totalAmount, $user, $business_code, $product, $result['payLink']);
             }
         }
 
@@ -126,21 +134,45 @@ class MposService
         $transaction = json_decode($response->body(), true);
 
         if (!$transaction['successful']) {
-            return response()->json(['message' => 'Whoops! ' . json_encode($transaction['message'])], 400);
+            return response()->json(['message' => 'Whoops! ' . $transaction['message']], 400);
         }
 
-        return true;
+        return $transaction;
     }
 
-    private function paymentData($totalAmount, $product): array
+    private function paymentData($totalAmount, $product, $prodUrl): array
     {
-        // Create the payment data array based on your requirements
+        $productId = env('PayThru_business_productid');
+        $secret = env('PayThru_App_Secret');
+        $hashSign = hash('sha512', $totalAmount . $secret);
         return [
-            'total_amount' => $totalAmount,
-            'product' => $product,
+            'amount' => $totalAmount,
+            'productId' => $productId,
+            'transactionReference' => time() . $product->id,
+            'paymentDescription' => $product->description,
+            'paymentType' => 1,
+            'sign' => $hashSign,
+            'displaySummary' => false,
         ];
     }
 
+    private function saveTransaction($totalAmount, $user, $business_code, $product, $payLink)
+    {
+        $lastSegment = basename($payLink);
+
+        BusinessTransaction::create([
+            'transaction_amount' => $totalAmount,
+            'owner_id' => Auth::user()->id,
+            'email' => $user->customer_email,
+            'business_code' => $business_code,
+            'moto_id' => 1,
+            'name' => 'MPOS',
+            'product_id' => $product->id,
+            'description' => $product->description,
+            'paymentReference' => $lastSegment,
+            'unique_code' => $this->generateUniqueCode()
+        ]);
+    }
     private function generateUniqueCode(): string
     {
         // Generate a unique code for the transaction
@@ -163,7 +195,7 @@ class MposService
         $data = [
             'amount' => $amount,
             'productId' => $productId,
-            'transactionReference' => time() . $amount->id,
+            'transactionReference' => time() . $amount,
             'paymentDescription' => $description,
             'paymentType' => 1,
             'sign' => $hashSign,
@@ -190,14 +222,19 @@ class MposService
         $paylink = $transaction['payLink'];
 
         if ($paylink) {
-            $getLastString = explode('/', $paylink);
-            $now = end($getLastString);
+            $lastSegment = basename($paylink);
 
             $info = BusinessTransaction::create([
                 'transaction_amount' => $amount,
+                'owner_id' => Auth::user()->id,
+                'email' => Auth::user()->email,
+                'business_code' => 1,
+                'moto_id' => 1,
+                'name' => 'MPOS',
+                'product_id' => 1,
                 'description' => $description,
-                'paymentReference' => $now,
-                'product_code' => $this->generateUniqueCode()
+                'paymentReference' => $lastSegment,
+                'unique_code' => $this->generateUniqueCode()
             ]);
 
             return response()->json($transaction);
@@ -205,6 +242,7 @@ class MposService
 
         return response()->json(['message' => 'Unexpected error occurred.'], 500);
     }
+
 
 
 }

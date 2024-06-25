@@ -1172,9 +1172,9 @@ public function AzatBusinessCollection(Request $request)
 
     public function mposOneTimePay(Request $request): \Illuminate\Http\JsonResponse
     {
+
         if (!empty($this->mPos)) {
             $mposPayment = $this->mPos->mPosOneTimePay($request);
-
             return response()->json($mposPayment);
         }
 
