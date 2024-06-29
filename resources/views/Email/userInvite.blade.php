@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kontribute Email</title>
+    <title>RefundMe Email</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -100,8 +100,8 @@
 <body>
 <div class="email-content">
     <img src="https://api.azatme.com/storage/profiles/3kUvALFhEySvs7uOgDA8OfDmsrbvCPrj9e6aUMFD.png" alt="AzatMe Image" class="logo">
-    <p>Dear {{ucfirst($uxer)}},</p>
-    <p>Exciting news! your friend <b>{{ ucfirst($authmail['name']) }}</b>, just found RefundMe, the coolest socialized payment platform by AzatMe.</p>
+    <p>Dear {{$uxer}},</p>
+    <p>Exciting news! Your friend <b>{{ ucfirst($authmail['name']) }}</b>, just found RefundMe, the coolest socialized payment platform by AzatMe.</p>
     <p>Got expenses incurred on-behalf of a group, friends, or families? No worries! You can now effortlessly split payments and request refunds from Associates, friends and family. No more awkward convos or unpaid debts – RefundMe's got you covered.</p>
     <p> click <b><a href="{{$slip['paylink']}}">Pay Now</a></b> to settle up with<b>{{ ucfirst($authmail['name']) }}</b> Can't access the button? kindly copy and paste the link: <b><a href="{{$slip['paylink']}}">{{$slip['paylink']}}</a></b>.</p>
     <p>Furthermore, don't miss out, <b><a href="https://azatme.com/register">Join here</a></b> to experience the wonderful world of AzatMe bouquet of products and services.  You can copy and paste this <b><a href="https://azatme.com/register">https://azatme.com/register</a></b></p>
