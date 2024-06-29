@@ -1181,4 +1181,27 @@ public function AzatBusinessCollection(Request $request)
         return response()->json(['message' => 'MPOS Payment service is not available.'], 503);
     }
 
+    public function getMposPerBusiness(Request $request, $business_code): \Illuminate\Http\JsonResponse
+    {
+
+        if (!empty($this->mPos)) {
+            $getMposPerBusiness = $this->mPos->getAllTransactionPerBusiness($request, $business_code);
+            return response()->json($getMposPerBusiness);
+        }
+
+        return response()->json(['message' => 'MPOS Payment not available for this business.'], 503);
+    }
+
+
+    public function getMposPerPaymentReference(Request $request, $paymentReference): \Illuminate\Http\JsonResponse
+    {
+
+        if (!empty($this->mPos)) {
+            $getMposPerPaymentReference = $this->mPos->getTransactionPerPaymentReference($request, $paymentReference);
+            return response()->json($getMposPerPaymentReference);
+        }
+
+        return response()->json(['message' => 'MPOS Payment not available for this business.'], 503);
+    }
+
 }

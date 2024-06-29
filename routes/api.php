@@ -163,6 +163,9 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::post('/mpos-payment/{business_code}', [BusinessTransactionController::class, 'mposPay']);
     Route::post('/mpos-payment-option', [BusinessTransactionController::class, 'mposOneTimePay']);
 
+    Route::get('/get-mpos-payment-history/{business_code}', [BusinessTransactionController::class, 'getMposPerBusiness']);
+    Route::get('/get-mpos-payment-byReference/{paymentReference}', [BusinessTransactionController::class, 'getMposPerPaymentReference']);
+
 
 
 

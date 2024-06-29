@@ -252,6 +252,35 @@ class MposService
         return response()->json(['message' => 'Unexpected error occurred.'], 500);
     }
 
+    public function getAllTransactionPerBusiness($request, $business_code): \Illuminate\Http\JsonResponse
+    {
+        $perPage = $request->input('per_page', 10);
 
+        // Validate the $business_code parameter to ensure it's there.
+        if ($business_code){
+
+            $getAllTransactionPerBusiness = BusinessTransaction::where('owner_id', Auth::id())
+                ->where('business_code', $business_code)
+                ->where('name', 'MPOS')
+                ->paginate($perPage);
+            return response()->json($getAllTransactionPerBusiness);
+        } else {
+            return response()->json(['error' => 'No business code found'], 400);
+        }
+    }
+
+    public function getTransactionPerPaymentReference($request, $paymentReference): \Illuminate\Http\JsonResponse
+    {
+        // Validate the $business_code parameter to ensure it's there.
+        if ($paymentReference){
+
+            $getTransactionPerPaymentReference = BusinessTransaction::where('owner_id', Auth::id())
+                ->where('paymentReference', $paymentReference)
+                ->first();
+            return response()->json($getTransactionPerPaymentReference);
+        } else {
+            return response()->json(['error' => 'payment reference not found'], 400);
+        }
+    }
 
 }
