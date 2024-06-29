@@ -103,27 +103,33 @@ class MposService
                 $grandTotal = ($amount * $quantity) + $vatAmount;
 
                 $totalAmount += $grandTotal;
-
-                $token = $this->paythruService->handle();
-                $data = $this->paymentData($totalAmount, $product, $prodUrl);
-                $url = $prodUrl . '/transaction/create';
-
-                $response = Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Authorization' => $token,
-                ])->post($url, $data);
-
-                $result = $this->handleResponse($response);
-                if (!$result['successful']) {
-                    return response()->json(['message' => 'Payment processing failed'], 400);
-                }
-
-                $this->saveTransaction($totalAmount, $user, $business_code, $product, $result['payLink']);
             }
         }
 
-        return response()->json(['message' => 'Payment processed successfully'], 200);
+        $token = $this->paythruService->handle();
+        $data = $this->paymentData($totalAmount, null, $prodUrl);  // Assuming $product is not needed in paymentData when processing multiple payments
+        $url = $prodUrl . '/transaction/create';
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => $token,
+        ])->post($url, $data);
+
+        $result = $this->handleResponse($response);
+        if ($result['successful']) {
+            // Assuming you need to save the transaction for each product involved
+            foreach ($uniqueCodes as $index => $uniqueCode) {
+                $product = Product::where('unique_code', $uniqueCode)->first();
+                if ($product) {
+                    $this->saveTransaction($totalAmount, $user, $business_code, $product, $result['payLink']);
+                }
+            }
+        }
+
+        // Return the result as a JsonResponse
+        return response()->json($result);
     }
+
 
     private function handleResponse($response)
     {
@@ -148,8 +154,8 @@ class MposService
         return [
             'amount' => $totalAmount,
             'productId' => $productId,
-            'transactionReference' => time() . $product->id,
-            'paymentDescription' => $product->description,
+            'transactionReference' => time() . ($product ? $product->id : ''),
+            'paymentDescription' => $product ? $product->description : 'Multiple products',
             'paymentType' => 1,
             'sign' => $hashSign,
             'displaySummary' => false,
@@ -170,14 +176,17 @@ class MposService
             'product_id' => $product->id,
             'description' => $product->description,
             'paymentReference' => $lastSegment,
-            'unique_code' => $this->generateUniqueCode()
+            'unique_code' => $product->unique_code,
+            'product_code' => $this->generateUniqueCode()
         ]);
     }
+
     private function generateUniqueCode(): string
     {
         // Generate a unique code for the transaction
         return uniqid();
     }
+
 
     public function mPosOneTimePay($request): \Illuminate\Http\JsonResponse
     {

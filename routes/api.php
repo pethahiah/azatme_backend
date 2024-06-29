@@ -160,7 +160,7 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('get-a-single-business-under-owner/{business_code}', 'BusinessController@getABusiness');
     Route::delete('delete-a-business/{id}', 'BusinessController@deleteABusiness');
     Route::get('gac-under-a-specific-business/{customer_code}', 'BusinessController@getAllCustomersUnderABusiness');
-    Route::post('/mpos-payment', [BusinessTransactionController::class, 'mposPay']);
+    Route::post('/mpos-payment/{business_code}', [BusinessTransactionController::class, 'mposPay']);
     Route::post('/mpos-payment-option', [BusinessTransactionController::class, 'mposOneTimePay']);
 
 
