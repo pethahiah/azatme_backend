@@ -22,6 +22,53 @@ class BankController extends Controller
       $this->paythruService = $paythruService;
   }
 
+    /**
+     * @group Bank Management
+     *
+     * Add a new bank account to the user's profile.
+     *
+     * This endpoint allows the user to add a bank account by providing necessary details like bank name, account name, bank code, account number, and a reference ID. The method also checks if the account number already exists to prevent duplicates.
+     *
+     * @bodyParam name string required The name of the bank. Example: "First Bank"
+     * @bodyParam account_name string required The name associated with the bank account. Example: "John Doe"
+     * @bodyParam bankCode string required The code of the bank. Example: "011"
+     * @bodyParam account_number string required The account number for the bank account. Example: "1234567890"
+     * @bodyParam referenceId string optional A reference ID associated with this bank account. Example: "REF123456"
+     *
+     * @response 200 {
+     *     "success": true,
+     *     "bank": {
+     *         "id": 1,
+     *         "user_id": 3,
+     *         "bankName": "First Bank",
+     *         "account_name": "John Doe",
+     *         "bankCode": "011",
+     *         "account_number": "1234567890",
+     *         "referenceId": "REF123456",
+     *         "created_at": "2024-08-18T14:00:00.000000Z",
+     *         "updated_at": "2024-08-18T14:00:00.000000Z"
+     *     }
+     * }
+     *
+     * @response 409 {
+     *     "message": "Account number already exists"
+     * }
+     *
+     * @response 422 {
+     *     "message": "Validation failed",
+     *     "errors": {
+     *         "name": [
+     *             "The name field is required."
+     *         ],
+     *         "account_name": [
+     *             "The account name field is required."
+     *         ]
+     *         // Other validation errors
+     *     }
+     * }
+     * @post /addBank
+     */
+
     public function addBank(BankRequest $request){
     $bank = new Bank();
     $bank->bankName=$request->input('name');
@@ -38,10 +85,50 @@ class BankController extends Controller
                 'message' => 'Account number already exists'
             ], 409);
         }
-        
+
     $bank -> save();
     return response()->json(['success' => true, $bank]);
     }
+
+    /**
+     * @group Bank Management
+     *
+     * Get all bank accounts for the authenticated user.
+     *
+     * This endpoint retrieves all bank accounts that have been added by the authenticated user. It returns a list of all bank accounts associated with the user's ID.
+     *
+     * @response 200 {
+     *     "banks": [
+     *         {
+     *             "id": 1,
+     *             "user_id": 3,
+     *             "bankName": "First Bank",
+     *             "account_name": "John Doe",
+     *             "bankCode": "011",
+     *             "account_number": "1234567890",
+     *             "referenceId": "REF123456",
+     *             "created_at": "2024-08-18T14:00:00.000000Z",
+     *             "updated_at": "2024-08-18T14:00:00.000000Z"
+     *         },
+     *         {
+     *             "id": 2,
+     *             "user_id": 3,
+     *             "bankName": "GTBank",
+     *             "account_name": "Jane Doe",
+     *             "bankCode": "058",
+     *             "account_number": "0987654321",
+     *             "referenceId": "REF654321",
+     *             "created_at": "2024-08-18T15:00:00.000000Z",
+     *             "updated_at": "2024-08-18T15:00:00.000000Z"
+     *         }
+     *     ]
+     * }
+     *
+     * @response 401 {
+     *     "error": "Unauthorized"
+     * }
+     * @get /getBankPerUser
+     */
 
     public function getBankPerUser()
     {
@@ -50,6 +137,45 @@ class BankController extends Controller
         return response()->json($getBankPerUser);
     }
 
+    /**
+     * @group Bank Management
+     *
+     * Get all banks.
+     *
+     * This endpoint retrieves a list of all banks stored in the database, including their details like bank name, account name, account number, and associated user ID.
+     *
+     * @response 200 {
+     *     "banks": [
+     *         {
+     *             "id": 1,
+     *             "user_id": 3,
+     *             "bankName": "First Bank",
+     *             "account_name": "John Doe",
+     *             "bankCode": "011",
+     *             "account_number": "1234567890",
+     *             "referenceId": "REF123456",
+     *             "created_at": "2024-08-18T14:00:00.000000Z",
+     *             "updated_at": "2024-08-18T14:00:00.000000Z"
+     *         },
+     *         {
+     *             "id": 2,
+     *             "user_id": 4,
+     *             "bankName": "GTBank",
+     *             "account_name": "Jane Doe",
+     *             "bankCode": "058",
+     *             "account_number": "0987654321",
+     *             "referenceId": "REF654321",
+     *             "created_at": "2024-08-18T15:00:00.000000Z",
+     *             "updated_at": "2024-08-18T15:00:00.000000Z"
+     *         }
+     *     ]
+     * }
+     *
+     * @response 401 {
+     *     "error": "Unauthorized"
+     * }
+     */
+
 
     public function getAllBanks()
     {
@@ -57,36 +183,138 @@ class BankController extends Controller
         return response()->json($getAllBanks);
     }
 
+    /**
+     * @group Bank Management
+     *
+     * Update a bank.
+     *
+     * This endpoint allows the user to update the details of a specific bank account by providing the bank's ID. Only certain fields like `bankName` can be updated.
+     *
+     * @urlParam bankid int required The ID of the bank to be updated. Example: 1
+     *
+     * @bodyParam bankName string required The name of the bank. Example: "Zenith Bank"
+     * @bodyParam account_name string The name associated with the account. Example: "John Doe"
+     * @bodyParam bankCode string The bank's unique code. Example: "057"
+     * @bodyParam account_number string The account number associated with the bank. Example: "1234567890"
+     * @bodyParam referenceId string A unique reference ID for the bank account. Example: "REF123456"
+     *
+     * @response 200 {
+     *     "id": 1,
+     *     "user_id": 3,
+     *     "bankName": "Zenith Bank",
+     *     "account_name": "John Doe",
+     *     "bankCode": "057",
+     *     "account_number": "1234567890",
+     *     "referenceId": "REF123456",
+     *     "created_at": "2024-08-18T14:00:00.000000Z",
+     *     "updated_at": "2024-08-18T14:05:00.000000Z"
+     * }
+     *
+     * @response 404 {
+     *     "message": "Bank not found"
+     * }
+     *
+     * @response 422 {
+     *     "message": "Validation Error",
+     *     "errors": {
+     *         "bankName": ["The bankName field is required."],
+     *         "account_number": ["The account_number field is required."]
+     *     }
+     * }
+     *
+     * @response 401 {
+     *     "error": "Unauthorized"
+     * }
+     * @put /updateBank/{bankid}
+     */
     public function updateBank(Request $request, $bankid)
     {
         //return response($request->all());
         $update = Bank::find($bankid);
          $update->bankName=$request->input('bankName');
-         
+
         // $update->account_name=$request->input('account_name');
         $update->update($request->all());
         return response()->json($update);
-    
+
     }
 
+    /**
+     * @group Bank Management
+     *
+     * Delete a bank.
+     *
+     * This endpoint allows the user to delete a specific bank account by providing the bank's ID.
+     *
+     * @urlParam id int required The ID of the bank to be deleted. Example: 1
+     *
+     * @response 204 {
+     *     "message": "Bank deleted successfully"
+     * }
+     *
+     * @response 404 {
+     *     "message": "Bank not found"
+     * }
+     *
+     * @response 401 {
+     *     "error": "Unauthorized"
+     * }
+     * @delete /bank/{id}
+     */
 
-    public function bank($id) 
+
+    public function bank($id)
     {
-        
+
     $deleteBank = Bank::findOrFail($id);
-   // return $deleteBank;  
+   // return $deleteBank;
     if($deleteBank)
-       $deleteBank->delete(); 
+       $deleteBank->delete();
     else
-    return response()->json(null); 
+    return response()->json(null);
 }
 
-
+    /**
+     * @group Bank Management
+     *
+     * Get NGN Banks List from External API
+     *
+     * This endpoint retrieves a list of Nigerian banks by making a request to an external API.
+     * It requires a valid authorization token, which is handled internally.
+     *
+     * @response 200 {
+     *    "banks": [
+     *        {
+     *            "bankName": "Access Bank",
+     *            "bankCode": "044"
+     *        },
+     *        {
+     *            "bankName": "Zenith Bank",
+     *            "bankCode": "057"
+     *        }
+     *    ]
+     * }
+     *
+     * @response 403 {
+     *    "error": "Access denied. You do not have permission to access this resource."
+     * }
+     *
+     * @response 500 {
+     *    "error": "Failed to retrieve the list of banks."
+     * }
+     */
 public function ngnBanksApiList()
 {
     $prodUrl = env('PayThru_Base_Live_Url');
     $token = $this->paythruService->handle();
-     // return $token;
+
+    if (!$token) {
+        return "Token retrieval failed";
+    } elseif (is_string($token) && strpos($token, '403') !== false) {
+        return response()->json([
+            'error' => 'Access denied. You do not have permission to access this resource.'
+        ], 403);
+    }
      $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $token,
@@ -96,10 +324,7 @@ public function ngnBanksApiList()
     {
       $banks = json_decode($response->body(), true);
       return response()->json($banks);
-    }  
+    }
 }
-
-
-//++aaGQ9gNrFWXrxoNDvbMbxVvvNtfZtZf4ad2NCFSJkwfmA/fnNp7c0FZna6PnuAWJ1BOPG4yJxQSRTlUHeitfJxE7cQ0VNik2CZP1xkIN8rFKlusp8pKcXIYvt7WHJRaH7Zp/wFIUucl/7N4uagMbU0jnAY/DU+TDmRs81KtWXtblV+9quIr5goA4mJdJkBfkpe1EqrcxIv3CY8elZF0HKVi2F8h9etgkqufMaBiAG7p6QKK5cCt8p/dfoUEzlQJbWwTQJlGHlmmnZajD1ISvSZaYrTUaxrhBMnlgiu9w0PerYwQ7eEh9aFsLjOkjcut0NDpIwH4I+CqtFjy1DnNQghx+QL2rWw33E3S8RjlZT1s3mxrn6PnyaTKKV99M71Za7rBpXE3Wf/7ydR8+C/xkK8x9BvDlfLdDkNvzw+gpENyr1RPS9ulYk2ySSMp/Ubo4M7wZMtap2lFZIsl1OrqZ9NJSbV8ul1WkW5x6zAZOVPhrQri/lpO+uPMjBx0VAHXQO6cseiqkmQjHv1G/rvFbQGyYzCqX+XuOpNVk9LQ3ztX6KvdUS2kXa+ts57bac7bKlnGyPXSGjYFkENcbP/So6GY3+LtgrfUM5UxellaFWa5yPmwmoTsP7Vt4qRw5Vy+odbD1PI633hfUAuc/Qm4rRExbDWM2t3D8D+9oxFeYwftd4R3mBZDwmGGy9ZnnpAspKi1KK8EfduE6N7rsqcJOoG5f4JHIlLVQrlpXJz5E5YwVjkQsCxmg+FuO4KD4D2PPsgIVP3PLlUDPO4u8Nu0SLdx12ZocN+Y3y7tQMtJCpTmgPeHeBeOcoax+DTHCiQ3Q5VMdiWrNNdopnEWLfHRO1DFnjFlJOuAqznBnYbz0DMOowAi8WKJEy3QfMhbxXh7wU3/lApVgnuvmo08b/Sh5h95j9LkcuSArueBiV4sKB4cBmNPJYkYxeahnYa89rtgV7AnXECyD2FoGC+TFqvFlQudLUYtSImsMwtw9ZPZsT3S0GEuPgFiEARjZbGm0acUWMvq263mj2TqSQLAa6PEQe6lZ8sdaMRKkwas4hGHUz8/3+vy/lEoBPxwPZMzXBMI/P7xMI3bhuAfaQ3CGP6LPwIyJiN4hHAwg1QdtTQ/8K7QE2mub1yzye/kuIe1G1hNIZILv+vLJ0sLId17dr7L5GM34ylZJnHRptIW8g5uUefYgWgQ+hZ09SlMqWs5Sb3hLYEslYNbBKMDiTCWS/q6q2pYBO17kDu6JlQxosvY+XGkoJQJytE+mYoT83f/p4ZYIRQKElWND/w7Cguq25XogvdFN5HCLU
 
 }

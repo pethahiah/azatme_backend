@@ -14,6 +14,10 @@ class GroupWithdrawal extends Model
         'group_id',
         'beneficiary_id',
         'amount',
-        'bank'
+        'bank',
+	'charges',
+	'uniqueId',
+	'minus_residual',
+	'status'
     ];
 }

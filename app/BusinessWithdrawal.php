@@ -15,6 +15,10 @@ class BusinessWithdrawal extends Model
         'product_id',
         'beneficiary_id',
         'amount',
-        'bank'
+        'bank',
+	'charges',
+	'uniqueId',
+	'minus_residual',
+	'status'
     ];
 }

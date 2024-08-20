@@ -11,16 +11,20 @@ class BusinessPaylinkMail extends Mailable
 {
     use Queueable, SerializesModels;
     public $paylink;
+    public $busName;
+    public $cusName;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($paylink)
+    public function __construct($paylink, $busName, $cusName)
     {
         //
         $this->paylink = $paylink;
+	$this->cusName = $cusName;
+	$this->busName = $busName;
     }
 
     /**
@@ -30,6 +34,7 @@ class BusinessPaylinkMail extends Mailable
      */
     public function build()
     {
-        return $this->subject("Business Invite/Paymentlink")->markdown('Email.businessInvite');
+        //return $this->subject("Business Invite/Paymentlink")->view('Email.businessInvite');
+	 return $this->subject("Business Paymentlink")->view('Email.businessInvite')->with(['busName' => $this->busName, 'cusName' => $this->cusName]);
     }
 }

@@ -17,7 +17,11 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'otp', 'phone','first_name', 'middle_name', 'last_name', 'address', 'state', 'country', 'city', 'image', 'usertype', 'registration_code', 'company_name','nimc','bvn'
+        'name', 'email', 'password', 'otp', 'phone','first_name', 'middle_name', 'last_name', 'address', 'state', 'country', 'city',
+
+'image', 'usertype', 'registration_code', 'company_name','nimc','bvn', 'isVerified','enrollment_username',
+        'nin_bvnDetails','accessToken','face_image','lga_of_origin', 'age', 'gender', 'dob'
+
     ];
 
     /**
@@ -37,13 +41,13 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    
+
     public function userExpense()
     {
         return $this->belongsTo(userExpense::class, 'principal_id','id')->withDefault();
     }
-    
-    
+
+
      public function userGroup()
     {
         return $this->belongsTo(userGroup::class, 'reference_id','id')->withDefault();

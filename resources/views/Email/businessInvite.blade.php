@@ -1,406 +1,149 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title> AzatMe Application</title>
+<head>
+    <title>Business Email</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-      /* -------------------------------------
-          GLOBAL RESETS
-      ------------------------------------- */
-      
-      /*All the styling goes here*/
-      
-      img {
-        border: none;
-        -ms-interpolation-mode: bicubic;
-        max-width: 100%; 
-      }
-
-      body {
-        background-color: #f6f6f6;
-        font-family: sans-serif;
-        -webkit-font-smoothing: antialiased;
-        font-size: 14px;
-        line-height: 1.4;
-        margin: 0;
-        padding: 0;
-        -ms-text-size-adjust: 100%;
-        -webkit-text-size-adjust: 100%; 
-      }
-
-      table {
-        border-collapse: separate;
-        mso-table-lspace: 0pt;
-        mso-table-rspace: 0pt;
-        width: 100%; }
-        table td {
-          font-family: sans-serif;
-          font-size: 14px;
-          vertical-align: top; 
-      }
-
-      /* -------------------------------------
-          BODY & CONTAINER
-      ------------------------------------- */
-
-      .body {
-        background-color: #f6f6f6;
-        width: 100%; 
-      }
-
-      /* Set a max-width, and make it display as block so it will automatically stretch to that width, but will also shrink down on a phone or something */
-      .container {
-        display: block;
-        margin: 0 auto !important;
-        /* makes it centered */
-        max-width: 580px;
-        padding: 10px;
-        width: 580px; 
-      }
-
-      /* This should also be a block element, so that it will fill 100% of the .container */
-      .content {
-        box-sizing: border-box;
-        display: block;
-        margin: 0 auto;
-        max-width: 580px;
-        padding: 10px; 
-      }
-
-      /* -------------------------------------
-          HEADER, FOOTER, MAIN
-      ------------------------------------- */
-      .main {
-        background: #ffffff;
-        border-radius: 3px;
-        width: 100%; 
-      }
-
-      .wrapper {
-        box-sizing: border-box;
-        padding: 20px; 
-      }
-
-      .content-block {
-        padding-bottom: 10px;
-        padding-top: 10px;
-      }
-
-      .footer {
-        clear: both;
-        margin-top: 10px;
-        text-align: center;
-        width: 100%; 
-      }
-        .footer td,
-        .footer p,
-        .footer span,
-        .footer a {
-          color: #999999;
-          font-size: 12px;
-          text-align: center; 
-      }
-
-      /* -------------------------------------
-          TYPOGRAPHY
-      ------------------------------------- */
-      h1,
-      h2,
-      h3,
-      h4 {
-        color: #000000;
-        font-family: sans-serif;
-        font-weight: 400;
-        line-height: 1.4;
-        margin: 0;
-        margin-bottom: 30px; 
-      }
-
-      h1 {
-        font-size: 35px;
-        font-weight: 300;
-        text-align: center;
-        text-transform: capitalize; 
-      }
-
-      p,
-      ul,
-      ol {
-        font-family: sans-serif;
-        font-size: 14px;
-        font-weight: normal;
-        margin: 0;
-        margin-bottom: 15px; 
-      }
-        p li,
-        ul li,
-        ol li {
-          list-style-position: inside;
-          margin-left: 5px; 
-      }
-
-      a {
-        color: #3498db;
-        text-decoration: underline; 
-      }
-
-      /* -------------------------------------
-          BUTTONS
-      ------------------------------------- */
-      .btn {
-        box-sizing: border-box;
-        width: 100%; }
-        .btn > tbody > tr > td {
-          padding-bottom: 15px; }
-        .btn table {
-          width: auto; 
-      }
-        .btn table td {
-          background-color: #ffffff;
-          border-radius: 5px;
-          text-align: center; 
-      }
-        .btn a {
-          background-color: #ffffff;
-          border: solid 1px #3498db;
-          border-radius: 5px;
-          box-sizing: border-box;
-          color: #3498db;
-          cursor: pointer;
-          display: inline-block;
-          font-size: 14px;
-          font-weight: bold;
-          margin: 0;
-          padding: 12px 25px;
-          text-decoration: none;
-          text-transform: capitalize; 
-      }
-
-      .btn-primary table td {
-        background-color: #3498db; 
-      }
-
-      .btn-primary a {
-        background-color: #3498db;
-        border-color: #3498db;
-        color: #ffffff; 
-      }
-
-      /* -------------------------------------
-          OTHER STYLES THAT MIGHT BE USEFUL
-      ------------------------------------- */
-      .last {
-        margin-bottom: 0; 
-      }
-
-      .first {
-        margin-top: 0; 
-      }
-
-      .align-center {
-        text-align: center; 
-      }
-
-      .align-right {
-        text-align: right; 
-      }
-
-      .align-left {
-        text-align: left; 
-      }
-
-      .clear {
-        clear: both; 
-      }
-
-      .mt0 {
-        margin-top: 0; 
-      }
-
-      .mb0 {
-        margin-bottom: 0; 
-      }
-
-      .preheader {
-        color: transparent;
-        display: none;
-        height: 0;
-        max-height: 0;
-        max-width: 0;
-        opacity: 0;
-        overflow: hidden;
-        mso-hide: all;
-        visibility: hidden;
-        width: 0; 
-      }
-
-      .powered-by a {
-        text-decoration: none; 
-      }
-
-      hr {
-        border: 0;
-        border-bottom: 1px solid #f6f6f6;
-        margin: 20px 0; 
-      }
-
-      /* -------------------------------------
-          RESPONSIVE AND MOBILE FRIENDLY STYLES
-      ------------------------------------- */
-      @media only screen and (max-width: 620px) {
-        table[class=body] h1 {
-          font-size: 28px !important;
-          margin-bottom: 10px !important; 
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
         }
-        table[class=body] p,
-        table[class=body] ul,
-        table[class=body] ol,
-        table[class=body] td,
-        table[class=body] span,
-        table[class=body] a {
-          font-size: 16px !important; 
-        }
-        table[class=body] .wrapper,
-        table[class=body] .article {
-          padding: 10px !important; 
-        }
-        table[class=body] .content {
-          padding: 0 !important; 
-        }
-        table[class=body] .container {
-          padding: 0 !important;
-          width: 100% !important; 
-        }
-        table[class=body] .main {
-          border-left-width: 0 !important;
-          border-radius: 0 !important;
-          border-right-width: 0 !important; 
-        }
-        table[class=body] .btn table {
-          width: 100% !important; 
-        }
-        table[class=body] .btn a {
-          width: 100% !important; 
-        }
-        table[class=body] .img-responsive {
-          height: auto !important;
-          max-width: 100% !important;
-          width: auto !important; 
-        }
-      }
 
-      /* -------------------------------------
-          PRESERVE THESE STYLES IN THE HEAD
-      ------------------------------------- */
-      @media all {
-        .ExternalClass {
-          width: 100%; 
+        .email-content {
+            max-width: 800px;
+            margin: 30px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .ExternalClass,
-        .ExternalClass p,
-        .ExternalClass span,
-        .ExternalClass font,
-        .ExternalClass td,
-        .ExternalClass div {
-          line-height: 100%; 
-        }
-        .apple-link a {
-          color: inherit !important;
-          font-family: inherit !important;
-          font-size: inherit !important;
-          font-weight: inherit !important;
-          line-height: inherit !important;
-          text-decoration: none !important; 
-        }
-        .btn-primary table td:hover {
-          background-color: #34495e !important; 
-        }
-        .btn-primary a:hover {
-          background-color: #34495e !important;
-          border-color: #34495e !important; 
-        } 
-      }
 
+        .email-content p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            text-align: justify;
+        }
+
+        .email-content b {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .email-content a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .email-content a:hover {
+            text-decoration: underline;
+        }
+
+        .logo {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto 20px;
+        }
+
+        /*.email-content .register-link,*/
+        /*.email-content .pay-now-link {*/
+        /*    display: block;*/
+        /*    background-color: #007bff;*/
+        /*    color: #fff;*/
+        /*    padding: 10px;*/
+        /*    border-radius: 5px;*/
+        /*    margin-top: 15px;*/
+        /*    text-align: center;*/
+        /*    max-width: 150px; !* Adjust the max-width as needed *!*/
+        /*    margin-left: auto;*/
+        /*    margin-right: auto;*/
+        /*}*/
+
+        .footer {
+            text-align: center;
+        }
+
+        .footer p {
+            margin-bottom: 5px;
+        }
+
+        .social-icons-container {
+            text-align: center;
+        }
+
+        .follow-text {
+            margin-bottom: 10px;
+        }
+
+        .social-icons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-icon {
+            margin: 0 10px;
+        }
+
+        .social-icon img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .centerx {
+            text-align: center;
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-content {
+                padding: 15px;
+            }
+
+            .email-content .recipient {
+                font-size: 18px;
+            }
+
+            .email-content p {
+                font-size: 14px;
+            }
+        }
     </style>
-  </head>
-  <body class="">
-    <span class="preheader">Expense User Invite</span>
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
-      <tr>
-        <td>&nbsp;</td>
-        <td class="container">
-          <div class="content">
+</head>
+<body>
+<div class="email-content">
+    <img src="https://api.azatme.com/storage/profiles/3kUvALFhEySvs7uOgDA8OfDmsrbvCPrj9e6aUMFD.png" alt="AzatMe Image" class="logo">
+    <p>Dear {{ucfirst($cusName)}},</p>
+    <p>Further to the business relationship with <b>{{ ucfirst($busName) }}</b>, You are receiving the AzatMe Business payment link from <b>{{ ucfirst($busName) }}</b>. AzatMe Business allows Merchant to generate invoice, facilitate collections, serve as POS, keep track of transactions, and export into 3rd party accounting solutions.</p>
+    <p>Please proceed to make the payment using the provided link below:<b><a href="{{$paylink}}" class="pay-now-link">Pay Now</a></b></p>
 
-            <!-- START CENTERED WHITE CONTAINER -->
-            <table role="presentation" class="main">
+    <p>Kindly <b><a href="https://azatme.com/register" class="register-link">Register</a></b> and unlock amazing features of AzatMe Business. Be you a Nano or Micro or gig business, you will find innovative solutions for your needs. You don't want to miss out!</p>
+    <p>If you can't access the button, you can copy and paste the following link into your browser to make the payment: <b><a href="{{$paylink}}">{{$paylink}}</a></b>.</p>
+    <p>To register, use this link: <b><a href="https://azatme.com/register">https://azatme.com/register</a></b></p>
+    <p>Thank you!</p>
+    <p>It’s Us @ Team AzatMe!</p>
+    <p><a href="https://www.azatme.com">AzatMe</a></p>
 
-              <!-- START MAIN CONTENT AREA Dear awonusi olajide (FrancollimAssociates),
--->
-              <tr>
-                <td class="wrapper">
-                  <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td>
-                        <p>Hi,</p>
-                        <p> You have been invited to this expense, 
-                        
-                        To get the full feature of this app kindly click this link to signup <a href= "https://azatme.com/register"> Register</a></p>
+    <!-- Footer with social media links -->
+    <div class="footer">
+        <p style="text-align: center !important;">Follow us on social media</p>
+        <div class="social-icons">
+            <a href="#" class="social-icon" target="_blank"><img src="https://api.azatme.com/storage/profiles/1QfW8snv5yETjhPlWPDYODXPjWfTrIN4kdCVwn2W.jpg" alt="Facebook"></a>
+            <a href="#" class="social-icon" target="_blank"><img src="https://api.azatme.com/storage/profiles/5MI8cWhvXgQRuwmS2gy3Dy0R75qMlojG3403gstr.jpg" alt="Twitter"></a>
+            <a href="#" class="social-icon" target="_blank"><img src="https://api.azatme.com/storage/profiles/fNPOlac1mDuLHreE9mF4UPB2ZFdPaqCnphl4zWvN.jpg" alt="Instagram"></a>
+        </div>
+        <p style="text-align: center !important;">
+            © <span id="currentYear"></span> <a href="www.paythru.ng">PayThru</a>. All rights reserved.
+        </p>
+    </div>
+</div>
 
-                       
- <p>Meanwhile, kindly click to make payment<b> <a href={{$paylink}}>Pay Now</a></b></p>
-                         
-                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
-                          <tbody>
-                            <tr>
-                              <td align="left">
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                                  <tbody>
-                                    <tr>
-                                      <td> 
-                                      <p></p>
-                                          
-                                       </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                        <p></p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-
-            <!-- END MAIN CONTENT AREA -->
-            </table>
-            <!-- END CENTERED WHITE CONTAINER -->
-
-            <!-- START FOOTER -->
-            <div class="footer">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td class="content-block">
-                    <span class="apple-link">,</span>
-                    
-                  </td>
-                </tr>
-                <tr>
-                  <td class="content-block powered-by">
-                    Powered by <a href="#">PayThru.ng</a>.
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <!-- END FOOTER -->
-
-          </div>
-        </td>
-        <td>&nbsp;</td>
-      </tr>
-    </table>
-  </body>
+<script>
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+    // Set the current year to the "currentYear" span element
+    document.getElementById("currentYear").innerText = currentYear;
+</script>
+</body>
 </html>

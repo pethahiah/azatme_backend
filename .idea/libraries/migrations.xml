@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="migrations">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/database/migrations.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
