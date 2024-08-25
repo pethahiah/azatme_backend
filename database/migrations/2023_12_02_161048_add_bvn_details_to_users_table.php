@@ -15,11 +15,12 @@ class AddBvnDetailsToUsersTable extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             //
-	    $table->string('enrollment_username');
-            $table->string('nin_bvnDetails');
-            $table->longText('accessToken');
-            $table->string('face_image');
-            $table->string('lga_of_origin');
+	        $table->string('enrollment_username')->nullable();
+            $table->string('nin_bvnDetails')->nullable();
+            $table->longText('accessToken')->nullable();
+            $table->string('face_image')->nullable();
+            $table->string('lga_of_origin')->nullable();
+
         });
     }
 

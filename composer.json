@@ -21,7 +21,9 @@
         "maatwebsite/excel": "^3.1",
         "predis/predis": "*",
         "simplesoftwareio/simple-qrcode": "*",
-        "twilio/sdk": "^6.43"
+
+        "twilio/sdk": "^6.43",
+      "ext-json": "*"
     },
     "require-dev": {
         "facade/ignition": "^2.0",

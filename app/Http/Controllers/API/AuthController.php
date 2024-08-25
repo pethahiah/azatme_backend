@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Services\Referrals;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Requests\LoginRequest;
 use Carbon\Carbon;
 use App\User;
 use Mail;
-use Log;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\BusinessRequest;
 use App\Business;
@@ -27,36 +28,58 @@ use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    
+
+
+
+
+    public $referral;
+
+    public function __construct(Referrals $referral)
+    {
+        $this->referral = $referral;
+    }
+
+
      //Register
-
-
-     public function register(Request $request){
+    public function register(Request $request): \Illuminate\Http\JsonResponse
+    {
         $this->validate($request, [
-        'name' => 'required|min:3|max:50',
-        'email' => 'required|email|unique:users',
-        'usertype' => 'required|string',
-        'company_name' => 'string',
-        'phone' => 'string|unique:users|required',
-        'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
-        'password_confirmation' => 'required|same:password',
-    ]);
+            'name' => 'required|min:3|max:50',
+            'email' => 'required|email|unique:users',
+            'usertype' => 'required|string',
+            'company_name' => 'string',
+            'phone' => 'string|unique:users|required',
+            'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
+            'password_confirmation' => 'required|same:password',
+        ]);
 
-        $user = new User([
+        $uniqueCode = $request->unique_code;
+
+        $result = $this->referral->processReferral($uniqueCode, $request->name, $request->email);
+
+        if ($result['success']) {
+            Log::info($result['message']);
+        } else {
+            Log::error($result['error']);
+        }
+
+             $user = new User([
             'name' => $request->name,
             'email' => $request->email,
             'usertype' => $request->usertype,
             'company_name' => $request->company_name,
-            'phone'=> $request->phone,
-            'password' => Hash::make($request->password)
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'unique_code' => $uniqueCode, // Save unique_code in the user table
+
         ]);
         $user->save();
-        return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);       
-}
+        return response()->json(['message' => 'User has been registered', 'data' => $user], 200);
+    }
 
     //login function
 
-public function getRequesterIP()
+private function getRequesterIP(): ?string
 {
     return request()->ip();
 }
@@ -72,13 +95,13 @@ try {
     $user = User::where('email', '=', $email)->first();
 
     // Implement rate limiting for user and IP address using Redis cache
-    $userRateLimitKey = 'rate_limit:user:' . $user->id . ':' . $email;
-    $ipRateLimitKey = 'rate_limit:ip:' . $this->getRequesterIP();
+//    $userRateLimitKey = 'rate_limit:user:' . $user->id . ':' . $email;
+//    $ipRateLimitKey = 'rate_limit:ip:' . $this->getRequesterIP();
     $rateLimitDuration = 300; // 5 minutes
     $rateLimitMaxAttempts = 3;
 
-    $currentUserAttempts = (int) Redis::get($userRateLimitKey) ?? 0;
-    $currentIPAttempts = (int) Redis::get($ipRateLimitKey) ?? 0;
+//    $currentUserAttempts = (int) Redis::get($userRateLimitKey) ?? 0;
+//    $currentIPAttempts = (int) Redis::get($ipRateLimitKey) ?? 0;
 
 //    if ($currentUserAttempts >= $rateLimitMaxAttempts || $currentIPAttempts >= $rateLimitMaxAttempts) {
   //      return response(['message' => 'Too many login attempts. Try again after 5 minutes.'], 429);
@@ -104,14 +127,14 @@ try {
         });
 
         // Ensure to update the Redis keys when the login is successful
-        Redis::incr($userRateLimitKey);
-        Redis::incr($ipRateLimitKey);
-        if (!Redis::ttl($userRateLimitKey)) {
-            Redis::expire($userRateLimitKey, $rateLimitDuration);
-        }
-        if (!Redis::ttl($ipRateLimitKey)) {
-            Redis::expire($ipRateLimitKey, $rateLimitDuration);
-        }
+//        Redis::incr($userRateLimitKey);
+//        Redis::incr($ipRateLimitKey);
+//        if (!Redis::ttl($userRateLimitKey)) {
+//            Redis::expire($userRateLimitKey, $rateLimitDuration);
+//        }
+//        if (!Redis::ttl($ipRateLimitKey)) {
+//            Redis::expire($ipRateLimitKey, $rateLimitDuration);
+//        }
 
         return response(["status" => 200, "message" => "OTP sent successfully"]);
     } else {
@@ -137,10 +160,10 @@ public function loginViaOtp(Request $request)
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
         // Reset the rate limit counters after successful login
-        $userRateLimitKey = 'rate_limit:user:' . $user->id . ':' . $request->email;
-        $ipRateLimitKey = 'rate_limit:ip:' . $this->getRequesterIP();
-        Redis::del($userRateLimitKey);
-        Redis::del($ipRateLimitKey);
+//        $userRateLimitKey = 'rate_limit:user:' . $user->id . ':' . $request->email;
+//        $ipRateLimitKey = 'rate_limit:ip:' . $this->getRequesterIP();
+//        Redis::del($userRateLimitKey);
+//        Redis::del($ipRateLimitKey);
 
         // Get and display the user data from Redis cache
        // $userDataKey = 'user:' . $user->id;
@@ -163,10 +186,10 @@ public function loginViaOtp(Request $request)
     }
 }
 
-
     //logout function
 
-    public function logout() {
+    public function logout(): \Illuminate\Http\JsonResponse
+    {
 
         if(Auth::check()) {
         Auth::user()->token()->revoke();
@@ -186,13 +209,15 @@ public function loginViaOtp(Request $request)
                 'bvn' => 'string|min:11|max:11',
                 'country' => 'string',
                 'state' => 'string',
-		'age' => 'string',
-		'gender' => 'string',
-		'lga_of_origin' => 'string', 
+		        'age' => 'string',
+		        'gender' => 'string',
+                'dob' => 'string',
+		        'lga_of_origin' => 'string',
+		        'maiden'=> 'string',
             ]);
-             
-            
-            
+
+
+
                 if($validator->fails()){
                     $error = $validator->errors()->all()[0];
                     return response()->json(['status'=>'false', 'message'=>$error, 'data'=>[]],422);
@@ -202,20 +227,21 @@ public function loginViaOtp(Request $request)
                     $user->last_name = $request->last_name;
                     $user->middle_name = $request->middle_name;
                     $user->state = $request->state;
-                    $user->nimc = $request->nimc;  
+                    $user->nimc = $request->nimc;
                     $user->bvn = $request->bvn;
                     $user->country = $request->country;
                     $user->address = $request->address;
                     $user->age = $request->age;
                     $user->gender = $request->gender;
                     $user->lga_of_origin = $request->lga_of_origin;
-                    // $user->image = $request->image;
-                   //return $user;
+                    $user->dob = $request->dob;
+                    $user->maiden = $request->maiden_name;
+
                             $user->update();
                              return response()->json(['status'=>'true', 'message'=>"profile updated suuccessfully", 'data'=>$user]);
-                
+
                 }
-    
+
         }catch (\Exception $e){
                     return response()->json(['status'=>'false', 'message'=>$e->getMessage(), 'data'=>[]], 500);
         }
@@ -229,7 +255,7 @@ public function loginViaOtp(Request $request)
 
     $user = Auth::user();
 
-  $path = null; 
+  $path = null;
     if ($request->hasFile('image') && $request->file('image')->isValid()) {
         $image = $request->file('image');
         $base64Image = base64_encode(file_get_contents($image->path()));
@@ -269,11 +295,11 @@ public function uploadImage(Request $request)
     {
         $getBusiness = Auth::user();
         $get_user = User::where('id',$id)->first();
-        
+
         $updated = $get_user->fill(['company_name' => $getBusiness->company_name])->save();
-          
+
           if ($updated){
-            
+
             return response()->json(['status'=>'true', 'message'=>"User added successfully"]);
           }else {
             return response()->json(['status'=>'false', 'data'=>[]]);
@@ -289,12 +315,12 @@ public function uploadImage(Request $request)
         {
             $get_user->update(['company_name' => Null]);
             return response()->json(['status'=>'true', 'message'=>"profile updated successfully"]);
-            
-            
+
+
         }else{
             return response()->json('User is not a merchant, so you are not authorize to perform this action');
-                    } 
-       
+                    }
+
     }
 
     public function listAllBusinessUsers()
@@ -308,7 +334,7 @@ public function uploadImage(Request $request)
                 }
             else{
         return response()->json('User is not a merchant, so you are not authorize to perform this action');
-                }   
+                }
     }
 
 
@@ -323,7 +349,7 @@ public function uploadImage(Request $request)
 
     public function getAllUser()
     {
-      
+
         $user = user::select('id', 'email')->get();
         return response()->json($user);
 
@@ -332,8 +358,8 @@ public function uploadImage(Request $request)
 
 public function updateUserEmailStatus(Request $request)
     {
-        $email = $request->input('email'); 
 
+        $email = $request->input('email');
         if ($email === 'adunola.adeyemi@gmail.com' || $email === 'akm@mailinator.com' || $email === 'sunday4oged@yahoo.com' || $email === 'ade_adun@yahoo.com'|| $email === 'azatme@mailinator.com' || $email === 'lumiged4u@gmail.com') {
             $user = User::where('email', $email)->first();
 
@@ -349,32 +375,28 @@ public function updateUserEmailStatus(Request $request)
     }
 
 
-
-
-   
-
-
 public function getBVNDetails(Request $request)
 {
-    //dd($request);
     $accessToken = 'Bearer ' . $request->accessToken;
-    // $getDetailsApi = env("getBvn");
-    // https://services.paythru.ng/bvn/api/v1/bvn/get-bvn-details
-    Log::info("Token:" . $accessToken);
+    Log::info("Token: " . $accessToken);
 
     $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Authorization' => $accessToken,
     ])->get("https://services.paythru.ng/bvn/api/v1/bvn/get-bvn-details");
 
-    // Log the response
-    Log::info("BVN Response: " . $response);
+    Log::info("BVN Response: " . $response->body());
 
-    if ($response->successful()) {
-        $data = $response->json();
+    if (!$response->successful()) {
+        Log::error("Failed to get BVN details. Status code: " . $response->status());
+        return response()->json(['error' => 'Failed to get BVN details'], 500);
+    }
 
-        if ($data['status']) {
-            $validationData = $data['data']['validationDataRes'][0];
+    $dataArray = json_decode($response->body(), true);
+
+    if (json_last_error() === JSON_ERROR_NONE) {
+        if ($dataArray['status']) {
+            $validationData = $dataArray['data']['validationDataRes'][0];
             $user = Auth::user();
 
             if ($this->areUserDetailsMatching($user, $validationData)) {
@@ -388,31 +410,41 @@ public function getBVNDetails(Request $request)
         } else {
             return response()->json(['error' => 'Status is not true. Update aborted.'], 400);
         }
+    } else {
+        return response()->json(['error' => 'Failed to decode JSON response'], 500);
     }
-
-    return response()->json(['error' => 'Failed to get BVN details'], 500);
-}
-
-private function areUserDetailsMatching($user, $validationData)
-{
-    return (
-        $user->last_name === $validationData['surname'] &&
-        $user->first_name === $validationData['first_name'] &&
-        $user->country === $validationData['nationality'] &&
-        $user->lga_of_origin === $validationData['lga_of_origin']
-    );
 }
 
 
 
 
+    private function areUserDetailsMatching($user, $validationData): bool
+    {
+        $surnameMatch = strtoupper($user->last_name) === $validationData['surname'];
 
+        if (!$surnameMatch && isset($user->maiden)) {
+            $maidenMatch = strtoupper($user->maiden) === $validationData['surname'];
+            if ($maidenMatch) {
+                $surnameMatch = true;
+            }
+        }
 
+        $dobMatch = isset($validationData['dateOfBirth']) &&
+            date('Y-m-d', strtotime($user->dob)) === date('Y-m-d', strtotime($validationData['dateOfBirth']));
+
+        return (
+            $surnameMatch &&
+            isset($validationData['first_name']) &&
+            strtoupper($user->first_name) === $validationData['first_name'] &&
+            ucfirst($user->gender) === $validationData['gender'] &&
+            $dobMatch
+        );
+    }
 
    public function updateUsertype(Request $request)
 {
     $id = Auth::user();
-    $user = User::where('id', $id->id)->firstOrFail(); 
+    $user = User::where('id', $id->id)->firstOrFail();
 
     // Validate the request, ensuring usertype is not admin
     $this->validate($request, [
@@ -450,12 +482,13 @@ private function areUserDetailsMatching($user, $validationData)
             'ApiKey' => $PayThru_AppId,
             'RequestId' => $requestId,
             'RedirectUrl' => $redirectUrl,
-            'Sign' => $computedHash, 
+            'Sign' => $computedHash,
         ];
+	 Log::info("BVN Data: " . json_encode($data));
 //	return response()->json(['success' => true, $data]);
      //echo $data;
         $response = Http::get($url, $data);
-//        return $response;  
+//        return $response;
         $responseData = $response->json();
 
         if ($response->successful()) {
@@ -478,7 +511,6 @@ private function areUserDetailsMatching($user, $validationData)
 
 
 
-
     public function getBvnConsent(Request $request)
     {
         $responseFromFirstCall = $this->initiateBvnConsent($request);
@@ -488,7 +520,7 @@ private function areUserDetailsMatching($user, $validationData)
         }
        $requestId = $responseFromFirstCall['requestId'];
         $response = Http::get("https://www.sandbox.paythru.ng/BvnIgree/api/v1/bvn/consent/{$requestId}");
-        return $response;
+       // return $response;
         if ($response->successful()) {
 
           return response()->json($response);
@@ -503,6 +535,11 @@ private function areUserDetailsMatching($user, $validationData)
             ], 500);
         }
     }
+
+
+
+
+
 
 
 

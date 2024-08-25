@@ -15,6 +15,9 @@ class VerifyCsrfToken extends Middleware
         '/updateStatus',
         '/kontributewebhook',
         '/businesswebhook',
-	'/agowebhook'
+
+	'/agowebhook',
+	'/process-data'
+
     ];
 }
