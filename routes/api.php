@@ -337,6 +337,8 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('get-ajo-contributor/{transactionReference}/{email}', 'AjoController@getTransactionData');
     Route::get('get-ajo-withdrawal', 'AjoController@getAjoWithdrawalTransaction');
     Route::post('test-auto', 'AjoController@sendPaymentLinkToUsers');
+    Route::post('request-manual-paylink/{ajo_id}', 'AjoController@isPaylink');
+    Route::get('send-ajo-paylink', 'AjoController@sendPaymentLinkToUsers');
 
 
     // Referrals
