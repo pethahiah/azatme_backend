@@ -1,0 +1,690 @@
+name: NQR
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - POST
+    uri: api/nqr-merchant-registration
+    metadata:
+      title: |-
+        API endpoints for nqr management.
+        Register a new merchant.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the merchant.'
+        required: true
+        example: 'John Doe Ltd.'
+        type: string
+        custom: []
+      tin:
+        name: tin
+        description: 'The TIN of the merchant.'
+        required: true
+        example: '123456789'
+        type: string
+        custom: []
+      contact:
+        name: contact
+        description: 'The contact person for the merchant.'
+        required: true
+        example: 'John Doe'
+        type: string
+        custom: []
+      phone:
+        name: phone
+        description: 'The phone number of the merchant.'
+        required: true
+        example: '08012345678'
+        type: string
+        custom: []
+      email:
+        name: email
+        description: 'The email address of the merchant.'
+        required: true
+        example: john.doe@example.com
+        type: string
+        custom: []
+      address:
+        name: address
+        description: 'The address of the merchant.'
+        required: true
+        example: '123 Merchant St.'
+        type: string
+        custom: []
+      bankNo:
+        name: bankNo
+        description: 'The bank number.'
+        required: true
+        example: '12345'
+        type: string
+        custom: []
+      accountName:
+        name: accountName
+        description: 'The account name.'
+        required: true
+        example: 'John Doe Ltd.'
+        type: string
+        custom: []
+      accountNumber:
+        name: accountNumber
+        description: 'The account number.'
+        required: true
+        example: '1234567890'
+        type: string
+        custom: []
+      remarks:
+        name: remarks
+        description: 'Optional Additional remarks.'
+        required: false
+        example: 'Registered for NQR.'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "merchantNumber": "123456",
+            "qrCode": "https://example.com/qr/123456"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+            "message": "Invalid response from API."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-merchant-collection-account
+    metadata:
+      title: 'Create a merchant collection account.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      bankCode:
+        name: bankCode
+        description: 'The bank code.'
+        required: true
+        example: '012'
+        type: string
+        custom: []
+      accountName:
+        name: accountName
+        description: 'The name on the account.'
+        required: true
+        example: 'John Doe Ltd.'
+        type: string
+        custom: []
+      accountNumber:
+        name: accountNumber
+        description: 'The account number.'
+        required: true
+        example: '1234567890'
+        type: string
+        custom: []
+      merchantNumber:
+        name: merchantNumber
+        description: 'The merchant number.'
+        required: true
+        example: '123456'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "details": "Collection account created successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-merchant-number/{merchantNumber}'
+    metadata:
+      title: 'Get merchant details by merchant number.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      merchantNumber:
+        name: merchantNumber
+        description: 'The merchant number to retrieve details for.'
+        required: true
+        example: '123456'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "merchantNumber": "123456",
+            "name": "John Doe Ltd.",
+            "contact": "John Doe",
+            "phone": "08012345678",
+            "email": "john.doe@example.com",
+            "address": "123 Merchant St."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-sub-merchant
+    metadata:
+      title: 'Create a sub-merchant.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      merchantNumber:
+        name: merchantNumber
+        description: 'The merchant number to associate with the sub-merchant.'
+        required: true
+        example: '123456'
+        type: string
+        custom: []
+      name:
+        name: name
+        description: 'The name of the sub-merchant.'
+        required: true
+        example: 'Jane Doe Ltd.'
+        type: string
+        custom: []
+      email:
+        name: email
+        description: 'The email address of the sub-merchant.'
+        required: true
+        example: jane.doe@example.com
+        type: string
+        custom: []
+      phoneNumber:
+        name: phoneNumber
+        description: 'The phone number of the sub-merchant.'
+        required: true
+        example: '08098765432'
+        type: string
+        custom: []
+      qrCodeAmount:
+        name: qrCodeAmount
+        description: 'Amount associated with the QR code.'
+        required: true
+        example: 500.0
+        type: number
+        custom: []
+      storeId:
+        name: storeId
+        description: 'The store ID for the sub-merchant.'
+        required: true
+        example: store123
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "subMerchantDetails": {
+              "subMerchantNumber": "654321",
+              "qrCode": "https://example.com/qr/654321"
+            }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-all-submerchant-under-merchant/{id}'
+    metadata:
+      title: 'Get all sub-merchants under a specific merchant.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the merchant.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+            {
+              "subMerchantNumber": "654321",
+              "name": "Jane Doe Ltd.",
+              "email": "jane.doe@example.com",
+              "phoneNumber": "08098765432"
+            }
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/get-specific-submerchnat-under-merchant/{id}'
+    metadata:
+      title: 'Get specific sub-merchant under a merchant.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the sub-merchant.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "subMerchantNumber": "654321",
+            "name": "Jane Doe Ltd.",
+            "email": "jane.doe@example.com",
+            "phoneNumber": "08098765432"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-specific-merchant-info/{merchantNumber}'
+    metadata:
+      title: 'Get detailed information of a specific merchant.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      merchantNumber:
+        name: merchantNumber
+        description: 'The merchant number to get details for.'
+        required: true
+        example: '123456'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "merchantNumber": "123456",
+            "name": "John Doe Ltd.",
+            "contact": "John Doe",
+            "phone": "08012345678",
+            "email": "john.doe@example.com",
+            "address": "123 Merchant St.",
+            "details": "Detailed information about the merchant."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/get-merchant-trans-report/{merchantNumber}'
+    metadata:
+      title: 'Get merchant transaction report.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      merchantNumber:
+        name: merchantNumber
+        description: ''
+        required: true
+        example: corporis
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      startTime:
+        name: startTime
+        description: 'Start time for the report.'
+        required: true
+        example: '2024-01-01T00:00:00Z'
+        type: string
+        custom: []
+      endTime:
+        name: endTime
+        description: 'End time for the report.'
+        required: true
+        example: '2024-01-31T23:59:59Z'
+        type: string
+        custom: []
+      orderType:
+        name: orderType
+        description: 'The type of order.'
+        required: true
+        example: purchase
+        type: string
+        custom: []
+      page:
+        name: page
+        description: 'Optional Page number for paginated results.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "report": [
+              {
+                "transactionId": "1234567890",
+                "amount": 100.00,
+                "status": "completed"
+              }
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/generate-dynamic-qrcode/{merchantNumber}'
+    metadata:
+      title: 'Generate a dynamic QR code.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      merchantNumber:
+        name: merchantNumber
+        description: ''
+        required: true
+        example: enim
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      channel:
+        name: channel
+        description: 'The channel for the QR code.'
+        required: true
+        example: web
+        type: string
+        custom: []
+      subMchNo:
+        name: subMchNo
+        description: 'The sub-merchant number.'
+        required: true
+        example: '654321'
+        type: string
+        custom: []
+      codeType:
+        name: codeType
+        description: 'The type of code.'
+        required: true
+        example: payment
+        type: string
+        custom: []
+      amount:
+        name: amount
+        description: 'The amount associated with the QR code.'
+        required: true
+        example: 500.0
+        type: number
+        custom: []
+      order_no:
+        name: order_no
+        description: 'The order number.'
+        required: true
+        example: order12345
+        type: string
+        custom: []
+      orderType:
+        name: orderType
+        description: 'The type of order.'
+        required: true
+        example: purchase
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "qrCode": "https://example.com/qr/dynamic123456",
+            "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/get-merchant-transaction-status
+    metadata:
+      title: 'Get the status of a merchant transaction.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      orderNo:
+        name: orderNo
+        description: 'The order number for the transaction.'
+        required: true
+        example: order12345
+        type: string
+        custom: []
+      merchantNumber:
+        name: merchantNumber
+        description: 'The merchant number for the transaction.'
+        required: true
+        example: '123456'
+        type: string
+        custom: []
+      orderSn:
+        name: orderSn
+        description: 'The order serial number.'
+        required: true
+        example: serial12345
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "completed",
+            "details": "Transaction details here."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-all-merchants
+    metadata:
+      title: 'Get all merchants for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+            {
+              "merchantNumber": "123456",
+              "name": "John Doe Ltd.",
+              "contact": "John Doe",
+              "phone": "08012345678"
+            }
+          ]
+        headers: []
+        description: '200'
+    responseFields: []

@@ -1,0 +1,76 @@
+name: 'Business Transactions'
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-mpos-payment-history/{business_code}'
+    metadata:
+      title: |-
+        Retrieve MPOS transactions for a specific business.
+
+        This endpoint fetches all MPOS transactions associated with the authenticated user and a given business code.
+        The transactions are grouped by `product_code` and `email`, and the total amount paid for each group is calculated.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: ''
+        required: true
+        example: natus
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "Product Code": "string",
+                "email": "string",
+                "total_Amount_Paid": "number",
+                "data": [
+                  {
+                    // Transaction fields such as id, amount, etc.
+                  }
+                ]
+              }
+            ],
+            "total": "integer"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 401
+        content: |-
+          {
+            "message": "Unauthorized"
+          }
+        headers: []
+        description: '401'
+      -
+        status: 500
+        content: |-
+          {
+            "message": "An error occurred"
+          }
+        headers: []
+        description: '500'
+    responseFields:
+      data:
+        name: data
+        description: 'An array of grouped transaction data.'
+        type: 'string[]'
+      total:
+        name: total
+        description: 'The total number of groups returned.'
+        type: integer

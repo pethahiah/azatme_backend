@@ -1,0 +1,100 @@
+name: Authentication
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - POST
+    uri: api/forgot
+    metadata:
+      title: 'Request a password reset.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The email address associated with the account.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "message": "Password reset email sent."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "User doesn't exist."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "Exception message details."
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/reset
+    metadata:
+      title: 'Reset the password using a token.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      token:
+        name: token
+        description: 'The token sent to the user''s email for password reset.'
+        required: true
+        example: a1b2c3d4e5
+        type: string
+        custom: []
+      password:
+        name: password
+        description: 'The new password for the user.'
+        required: true
+        example: newpassword123
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "message": "Password successfully reset."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "message": "Invalid token or User doesn't exist."
+          }
+        headers: []
+        description: '403'
+    responseFields: []

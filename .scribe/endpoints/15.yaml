@@ -1,0 +1,64 @@
+name: 'User Profile'
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/getProfile
+    metadata:
+      title: |-
+        Retrieve the profile of the authenticated user.
+
+        This endpoint returns the profile details of the currently authenticated user. It retrieves user information based on the authenticated user's ID.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "name": "John Doe",
+              "email": "john.doe@example.com",
+              "usertype": "user",
+              "company_name": "Business XYZ",
+              "phone": "1234567890",
+              "password": "hashed_password",
+              "unique_code": "ABC123",
+              "created_at": "2024-08-18T00:00:00.000000Z",
+              "updated_at": "2024-08-18T00:00:00.000000Z",
+              "first_name": "John",
+              "last_name": "Doe",
+              "middle_name": "M",
+              "address": "123 Main St",
+              "nimc": "12345678901",
+              "bvn": "12345678901",
+              "country": "Country Name",
+              "state": "State Name",
+              "age": "30",
+              "gender": "Male",
+              "dob": "1994-01-01",
+              "lga_of_origin": "Local Government Area",
+              "maiden": "Maiden Name",
+              "image": "storage/profiles/user_image.jpg"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 401
+        content: |-
+          {
+              "status": "error",
+              "message": "Unauthorized"
+          }
+        headers: []
+        description: '401'
+    responseFields: []

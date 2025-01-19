@@ -1,0 +1,377 @@
+name: 'Bank Management'
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/getBanks
+    metadata:
+      title: |-
+        Get NGN Banks List from External API
+
+        This endpoint retrieves a list of Nigerian banks by making a request to an external API.
+        It requires a valid authorization token, which is handled internally.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+             "banks": [
+                 {
+                     "bankName": "Access Bank",
+                     "bankCode": "044"
+                 },
+                 {
+                     "bankName": "Zenith Bank",
+                     "bankCode": "057"
+                 }
+             ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+             "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+             "error": "Failed to retrieve the list of banks."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/updateBank/{bankid}'
+    metadata:
+      title: |-
+        Update a bank.
+
+        This endpoint allows the user to update the details of a specific bank account by providing the bank's ID. Only certain fields like `bankName` can be updated.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      bankid:
+        name: bankid
+        description: 'The ID of the bank to be updated.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      bankName:
+        name: bankName
+        description: 'The name of the bank.'
+        required: true
+        example: '"Zenith Bank"'
+        type: string
+        custom: []
+      account_name:
+        name: account_name
+        description: 'The name associated with the account.'
+        required: false
+        example: '"John Doe"'
+        type: string
+        custom: []
+      bankCode:
+        name: bankCode
+        description: 'The bank''s unique code.'
+        required: false
+        example: '"057"'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The account number associated with the bank.'
+        required: false
+        example: '"1234567890"'
+        type: string
+        custom: []
+      referenceId:
+        name: referenceId
+        description: 'A unique reference ID for the bank account.'
+        required: false
+        example: '"REF123456"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "user_id": 3,
+              "bankName": "Zenith Bank",
+              "account_name": "John Doe",
+              "bankCode": "057",
+              "account_number": "1234567890",
+              "referenceId": "REF123456",
+              "created_at": "2024-08-18T14:00:00.000000Z",
+              "updated_at": "2024-08-18T14:05:00.000000Z"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Bank not found"
+          }
+        headers: []
+        description: '404'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "Validation Error",
+              "errors": {
+                  "bankName": ["The bankName field is required."],
+                  "account_number": ["The account_number field is required."]
+              }
+          }
+        headers: []
+        description: '422'
+      -
+        status: 401
+        content: |-
+          {
+              "error": "Unauthorized"
+          }
+        headers: []
+        description: '401'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/addBank
+    metadata:
+      title: |-
+        Add a new bank account to the user's profile.
+
+        This endpoint allows the user to add a bank account by providing necessary details like bank name, account name, bank code, account number, and a reference ID. The method also checks if the account number already exists to prevent duplicates.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the bank.'
+        required: true
+        example: '"First Bank"'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The account number for the bank account.'
+        required: true
+        example: '"1234567890"'
+        type: string
+        custom: []
+      account_name:
+        name: account_name
+        description: 'The name associated with the bank account.'
+        required: true
+        example: '"John Doe"'
+        type: string
+        custom: []
+      bankCode:
+        name: bankCode
+        description: 'The code of the bank.'
+        required: true
+        example: '"011"'
+        type: string
+        custom: []
+      referenceId:
+        name: referenceId
+        description: 'optional A reference ID associated with this bank account.'
+        required: false
+        example: '"REF123456"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "success": true,
+              "bank": {
+                  "id": 1,
+                  "user_id": 3,
+                  "bankName": "First Bank",
+                  "account_name": "John Doe",
+                  "bankCode": "011",
+                  "account_number": "1234567890",
+                  "referenceId": "REF123456",
+                  "created_at": "2024-08-18T14:00:00.000000Z",
+                  "updated_at": "2024-08-18T14:00:00.000000Z"
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 409
+        content: |-
+          {
+              "message": "Account number already exists"
+          }
+        headers: []
+        description: '409'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "Validation failed",
+              "errors": {
+                  "name": [
+                      "The name field is required."
+                  ],
+                  "account_name": [
+                      "The account name field is required."
+                  ]
+                  // Other validation errors
+              }
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getBankPerUser
+    metadata:
+      title: |-
+        Get all bank accounts for the authenticated user.
+
+        This endpoint retrieves all bank accounts that have been added by the authenticated user. It returns a list of all bank accounts associated with the user's ID.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "banks": [
+                  {
+                      "id": 1,
+                      "user_id": 3,
+                      "bankName": "First Bank",
+                      "account_name": "John Doe",
+                      "bankCode": "011",
+                      "account_number": "1234567890",
+                      "referenceId": "REF123456",
+                      "created_at": "2024-08-18T14:00:00.000000Z",
+                      "updated_at": "2024-08-18T14:00:00.000000Z"
+                  },
+                  {
+                      "id": 2,
+                      "user_id": 3,
+                      "bankName": "GTBank",
+                      "account_name": "Jane Doe",
+                      "bankCode": "058",
+                      "account_number": "0987654321",
+                      "referenceId": "REF654321",
+                      "created_at": "2024-08-18T15:00:00.000000Z",
+                      "updated_at": "2024-08-18T15:00:00.000000Z"
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 401
+        content: |-
+          {
+              "error": "Unauthorized"
+          }
+        headers: []
+        description: '401'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/bank/{id}'
+    metadata:
+      title: |-
+        Delete a bank.
+
+        This endpoint allows the user to delete a specific bank account by providing the bank's ID.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the bank to be deleted.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 204
+        content: |-
+          {
+              "message": "Bank deleted successfully"
+          }
+        headers: []
+        description: '204'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Bank not found"
+          }
+        headers: []
+        description: '404'
+      -
+        status: 401
+        content: |-
+          {
+              "error": "Unauthorized"
+          }
+        headers: []
+        description: '401'
+    responseFields: []

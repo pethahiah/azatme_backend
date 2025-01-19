@@ -1,0 +1,111 @@
+name: 'Users Authentication'
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - POST
+    uri: api/register
+    metadata:
+      title: |-
+        API endpoints for user management.
+
+        Register a new user.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The user''s full name.'
+        required: true
+        example: 'John Doe'
+        type: string
+        custom: []
+      email:
+        name: email
+        description: 'The user''s email address.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+      usertype:
+        name: usertype
+        description: 'The type of the user. Can be ''user'', ''merchant'', or ''sponsor''.'
+        required: true
+        example: user
+        type: string
+        custom: []
+      company_name:
+        name: company_name
+        description: ''
+        required: false
+        example: debitis
+        type: string
+        custom: []
+      phone:
+        name: phone
+        description: ''
+        required: true
+        example: repellendus
+        type: string
+        custom: []
+      password:
+        name: password
+        description: 'The user''s password.'
+        required: true
+        example: yourpassword
+        type: string
+        custom: []
+      password_confirmation:
+        name: password_confirmation
+        description: 'Confirmation of the user''s password.'
+        required: true
+        example: yourpassword
+        type: string
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "user": {
+                "id": 1,
+                "email": "user@example.com",
+                "name": "John Doe"
+              }
+            },
+            "message": "Registration successful."
+          }
+        headers: []
+        description: '201'
+      -
+        status: 400
+        content: |-
+          {
+            "status": "error",
+            "message": "Validation errors.",
+            "errors": {
+              "email": ["The email has already been taken."],
+              "password": ["The passwords do not match."]
+            }
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []

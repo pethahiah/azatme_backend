@@ -1,0 +1,786 @@
+name: Kontribute
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/count-all-added-users-kontribute
+    metadata:
+      title: |-
+        Count the number of users added to a specific Kontribute group by ID.
+
+        This endpoint returns the count of users associated with a given `kontributeId` if the authenticated user is an admin.
+        If the user is not an admin, an authorization error is returned.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      kontributeId:
+        name: kontributeId
+        description: 'The ID of the Kontribute group.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "count": 10
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "Auth user is not an admin"
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Unsuccessful"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/createGroup
+    metadata:
+      title: 'Create a new group.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the group.'
+        required: true
+        example: 'Team Outing'
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'The description of the group.'
+        required: false
+        example: 'Group expenses for team outing.'
+        type: string
+        custom: []
+      amount:
+        name: amount
+        description: 'The total amount for the group.'
+        required: true
+        example: 500.0
+        type: number
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "name": "Team Outing",
+              "description": "Group expenses for team outing.",
+              "amount": 500.00,
+              "user_id": 1,
+              "uique_code": "abc123xyz"
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/inviteUsersToGroup/{groupId}'
+    metadata:
+      title: 'Invite users to a group and handle payment transactions.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      groupId:
+        name: groupId
+        description: ''
+        required: true
+        example: veniam
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The emails of the users to invite, separated by '';''.'
+        required: true
+        example: user1@example.com;user2@example.com
+        type: string
+        custom: []
+      paymentType:
+        name: paymentType
+        description: 'The type of payment.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+      expirationTime:
+        name: expirationTime
+        description: 'The expiration time for the payment link if applicable.'
+        required: false
+        example: '2024-09-01 00:00:00'
+        type: string
+        custom: []
+      split_method_id:
+        name: split_method_id
+        description: 'The method used for splitting payments.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+      percentage:
+        name: percentage
+        description: 'The percentage for splitting payments if applicable.'
+        required: false
+        example: 50.0
+        type: number
+        custom: []
+      percentage_per_user:
+        name: percentage_per_user
+        description: 'JSON object with user-specific percentages.'
+        required: false
+        example:
+          user1@example.com: 30
+          user2@example.com: 70
+        type: object
+        custom: []
+      consent:
+        name: consent
+        description: 'If consent is required.'
+        required: false
+        example: true
+        type: boolean
+        custom: []
+      bankName:
+        name: bankName
+        description: 'The name of the bank.'
+        required: false
+        example: 'Bank of Example'
+        type: string
+        custom: []
+      account_name:
+        name: account_name
+        description: 'The name on the account.'
+        required: false
+        example: 'John Doe'
+        type: string
+        custom: []
+      bankCode:
+        name: bankCode
+        description: 'The bank code.'
+        required: false
+        example: '123456'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The account number.'
+        required: false
+        example: '987654321'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "transactionReference": "txn_123456",
+              "payLink": "https://paythru.com/transaction/abc123"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 401
+        content: |-
+          {
+              "message": "Id doesn't belong to this transaction category"
+          }
+        headers: []
+        description: '401'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Failed to create open transaction link."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-openLink-transactions-by-id/{id}'
+    metadata:
+      title: 'Get open contributions by ID.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the get openLink transactions by id.'
+        required: true
+        example: voluptatem
+        type: string
+        custom: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Default is 10.'
+        required: false
+        example: 5
+        type: integer
+        custom: []
+      page:
+        name: page
+        description: 'The page number for pagination. Default is 1.'
+        required: false
+        example: 2
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": [
+                  {
+                      "id": 1,
+                      "amount": 100.00,
+                      "description": "Contribution for project X",
+                      "created_at": "2024-08-01T00:00:00.000000Z"
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "error": "Invalid ID"
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-donor/{transactionReference}'
+    metadata:
+      title: 'Get fund donors by transaction reference.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      transactionReference:
+        name: transactionReference
+        description: ''
+        required: true
+        example: ut
+        type: string
+        custom: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Default is 20.'
+        required: false
+        example: 10
+        type: integer
+        custom: []
+      page:
+        name: page
+        description: 'The page number for pagination. Default is 1.'
+        required: false
+        example: 2
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "message": "successful",
+              "data": [
+                  {
+                      "id": 1,
+                      "transactionReference": "txn_123456",
+                      "name": "John Doe",
+                      "email": "john.doe@example.com",
+                      "amount": 100.00
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "transaction reference not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/updateGroup/{id}'
+    metadata:
+      title: 'Update an existing group.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the updateGroup.'
+        required: true
+        example: sit
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The new name of the group.'
+        required: false
+        example: 'Team Outing Updated'
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'The new description of the group.'
+        required: false
+        example: 'Updated group expenses for team outing.'
+        type: string
+        custom: []
+      amount:
+        name: amount
+        description: 'The new total amount for the group.'
+        required: false
+        example: 600.0
+        type: number
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "name": "Team Outing Updated",
+              "description": "Updated group expenses for team outing.",
+              "amount": 600.00,
+              "user_id": 1,
+              "uique_code": "abc123xyz"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "You dont have edit right over this Kontribute"
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-draft-kontribute
+    metadata:
+      title: 'Get all draft contributions created by the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Default is 20.'
+        required: false
+        example: 10
+        type: integer
+        custom: []
+      page:
+        name: page
+        description: 'The page number for pagination. Default is 1.'
+        required: false
+        example: 2
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": [
+                  {
+                      "id": 1,
+                      "name": "Draft Contribution",
+                      "amount": 300.00,
+                      "created_at": "2024-08-01T00:00:00.000000Z",
+                      "confirm": 0
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/countAllGroupsPerUser
+    metadata:
+      title: 'Count all groups per user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "count": 5
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getAllGroupsPerUser
+    metadata:
+      title: 'Get all groups for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+            {
+              "id": 1,
+              "name": "My Group",
+              "description": "This is a sample group."
+            }
+          ]
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getRandomUserGroup/{email}'
+    metadata:
+      title: 'Get a random user group by email.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: 'The email of the user.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "group": {
+              "id": 1,
+              "name": "My Group"
+            }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "Group not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/deleteInvitedGoupUser/{user_id}'
+    metadata:
+      title: 'Delete an invited user from a group.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      user_id:
+        name: user_id
+        description: 'The ID of the user to remove.'
+        required: true
+        example: 2
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "User removed successfully"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "User or group not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/deleteGroup/{id}'
+    metadata:
+      title: 'Delete a group.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the group to delete.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "Group deleted successfully"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "Group not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAllMemebersOfAGroup/{groupId}'
+    metadata:
+      title: 'Get all members of a group.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      groupId:
+        name: groupId
+        description: 'The ID of the group.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+            {
+              "id": 1,
+              "name": "User Name",
+              "email": "user@example.com"
+            }
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "Group not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/list-users-per-Group/{groupId}'
+    metadata:
+      title: 'Get amounts paid per group.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      groupId:
+        name: groupId
+        description: 'The ID of the group.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+            {
+              "user_id": 1,
+              "amount_paid": 100
+            }
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "Group not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getUserGroup
+    metadata:
+      title: 'Get the user group for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "group": {
+              "id": 1,
+              "name": "My Group"
+            }
+          }
+        headers: []
+        description: '200'
+    responseFields: []

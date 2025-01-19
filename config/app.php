@@ -133,6 +133,18 @@ return [
     | this array to grant expanded functionality to your applications.
     |
     */
+     // Other configuration options
+
+        'allowed_origins' => [
+            'https://www.azatme.com',
+            'https://github.com',
+	    'https://azatme.com',
+	    'https://api.azatme.com/api/updateStatus',
+	    'https://api.azatme.com/api/kontributewebhook',
+	    'https://api.azatme.com/api/businesswebhook',
+	    'https://api.azatme.com/api/agowebhook',
+        ],
+
 
     'providers' => [
 
@@ -176,6 +188,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\TelescopeServiceProvider::class,
 
     ],
 

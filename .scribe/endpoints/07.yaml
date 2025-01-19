@@ -1,0 +1,5731 @@
+name: Endpoints
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - POST
+    uri: api/AttemptLogin
+    metadata:
+      title: 'Attempt to log in a user with credentials.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The user''s email address.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+      password:
+        name: password
+        description: 'The user''s password.'
+        required: true
+        example: yourpassword
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "token": "jwt_token_here",
+              "user": {
+                "id": 1,
+                "email": "user@example.com",
+                "name": "John Doe"
+              }
+            },
+            "message": "Login successful."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "status": "error",
+            "message": "Invalid credentials."
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/auth
+    metadata:
+      title: 'Initiates the BVN consent process.'
+      description: |-
+        This endpoint sends a request to the BVN consent service, generates a unique request ID, and computes a hash for verification.
+        It returns a URL where the user can provide their BVN consent.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "requestId": "2024081812345678901234",
+              "responseData": {
+                  "data": {
+                      "url": "https://example.com/redirect/2024081812345678901234"
+                  },
+                  "status": true,
+                  "message": "Success"
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "error": {
+                  "message": "Failed to initiate BVN consent.",
+                  "code": "API_ERROR"
+              }
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getAllUser
+    metadata:
+      title: 'Retrieve a list of all users with their IDs and emails.'
+      description: 'This endpoint returns a list of all users, including only their ID and email. It is typically used for administrative or user management purposes.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              [
+                  {
+                      "id": 1,
+                      "email": "john.doe@example.com"
+                  },
+                  {
+                      "id": 2,
+                      "email": "jane.doe@example.com"
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Internal Server Error"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/list-all-business-users
+    metadata:
+      title: 'List all users associated with the authenticated user''s business.'
+      description: 'This endpoint retrieves a list of all users who are associated with the authenticated user''s business. It filters the users by the `company_name` of the authenticated user and ensures that only users with the `user` role are listed. This action is only authorized for users with the `merchant` role.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": [
+                  {
+                      "id": 1,
+                      "name": "John Doe",
+                      "email": "john.doe@example.com",
+                      "company_name": "Business XYZ",
+                      "usertype": "user",
+                      "created_at": "2024-08-18T00:00:00.000000Z",
+                      "updated_at": "2024-08-18T00:00:00.000000Z"
+                  },
+                  // Other users
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "status": "false",
+              "message": "User is not a merchant, so you are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getBvnConsent
+    metadata:
+      title: 'Retrieves BVN consent details based on a previously initiated consent request.'
+      description: |-
+        This endpoint first calls the `initiateBvnConsent` method to get a `requestId`. It then uses this `requestId` to fetch the BVN consent details.
+        The response contains the details of the BVN consent or an error if the request fails.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      requestId:
+        name: requestId
+        description: 'The request ID obtained from initiating the BVN consent process.'
+        required: false
+        example: '2024081812345678901234'
+        type: string
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": {
+                  "status": true,
+                  "message": "Consent retrieved successfully",
+                  "consentDetails": {
+                      // Include details here as per the response structure from the external service
+                  }
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+              "error": {
+                  "message": "Failed to get BVN consent.",
+                  "code": "API_ERROR"
+              }
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: api/updateUsertype
+    metadata:
+      title: 'Update the user type for the authenticated user.'
+      description: 'This endpoint allows updating the user type of the authenticated user, but prevents setting it to "admin."'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      usertype:
+        name: usertype
+        description: 'The new user type for the user.'
+        required: true
+        example: '`merchant`'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "success": true,
+              "id": 1,
+              "name": "John Doe",
+              "email": "john.doe@example.com",
+              "usertype": "merchant"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "You cannot update the usertype to admin."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 404
+        content: |-
+          {
+              "error": "User not found."
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/loginViaOtp
+    metadata:
+      title: 'Log in a user using an OTP (One-Time Password).'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The user''s email address.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+      otp:
+        name: otp
+        description: 'The OTP sent to the user''s email or phone.'
+        required: true
+        example: '123456'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "token": "jwt_token_here",
+              "user": {
+                "id": 1,
+                "email": "user@example.com",
+                "name": "John Doe"
+              }
+            },
+            "message": "Login successful."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "status": "error",
+            "message": "Invalid OTP or email."
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/logout
+    metadata:
+      title: 'Log out the currently authenticated user.'
+      description: 'This endpoint allows the currently authenticated user to log out by revoking their access token. If the user is already logged out or no token exists, an appropriate message is returned.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "status": "success",
+              "error": false,
+              "message": "Success! You are logged out."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "status": "failed",
+              "error": true,
+              "message": "Failed! You are already logged out."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: api/get-verifiedd
+    metadata:
+      title: 'Retrieve and verify BVN details for the authenticated user.'
+      description: |-
+        This endpoint retrieves BVN details using an external service and verifies them against the authenticated user's details.
+        If the details match, it updates the user's verification status.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      accessToken:
+        name: accessToken
+        description: 'The access token for the external service.'
+        required: true
+        example: '`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "user": {
+                  "id": 1,
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "isVerified": 1
+              },
+              "message": "User details updated successfully"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "error": "Mismatch in data. Update aborted."
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Failed to get BVN details"
+          }
+        headers: []
+        description: '500'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Failed to decode JSON response"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/image
+    metadata:
+      title: 'Upload and save a profile image for the authenticated user.'
+      description: 'This endpoint allows the authenticated user to upload an image, which is then saved to the server''s storage directory. The image file must be in one of the allowed formats (jpeg, png, jpg, gif). The image path is then saved in the user''s profile.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: multipart/form-data
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      image:
+        name: image
+        description: 'The image file to upload. Must be in jpeg, png, jpg, or gif format.'
+        required: true
+        example: null
+        type: file
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "image": "http://yourdomain.com/storage/profiles/image_filename.jpg",
+              "user": {
+                  "id": "integer",
+                  "name": "string",
+                  "email": "string",
+                  "image": "storage/profiles/image_filename.jpg"
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "The given data was invalid.",
+              "errors": {
+                  "image": ["The image field is required.", "The image must be a file of type: jpeg, png, jpg, gif."]
+              }
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/createparam
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/token
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Server Error"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '60'
+          x-ratelimit-remaining: '59'
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/kontributewebhook
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/businesswebhook
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/contact-us
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-all-customers
+    metadata:
+      title: 'Get all customers.'
+      description: 'This endpoint retrieves a list of all customers in the system.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "id": 1,
+                "customer_name": "Jane Doe",
+                "customer_email": "jane.doe@example.com",
+                "customer_phone": "+1234567890",
+                "customer_code": "BUS1234",
+                "owner_id": 1,
+                "flagged": 0,
+                "created_at": "2024-08-20T12:00:00.000000Z",
+                "updated_at": "2024-08-20T12:00:00.000000Z"
+              }
+              // More customer objects
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No customers found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/decline-ajo
+    metadata:
+      title: 'Decline an Ajo invitation.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      ajoId:
+        name: ajoId
+        description: 'The ID of the Ajo invitation to decline.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Invitation declined successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Invitation not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/accept-ajo-invite
+    metadata:
+      title: 'Accept an Ajo invitation.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      ajoId:
+        name: ajoId
+        description: 'The ID of the Ajo invitation to accept.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Invitation accepted successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Invitation not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: api/update-user-email-status
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/agowebhook
+    metadata:
+      title: 'Handle Ajo webhook response.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      webhookData:
+        name: webhookData
+        description: 'The data received from the webhook.'
+        required: true
+        example:
+          status: paid
+          ajoId: 1
+        type: 'string[]'
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Webhook processed successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "status": "error",
+            "message": "Invalid webhook data."
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-ajo-user-bank-details/{id}'
+    metadata:
+      title: 'Retrieve bank details of an Ajo user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the Ajo user.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "bank_name": "Bank XYZ",
+              "account_number": "1234567890",
+              "account_name": "John Doe"
+            },
+            "message": "Bank details retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Ajo user not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-lastUpdated-charges
+    metadata:
+      title: 'Retrieve the last updated charge.'
+      description: 'This endpoint retrieves the most recently updated charge.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "id": 1,
+            "product_affected": "ajo",
+            "charges": 100
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No charges found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-referred-count
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/admin/register
+    metadata:
+      title: 'Register a new admin.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The admin''s full name.'
+        required: true
+        example: 'Admin User'
+        type: string
+        custom: []
+      email:
+        name: email
+        description: 'The admin''s email address.'
+        required: true
+        example: admin@example.com
+        type: string
+        custom: []
+      password:
+        name: password
+        description: 'The admin''s password.'
+        required: true
+        example: adminpassword
+        type: string
+        custom: []
+      password_confirmation:
+        name: password_confirmation
+        description: 'Confirmation of the admin''s password.'
+        required: true
+        example: adminpassword
+        type: string
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "admin": {
+                "id": 1,
+                "email": "admin@example.com",
+                "name": "Admin User"
+              }
+            },
+            "message": "Admin registration successful."
+          }
+        headers: []
+        description: '201'
+      -
+        status: 400
+        content: |-
+          {
+            "status": "error",
+            "message": "Validation errors.",
+            "errors": {
+              "email": ["The email has already been taken."],
+              "password": ["The passwords do not match."]
+            }
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/allExpenses
+    metadata:
+      title: 'Get all expenses.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "amount": 500,
+                "description": "Office Supplies",
+                "date": "2024-08-19",
+                "email": "user@example.com"
+              }
+            ],
+            "message": "Expenses retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No expenses found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/allKontributes
+    metadata:
+      title: 'Get all Kontributes.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "amount": 1000,
+                "description": "Monthly Contribution",
+                "date": "2024-08-19",
+                "email": "user@example.com"
+              }
+            ],
+            "message": "Kontributes retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No Kontributes found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getAllBusiness
+    metadata:
+      title: 'Get all businesses.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "name": "Business Name",
+                "email": "user@example.com",
+                "created_at": "2024-08-19"
+              }
+            ],
+            "message": "Businesses retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No businesses found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAllExpensesByUserEmail/{email}'
+    metadata:
+      title: 'Get all expenses by user email.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: 'The email of the user.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "amount": 500,
+                "description": "Office Supplies",
+                "date": "2024-08-19",
+                "email": "user@example.com"
+              }
+            ],
+            "message": "Expenses retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No expenses found for the specified email."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAllKontributeByUserEmail/{email}'
+    metadata:
+      title: 'Get all Kontributes by user email.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: 'The email of the user.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "amount": 1000,
+                "description": "Monthly Contribution",
+                "date": "2024-08-19",
+                "email": "user@example.com"
+              }
+            ],
+            "message": "Kontributes retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No Kontributes found for the specified email."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAllBusinessByUserEmail/{email}'
+    metadata:
+      title: 'Get all businesses by user email.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: 'The email of the user.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "name": "Business Name",
+                "email": "user@example.com",
+                "created_at": "2024-08-19"
+              }
+            ],
+            "message": "Businesses retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No businesses found for the specified email."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAllAjoByUserEmail/{email}'
+    metadata:
+      title: 'Get all Ajo by user email.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: 'The email of the user.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "name": "Ajo Name",
+                "amount": 500,
+                "created_at": "2024-08-19",
+                "email": "user@example.com"
+              }
+            ],
+            "message": "Ajo retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No Ajo found for the specified email."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/countAllAjo
+    metadata:
+      title: 'Count all Ajo records.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "count": 10
+            },
+            "message": "Ajo count retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/countAllBusiness
+    metadata:
+      title: 'Count all businesses.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "count": 5
+            },
+            "message": "Business count retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/countAllExpenses
+    metadata:
+      title: 'Count all expenses.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "count": 20
+            },
+            "message": "Expense count retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/getAllExpenseWithDate
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/getAllGroupWithDate
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/getUserExpenseWithCategory/{categoryId}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      categoryId:
+        name: categoryId
+        description: ''
+        required: true
+        example: sunt
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/getUserExpenseWithSubCategory/{sub_categoryId}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      sub_categoryId:
+        name: sub_categoryId
+        description: ''
+        required: true
+        example: odit
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/count-all-active-users-kontributes
+    metadata:
+      title: 'Count all active Kontributes.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "count": 8
+            },
+            "message": "Count of active Kontributes retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/admin/update-feedback/{complain_reference_code}'
+    metadata:
+      title: 'Update feedback or issue.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      complain_reference_code:
+        name: complain_reference_code
+        description: 'The reference code of the complaint.'
+        required: true
+        example: CR123456
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      status:
+        name: status
+        description: 'The status of the complaint (e.g., resolved, pending).'
+        required: true
+        example: resolved
+        type: string
+        custom: []
+      notes:
+        name: notes
+        description: 'optional Additional notes or comments regarding the complaint.'
+        required: false
+        example: 'Issue resolved after updating payment details.'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Feedback updated successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Complaint not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/set-ref
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/update-ref/{referralId}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      referralId:
+        name: referralId
+        description: ''
+        required: true
+        example: a
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-ref-settings/perAdmin
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/all-users
+    metadata:
+      title: 'Get all users.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "email": "user@example.com",
+                "name": "User One",
+                "created_at": "2024-08-19"
+              }
+            ],
+            "message": "Users retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "No users found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/users/{email}'
+    metadata:
+      title: 'Get user by email.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: 'The email of the user.'
+        required: true
+        example: user@example.com
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "id": 1,
+              "email": "user@example.com",
+              "name": "User One",
+              "created_at": "2024-08-19"
+            },
+            "message": "User retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "User not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-charges
+    metadata:
+      title: 'Create a new charge.'
+      description: 'This endpoint allows the creation of a new charge with the specified product and amount.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      product_affected:
+        name: product_affected
+        description: 'The product that is affected by this charge. Allowed values: all_products, refundme, ajo, kontribute, business.'
+        required: true
+        example: '"ajo"'
+        type: string
+        custom: []
+      charges:
+        name: charges
+        description: 'The amount of the charge.'
+        required: true
+        example: '100'
+        type: numeric
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+            "message": "Charge created successfully",
+            "data": {
+              "id": 1,
+              "product_affected": "ajo",
+              "charges": 100
+            }
+          }
+        headers: []
+        description: '201'
+      -
+        status: 400
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {
+              "product_affected": ["The product affected field is required."],
+              "charges": ["The charges field is required.", "The charges must be a number."]
+            }
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/charges
+    metadata:
+      title: 'Retrieve all charges.'
+      description: 'This endpoint retrieves a list of all charges in the system.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "id": 1,
+                "product_affected": "ajo",
+                "charges": 100
+              },
+              // More charge objects
+            ]
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/charges/{id}'
+    metadata:
+      title: 'Update an existing charge.'
+      description: 'This endpoint allows the updating of a charge identified by the provided ID with the new data.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the charge to update.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      product_affected:
+        name: product_affected
+        description: 'The product that is affected by this charge. Allowed values: all_products, refundme, ajo, kontribute, business.'
+        required: false
+        example: '"refundme"'
+        type: string
+        custom: []
+      charges:
+        name: charges
+        description: 'The amount of the charge.'
+        required: false
+        example: '150'
+        type: numeric
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "Charge updated successfully",
+            "data": {
+              "id": 1,
+              "product_affected": "refundme",
+              "charges": 150
+            }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {
+              "product_affected": ["The selected product affected is invalid."],
+              "charges": ["The charges must be a number."]
+            }
+          }
+        headers: []
+        description: '400'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No query results for model [Charge] with id 1"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/charges/{id}'
+    metadata:
+      title: 'Delete a specific charge by ID.'
+      description: 'This endpoint allows the deletion of a charge identified by the provided ID.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the charge to delete.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "Charge deleted successfully"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No query results for model [Charge] with id 1"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/category
+    metadata:
+      title: 'Create a new expense category.'
+      description: 'This endpoint allows authenticated users to create a new expense category.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the expense category.'
+        required: true
+        example: '"Travel"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+            "id": 1,
+            "name": "Travel",
+            "user_id": 1,
+            "created_at": "2024-08-20T12:00:00.000000Z",
+            "updated_at": "2024-08-20T12:00:00.000000Z"
+          }
+        headers: []
+        description: '201'
+      -
+        status: 422
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {
+              "name": ["The name field is required.", "The name must be at least 3 characters.", "The name must not be greater than 50 characters.", "The name has already been taken."]
+            }
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/verify-phone-number
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/check-mobile-number
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/send-otp
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: api/confirm-email
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/update-business/{id}'
+    metadata:
+      title: 'Update an existing business.'
+      description: 'This endpoint allows authenticated users with the role of ''merchant'' to update business details.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the business to update.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      customer_name:
+        name: customer_name
+        description: 'The new name of the customer.'
+        required: true
+        example: '"Jane Doe"'
+        type: string
+        custom: []
+      customer_address:
+        name: customer_address
+        description: 'The new address of the customer.'
+        required: true
+        example: '"456 Innovation Road"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Business updated successfully.",
+            "data": {
+              "id": 1,
+              "customer_name": "Jane Doe",
+              "customer_address": "456 Innovation Road"
+            }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "status": "error",
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-business-under-a-owner/{owner_id}'
+    metadata:
+      title: 'Retrieve all businesses owned by the authenticated user.'
+      description: 'This endpoint allows authenticated users with the role of ''merchant'' to retrieve all their businesses.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      owner_id:
+        name: owner_id
+        description: 'The ID of the owner.'
+        required: true
+        example: delectus
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "business_name": "Tech Innovators",
+                "business_email": "contact@techinnovators.com",
+                "description": "Leading provider of tech solutions.",
+                "type": "Retail",
+                "registration_number": "123456789",
+                "business_address": "123 Tech Street",
+                "vat_option": true,
+                "vat_id": "VAT123456",
+                "business_logo": "http://example.com/storage/profiles/logo.jpg"
+              }
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "status": "error",
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-a-single-business-under-owner/{business_code}'
+    metadata:
+      title: 'Retrieve a single business by its code.'
+      description: 'This endpoint allows authenticated users with the role of ''merchant'' to retrieve a specific business.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: 'The code of the business to retrieve.'
+        required: true
+        example: '"TECH123"'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "id": 1,
+              "business_name": "Tech Innovators",
+              "business_email": "contact@techinnovators.com",
+              "description": "Leading provider of tech solutions.",
+              "type": "Retail",
+              "registration_number": "123456789",
+              "business_address": "123 Tech Street",
+              "vat_option": true,
+              "vat_id": "VAT123456",
+              "business_logo": "http://example.com/storage/profiles/logo.jpg"
+            }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Business not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 403
+        content: |-
+          {
+            "status": "error",
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/delete-a-business/{id}'
+    metadata:
+      title: 'Delete a business.'
+      description: 'This endpoint allows authenticated users with the role of ''merchant'' to delete a specific business.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the business to delete.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Business deleted successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Business not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 403
+        content: |-
+          {
+            "status": "error",
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/gac-under-a-specific-business/{customer_code}'
+    metadata:
+      title: 'Get all customers under a specific business.'
+      description: 'This endpoint retrieves a list of all customers for a specific business.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      customer_code:
+        name: customer_code
+        description: ''
+        required: true
+        example: consequatur
+        type: string
+        custom: []
+      business_code:
+        name: business_code
+        description: 'The unique code of the business.'
+        required: true
+        example: '"BUS1234"'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "id": 1,
+                "customer_name": "Jane Doe",
+                "customer_email": "jane.doe@example.com",
+                "customer_phone": "+1234567890",
+                "customer_code": "BUS1234",
+                "owner_id": 1,
+                "flagged": 0,
+                "created_at": "2024-08-20T12:00:00.000000Z",
+                "updated_at": "2024-08-20T12:00:00.000000Z"
+              }
+              // More customer objects
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No customers found for this business code"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/mpos-payment/{business_code}'
+    metadata:
+      title: 'Process payments for a business using MPOS.'
+      description: |-
+        This method handles the payment requests either for a single product or multiple products based on the
+        provided unique codes, quantities, and amounts. It validates the input data, checks business existence,
+        processes payments through an external service, and saves the transaction details in the database.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: ''
+        required: true
+        example: ut
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": {
+                  "vat": 7.50,
+                  "quantity": 10,
+                  "business_email": "business@example.com",
+                  "business_name": "Business Name",
+                  "transaction_amount": 107.50,
+                  "created_at": "2024-08-18T12:00:00Z",
+                  "pay_link": "https://pay.example.com/transaction/1234567890"
+              },
+              "exception": null
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "Invalid input data"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Business not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/mpos-payment-option/{business_code}'
+    metadata:
+      title: 'Process a one-time payment using MPOS.'
+      description: |-
+        This method handles the payment request for a single product with a specified amount. It validates the
+        payment data, interacts with the payment service, and saves the transaction details in the database.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: ''
+        required: true
+        example: et
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": {
+                  "business_email": "business@example.com",
+                  "business_name": "Business Name",
+                  "transaction_amount": 100.00,
+                  "created_at": "2024-08-18T12:00:00Z",
+                  "payLink": "https://pay.example.com/transaction/1234567890"
+              },
+              "exception": null
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "exception": "Transaction failed."
+          }
+        headers: []
+        description: '400'
+      -
+        status: 404
+        content: |-
+          {
+              "exception": "Business not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+              "exception": "Unexpected error occurred."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-mpos-payment-byReference/{paymentReference}'
+    metadata:
+      title: 'Retrieve a specific MPOS transaction by its payment reference.'
+      description: |-
+        This method fetches the transaction details for a given payment reference. It returns the transaction data
+        if found, or an appropriate error message if the transaction does not exist or if the MPOS service is unavailable.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      paymentReference:
+        name: paymentReference
+        description: ''
+        required: true
+        example: quibusdam
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "status": "success",
+              "data": {
+                  "transaction_id": 1,
+                  "transaction_amount": 100.00,
+                  "created_at": "2024-08-18T12:00:00Z",
+                  "description": "Payment for product XYZ",
+                  "paymentReference": "abc123"
+              },
+              "message": "Transaction retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "status": "error",
+              "message": "No transaction found for the specified payment reference."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 503
+        content: |-
+          {
+              "status": "error",
+              "message": "MPOS Payment service is not available for this business."
+          }
+        headers: []
+        description: '503'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-product
+    metadata:
+      title: 'Create a Product or Multiple Products'
+      description: |-
+        This method creates one or multiple products based on the request data.
+        It accepts an array of products or a single product's details, creates the product(s),
+        and assigns a common unique code to each product in the array.
+        It ensures the authenticated user is assigned as the owner of the product(s).
+
+        If `$products` is an array, it creates multiple products with a common unique code.
+        If `$products` is not an array, it creates a single product with its own unique code.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      products:
+        name: products
+        description: |-
+          An array of products, where each product is an associative array with keys:
+           - name string The name of the product.
+           - description string The description of the product.
+           - business_code string The business code associated with the product.
+           - category_id int The ID of the category the product belongs to.
+           - subcategory_id int The ID of the subcategory the product belongs to.
+           - amount float The amount of the product.
+           - quantity int The quantity of the product.
+        required: false
+        example:
+          - qui
+        type: 'string[]'
+        custom: []
+      name:
+        name: name
+        description: 'The name of the product (used when creating a single product).'
+        required: false
+        example: tenetur
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'The description of the product (used when creating a single product).'
+        required: false
+        example: distinctio
+        type: string
+        custom: []
+      business_code:
+        name: business_code
+        description: 'The business code associated with the product (used when creating a single product).'
+        required: false
+        example: recusandae
+        type: string
+        custom: []
+      category_id:
+        name: category_id
+        description: 'The ID of the category the product belongs to (used when creating a single product).'
+        required: false
+        example: 8
+        type: integer
+        custom: []
+      subcategory_id:
+        name: subcategory_id
+        description: 'The ID of the subcategory the product belongs to (used when creating a single product).'
+        required: false
+        example: 12
+        type: integer
+        custom: []
+      amount:
+        name: amount
+        description: 'The amount of the product (used when creating a single product).'
+        required: false
+        example: 5.350861
+        type: number
+        custom: []
+      quantity:
+        name: quantity
+        description: 'The quantity of the product (used when creating a single product).'
+        required: false
+        example: 19
+        type: integer
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "products": [
+              {
+                "id": 1,
+                "name": "Product Name",
+                "description": "Product Description",
+                "unique_code": "randomunique",
+                "business_code": "business_code",
+                "category_id": 1,
+                "subcategory_id": 1,
+                "amount": 100.00,
+                "quantity": 10,
+                "user_id": 1,
+                "created_at": "2024-08-18T00:00:00Z",
+                "updated_at": "2024-08-18T00:00:00Z"
+              }
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 422
+        content: |-
+          {
+            "error": "Validation failed for the input data."
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/all-product
+    metadata:
+      title: 'Get All Products for the Authenticated Merchant'
+      description: |-
+        This method retrieves all products associated with the currently authenticated merchant.
+        It allows for pagination of the results based on the `per_page` parameter provided in the request.
+        The products are sorted by the most recently created first.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of products per page. Default is 10.'
+        required: false
+        example: 9
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "current_page": 1,
+            "data": [
+              {
+                "id": 1,
+                "name": "Product Name",
+                "description": "Product Description",
+                "unique_code": "randomunique",
+                "business_code": "business_code",
+                "category_id": 1,
+                "subcategory_id": 1,
+                "amount": 100.00,
+                "quantity": 10,
+                "user_id": 1,
+                "created_at": "2024-08-18T00:00:00Z",
+                "updated_at": "2024-08-18T00:00:00Z"
+              }
+            ],
+            "first_page_url": "http://yourdomain.com/api/products?page=1",
+            "from": 1,
+            "last_page": 1,
+            "last_page_url": "http://yourdomain.com/api/products?page=1",
+            "links": [
+              {
+                "url": null,
+                "label": "&laquo; Previous",
+                "active": false
+              },
+              {
+                "url": "http://yourdomain.com/api/products?page=1",
+                "label": "1",
+                "active": true
+              },
+              {
+                "url": null,
+                "label": "Next &raquo;",
+                "active": false
+              }
+            ],
+            "next_page_url": null,
+            "path": "http://yourdomain.com/api/products",
+            "per_page": 10,
+            "prev_page_url": null,
+            "to": 1,
+            "total": 1
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "error": "Invalid pagination parameters or other request errors."
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/product-per-business/{businessCode}'
+    metadata:
+      title: 'Get All Products for a Specific Business'
+      description: |-
+        This method retrieves all products associated with a specific business, identified by its `business_code`.
+        The products are sorted by the most recently created first and are paginated with a fixed number of items per page.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      businessCode:
+        name: businessCode
+        description: ''
+        required: true
+        example: id
+        type: string
+        custom: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of products per page. Default is 50.'
+        required: false
+        example: 12
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "current_page": 1,
+            "data": [
+              {
+                "id": 1,
+                "name": "Product Name",
+                "description": "Product Description",
+                "unique_code": "randomunique",
+                "business_code": "business_code",
+                "category_id": 1,
+                "subcategory_id": 1,
+                "amount": 100.00,
+                "quantity": 10,
+                "user_id": 1,
+                "created_at": "2024-08-18T00:00:00Z",
+                "updated_at": "2024-08-18T00:00:00Z"
+              }
+            ],
+            "first_page_url": "http://yourdomain.com/api/products?business_code=business_code&page=1",
+            "from": 1,
+            "last_page": 1,
+            "last_page_url": "http://yourdomain.com/api/products?business_code=business_code&page=1",
+            "links": [
+              {
+                "url": null,
+                "label": "&laquo; Previous",
+                "active": false
+              },
+              {
+                "url": "http://yourdomain.com/api/products?business_code=business_code&page=1",
+                "label": "1",
+                "active": true
+              },
+              {
+                "url": null,
+                "label": "Next &raquo;",
+                "active": false
+              }
+            ],
+            "next_page_url": null,
+            "path": "http://yourdomain.com/api/products",
+            "per_page": 50,
+            "prev_page_url": null,
+            "to": 1,
+            "total": 1
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "error": "Invalid request or business code not found."
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/initiate-business-transaction/{business_code}'
+    metadata:
+      title: 'Start a business transaction and generate payment link or invoice based on `moto_id`.'
+      description: |-
+        This endpoint handles business transactions by calculating the total amount, VAT, and generating
+        a payment link or invoice based on the provided `moto_id`.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: ''
+        required: true
+        example: deserunt
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The email address of the customer.'
+        required: false
+        example: '"customer@example.com"'
+        type: string
+        custom: []
+      unique_code:
+        name: unique_code
+        description: 'The unique codes of the products being purchased.'
+        required: false
+        example: '["ABC123", "XYZ789"]'
+        type: array|string
+        custom: []
+      quantity:
+        name: quantity
+        description: 'The quantities of the products being purchased.'
+        required: false
+        example: '[1, 2]'
+        type: array|int
+        custom: []
+      moto_id:
+        name: moto_id
+        description: 'The mode of transaction: 1 for payment link, 2 for invoice.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+      bankName:
+        name: bankName
+        description: 'The name of the bank.'
+        required: false
+        example: '"Bank of Example"'
+        type: string
+        custom: []
+      bankCode:
+        name: bankCode
+        description: 'The bank code.'
+        required: false
+        example: '"123456"'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The bank account number.'
+        required: false
+        example: '"000123456789"'
+        type: string
+        custom: []
+      due_days:
+        name: due_days
+        description: 'The number of days for the invoice due date. Only used if moto_id is 2.'
+        required: false
+        example: 30
+        type: integer
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "status": "Successful",
+              "transactions": {
+                  "transaction_id": "txn_123456",
+                  "payLink": "https://example.com/paylink"
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "error": "Token retrieval failed"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Your request is unsuccessful at this time, Please try again"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-option
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-option
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-vat
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/all-invoices-created-by-business-owner
+    metadata:
+      title: 'Retrieve business withdrawal transactions for the authenticated user.'
+      description: |-
+        This endpoint fetches all withdrawal transactions associated with the currently authenticated user.
+        Transactions are returned in descending order of creation date.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+              {
+                  "id": 1,
+                  "account_number": "000123456789",
+                  "description": "Business collection",
+                  "beneficiary_id": 1,
+                  "amount": 5000,
+                  "bank": "Bank of Example",
+                  "charges": 100,
+                  "uniqueId": "abc123",
+                  "transactionReferences": "txn_123456",
+                  "status": "Success",
+                  "created_at": "2024-08-18T12:34:56Z",
+                  "updated_at": "2024-08-18T12:34:56Z"
+              },
+              // more transaction objects
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Transaction not found for this user"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/count-all-invoices-created-by-business-owner
+    metadata:
+      title: 'Count all invoices under the business owned by the authenticated user.'
+      description: |-
+        This endpoint counts the total number of business transactions associated with the authenticated user.
+        It returns the total count of transactions for that user.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "count": 150
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/business-settlements
+    metadata:
+      title: 'Process a business withdrawal request and handle transaction settlement.'
+      description: |-
+        This endpoint processes a withdrawal request by applying charges and settling the transaction,
+        updating the residual amount, and saving withdrawal details.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      amount:
+        name: amount
+        description: 'The amount to be withdrawn.'
+        required: false
+        example: 5000
+        type: integer
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The account number for withdrawal.'
+        required: false
+        example: '"000123456789"'
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'A description for the withdrawal.'
+        required: false
+        example: '"Business collection"'
+        type: string
+        custom: []
+      bank:
+        name: bank
+        description: 'The name of the bank.'
+        required: false
+        example: '"Bank of Example"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "transactionReferences": "txn_123456",
+              "status": "Success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "You cannot withdraw an amount less than 100 after commission"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Token retrieval failed"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/customer-invoice/{customerEmail}'
+    metadata:
+      title: 'Get all invoices sent to a particular customer by the authenticated user.'
+      description: |-
+        This endpoint retrieves a paginated list of invoices sent to a specific customer email,
+        where the transaction is associated with a particular MOTO ID and owned by the authenticated user.
+        The results are sorted by creation date in descending order.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      customerEmail:
+        name: customerEmail
+        description: ''
+        required: true
+        example: ea
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "current_page": 1,
+              "data": [
+                  {
+                      "id": 1,
+                      "owner_id": 1,
+                      "name": "Invoice Name",
+                      "unique_code": "INV123",
+                      "product_id": 1,
+                      "email": "customer@example.com",
+                      "transaction_amount": 150.00,
+                      "business_code": "BUS123",
+                      "description": "Invoice description",
+                      "moto_id": 2,
+                      "bankName": "Bank Name",
+                      "bankCode": "BANK123",
+                      "account_number": "1234567890",
+                      "qty": 3,
+                      "vat": 10.00,
+                      "Grand_total": 160.00,
+                      "paymentReference": "REF123456",
+                      "product_code": "XYZ789",
+                      "created_at": "2024-08-15T12:34:56.000000Z",
+                      "updated_at": "2024-08-15T12:34:56.000000Z"
+                  }
+              ],
+              "first_page_url": "http://example.com/api/invoices?customer_email=customer@example.com&page=1",
+              "from": 1,
+              "last_page": 10,
+              "last_page_url": "http://example.com/api/invoices?customer_email=customer@example.com&page=10",
+              "links": [
+                  {
+                      "url": null,
+                      "label": "&laquo; Previous",
+                      "active": false
+                  },
+                  {
+                      "url": "http://example.com/api/invoices?customer_email=customer@example.com&page=1",
+                      "label": "1",
+                      "active": true
+                  },
+                  {
+                      "url": "http://example.com/api/invoices?customer_email=customer@example.com&page=2",
+                      "label": "2",
+                      "active": false
+                  }
+              ],
+              "next_page_url": "http://example.com/api/invoices?customer_email=customer@example.com&page=2",
+              "path": "http://example.com/api/invoices",
+              "per_page": 50,
+              "prev_page_url": null,
+              "to": 50,
+              "total": 500
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No invoices found for this customer email"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-all-transactions-created-by-a-specific-business/{business_code}'
+    metadata:
+      title: 'Get all transactions for a specific business under the authenticated user.'
+      description: |-
+        This endpoint retrieves a paginated list of transactions for a specific business code,
+        owned by the authenticated user. The results are sorted by creation date in descending order.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: ''
+        required: true
+        example: sit
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "current_page": 1,
+              "data": [
+                  {
+                      "id": 1,
+                      "owner_id": 1,
+                      "name": "Transaction Name",
+                      "unique_code": "TXN123",
+                      "product_id": 1,
+                      "email": "customer@example.com",
+                      "transaction_amount": 100.00,
+                      "business_code": "BUS123",
+                      "description": "Transaction description",
+                      "moto_id": 1,
+                      "bankName": "Bank Name",
+                      "bankCode": "BANK123",
+                      "account_number": "1234567890",
+                      "qty": 2,
+                      "vat": 7.50,
+                      "Grand_total": 107.50,
+                      "paymentReference": "REF123456",
+                      "product_code": "XYZ789",
+                      "created_at": "2024-08-15T12:34:56.000000Z",
+                      "updated_at": "2024-08-15T12:34:56.000000Z"
+                  }
+              ],
+              "first_page_url": "http://example.com/api/transactions?business_code=BUS123&page=1",
+              "from": 1,
+              "last_page": 10,
+              "last_page_url": "http://example.com/api/transactions?business_code=BUS123&page=10",
+              "links": [
+                  {
+                      "url": null,
+                      "label": "&laquo; Previous",
+                      "active": false
+                  },
+                  {
+                      "url": "http://example.com/api/transactions?business_code=BUS123&page=1",
+                      "label": "1",
+                      "active": true
+                  },
+                  {
+                      "url": "http://example.com/api/transactions?business_code=BUS123&page=2",
+                      "label": "2",
+                      "active": false
+                  }
+              ],
+              "next_page_url": "http://example.com/api/transactions?business_code=BUS123&page=2",
+              "path": "http://example.com/api/transactions",
+              "per_page": 50,
+              "prev_page_url": null,
+              "to": 50,
+              "total": 500
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-all-customers-under-a-specific-business/{business_code}'
+    metadata:
+      title: 'Get all customers under a specific business code for the authenticated user.'
+      description: |-
+        This endpoint retrieves a list of customers associated with a specific business code,
+        owned by the authenticated user. The results include customer names, emails, and phone numbers,
+        and are sorted by creation date in descending order.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: ''
+        required: true
+        example: accusantium
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "data": [
+                  {
+                      "customer_name": "John Doe",
+                      "customer_email": "john.doe@example.com",
+                      "customer_phone": "+1234567890"
+                  },
+                  {
+                      "customer_name": "Jane Smith",
+                      "customer_email": "jane.smith@example.com",
+                      "customer_phone": "+0987654321"
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No customers found for this business code"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-withdrawal-response
+    metadata:
+      title: 'Retrieve all business withdrawal transactions.'
+      description: 'This endpoint retrieves all withdrawal transactions associated with businesses.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": [
+              {
+                "id": 1,
+                "transaction_id": "WD12345",
+                "amount": 2000.00,
+                "status": "Completed"
+              }
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "status": "error",
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-invoice/{businessCode}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      businessCode:
+        name: businessCode
+        description: ''
+        required: true
+        example: adipisci
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-link/{businessCode}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      businessCode:
+        name: businessCode
+        description: ''
+        required: true
+        example: dolores
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/send-notification/{id}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the send notification.'
+        required: true
+        example: quidem
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-customer-mails
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/create-customer/{business_code}'
+    metadata:
+      title: 'Create a new customer.'
+      description: 'This endpoint allows authenticated users to create a new customer under a specific business.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      business_code:
+        name: business_code
+        description: 'The unique code of the business.'
+        required: true
+        example: '"BUS1234"'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      customer_name:
+        name: customer_name
+        description: 'The name of the customer.'
+        required: true
+        example: '"Jane Doe"'
+        type: string
+        custom: []
+      customer_email:
+        name: customer_email
+        description: 'The email of the customer.'
+        required: true
+        example: '"jane.doe@example.com"'
+        type: string
+        custom: []
+      customer_phone:
+        name: customer_phone
+        description: 'The phone number of the customer.'
+        required: true
+        example: '"+1234567890"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+            "id": 1,
+            "customer_name": "Jane Doe",
+            "customer_email": "jane.doe@example.com",
+            "customer_phone": "+1234567890",
+            "customer_code": "BUS1234",
+            "owner_id": 1,
+            "flagged": 0,
+            "created_at": "2024-08-20T12:00:00.000000Z",
+            "updated_at": "2024-08-20T12:00:00.000000Z"
+          }
+        headers: []
+        description: '201'
+      -
+        status: 409
+        content: |-
+          {
+            "message": "User already exists with this business code"
+          }
+        headers: []
+        description: '409'
+      -
+        status: 400
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {
+              "customer_name": ["The customer name field is required."],
+              "customer_email": ["The customer email field is required."],
+              "customer_phone": ["The customer phone field is required."]
+            }
+          }
+        headers: []
+        description: '400'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/update-customer/{id}'
+    metadata:
+      title: 'Update an existing customer.'
+      description: 'This endpoint allows users to update customer information.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the customer to update.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      customer_name:
+        name: customer_name
+        description: 'The updated name of the customer.'
+        required: true
+        example: '"Jane Doe"'
+        type: string
+        custom: []
+      customer_phone:
+        name: customer_phone
+        description: 'The updated phone number of the customer.'
+        required: true
+        example: '"+1234567890"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "id": 1,
+            "customer_name": "Jane Doe",
+            "customer_email": "jane.doe@example.com",
+            "customer_phone": "+1234567890",
+            "customer_code": "BUS1234",
+            "owner_id": 1,
+            "flagged": 0,
+            "created_at": "2024-08-20T12:00:00.000000Z",
+            "updated_at": "2024-08-20T12:00:00.000000Z"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {
+              "customer_name": ["The customer name field is required."],
+              "customer_phone": ["The customer phone field is required."]
+            }
+          }
+        headers: []
+        description: '400'
+      -
+        status: 403
+        content: |-
+          {
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-customers-under-a business/{owner_id}'
+    metadata:
+      title: 'List all customers for a specific owner.'
+      description: 'This endpoint retrieves a list of all customers for a specific owner.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      owner_id:
+        name: owner_id
+        description: 'The ID of the owner.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "id": 1,
+                "customer_name": "Jane Doe",
+                "customer_email": "jane.doe@example.com",
+                "customer_phone": "+1234567890",
+                "customer_code": "BUS1234",
+                "owner_id": 1,
+                "flagged": 0,
+                "created_at": "2024-08-20T12:00:00.000000Z",
+                "updated_at": "2024-08-20T12:00:00.000000Z"
+              }
+              // More customer objects
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No customers found for this owner"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/delete-a-customer/{id}'
+    metadata:
+      title: 'Delete a specific customer.'
+      description: 'This endpoint allows users to delete a specific customer.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the customer to delete.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "Customer deleted successfully"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+            "message": "You are not authorized to perform this action"
+          }
+        headers: []
+        description: '403'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No query results for model [Customer] with id 1"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/deleteInvitedExpenseUser/{user_id}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      user_id:
+        name: user_id
+        description: 'The ID of the user.'
+        required: true
+        example: saepe
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/deleteExpense/{id}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the deleteExpense.'
+        required: true
+        example: consequuntur
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/export-excel
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/export-csv
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/verify-account
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-unpaid-balance/{expenseId}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      expenseId:
+        name: expenseId
+        description: ''
+        required: true
+        example: sint
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/group-settlement
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/update-kontribute-transaction/{transactionId}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      transactionId:
+        name: transactionId
+        description: ''
+        required: true
+        example: sit
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/re-initiate-transaction/{groupId}/{id}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      groupId:
+        name: groupId
+        description: ''
+        required: true
+        example: et
+        type: string
+        custom: []
+      id:
+        name: id
+        description: 'The ID of the {groupId}.'
+        required: true
+        example: facere
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-kontribute-withdrawal-response
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-openLink-transactions
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-funds
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/updateCategory/{id}'
+    metadata:
+      title: 'Update an existing expense category.'
+      description: 'This endpoint allows authenticated users to update an existing expense category.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the expense category to update.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The updated name of the expense category.'
+        required: true
+        example: '"Food"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "id": 1,
+            "name": "Food",
+            "user_id": 1,
+            "created_at": "2024-08-20T12:00:00.000000Z",
+            "updated_at": "2024-08-20T12:00:00.000000Z"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No query results for model [ExpenseCategory] with id 1"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getCateList
+    metadata:
+      title: 'Get all expense categories.'
+      description: 'This endpoint retrieves a list of all expense categories.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "data": [
+              {
+                "id": 1,
+                "name": "Travel",
+                "user_id": 1,
+                "created_at": "2024-08-20T12:00:00.000000Z",
+                "updated_at": "2024-08-20T12:00:00.000000Z"
+              }
+              // More category objects
+            ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No categories found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/deleteExpenseCategory/{id}'
+    metadata:
+      title: 'Delete a specific expense category.'
+      description: 'This endpoint allows authenticated users to delete a specific expense category.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the expense category to delete.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "Expense category deleted successfully"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No query results for model [ExpenseCategory] with id 1"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-ledger
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/getUserExpenseWithDate
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/getUserGroupWithDate
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getExpenseReport
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getKontributeReport
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getBusinessReport/{businessCode}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      businessCode:
+        name: businessCode
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/splitingMethod
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getSplittingMethods
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/add-users
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/store-generate-dyanmic-qrcode
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/get-store-trans-report
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/get-store-trans-status
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-store
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-store
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-specific-submerchant-list-Instore/{id}'
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the get specific submerchant list Instore.'
+        required: true
+        example: aspernatur
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-ajo-by-id/{id}'
+    metadata:
+      title: 'Retrieve Ajo details by ID.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the get ajo by id.'
+        required: true
+        example: nihil
+        type: string
+        custom: []
+      ajoId:
+        name: ajoId
+        description: 'The ID of the Ajo.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "ajo_id": 1,
+              "name": "Monthly Ajo",
+              "amount": 5000,
+              "description": "Monthly savings plan"
+            },
+            "message": "Ajo details retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Ajo not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/test-auto
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/generate-link
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-refPoint-per-user
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: api/update-user-email-status-to-unverfiy
+    metadata:
+      title: ''
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses: []
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/updateProfile
+    metadata:
+      title: 'Update the user''s profile information.'
+      description: 'This endpoint allows the authenticated user to update their profile details. The user can update fields such as name, address, and identification numbers. Validation is performed to ensure data integrity.'
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      first_name:
+        name: first_name
+        description: 'optional The user''s first name. Min: 2, Max: 45 characters.'
+        required: false
+        example: et
+        type: string
+        custom: []
+      last_name:
+        name: last_name
+        description: 'optional The user''s last name. Min: 2, Max: 45 characters.'
+        required: false
+        example: et
+        type: string
+        custom: []
+      address:
+        name: address
+        description: 'optional The user''s address.'
+        required: false
+        example: nihil
+        type: string
+        custom: []
+      nimc:
+        name: nimc
+        description: 'optional The user''s NIMC number. Exactly 11 characters.'
+        required: false
+        example: rem
+        type: string
+        custom: []
+      bvn:
+        name: bvn
+        description: 'optional The user''s BVN number. Exactly 11 characters.'
+        required: false
+        example: ratione
+        type: string
+        custom: []
+      country:
+        name: country
+        description: 'optional The user''s country.'
+        required: false
+        example: et
+        type: string
+        custom: []
+      state:
+        name: state
+        description: 'optional The user''s state.'
+        required: false
+        example: ut
+        type: string
+        custom: []
+      age:
+        name: age
+        description: 'optional The user''s age.'
+        required: false
+        example: error
+        type: string
+        custom: []
+      gender:
+        name: gender
+        description: 'optional The user''s gender.'
+        required: false
+        example: at
+        type: string
+        custom: []
+      dob:
+        name: dob
+        description: 'optional The user''s date of birth.'
+        required: false
+        example: quas
+        type: string
+        custom: []
+      lga_of_origin:
+        name: lga_of_origin
+        description: 'optional The user''s local government area of origin.'
+        required: false
+        example: expedita
+        type: string
+        custom: []
+      maiden_name:
+        name: maiden_name
+        description: 'optional The user''s maiden name.'
+        required: false
+        example: ea
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "status": "true",
+              "message": "Profile updated successfully",
+              "data": {
+                  "first_name": "string",
+                  "last_name": "string",
+                  "middle_name": "string",
+                  "state": "string",
+                  "nimc": "string",
+                  "bvn": "string",
+                  "country": "string",
+                  "address": "string",
+                  "age": "string",
+                  "gender": "string",
+                  "lga_of_origin": "string",
+                  "dob": "string",
+                  "maiden": "string"
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 422
+        content: |-
+          {
+              "status": "false",
+              "message": "Validation error message",
+              "data": []
+          }
+        headers: []
+        description: '422'
+      -
+        status: 500
+        content: |-
+          {
+              "status": "false",
+              "message": "Internal server error message",
+              "data": []
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/admin/business-withdrawals/{id}'
+    metadata:
+      title: 'Get Business Withdrawal by ID.'
+      description: |-
+        This endpoint returns a specific Business withdrawal by its ID.
+        If the withdrawal is not found, it returns a 404 error.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the Business withdrawal.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/ajos
+    metadata:
+      title: 'Get all Ajos with their invitations.'
+      description: |-
+        This endpoint returns a paginated list of all Ajos with their associated invitations.
+        You can specify the number of results per page using the `per_page` query parameter.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Defaults to 10.'
+        required: false
+        example: 15
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": [
+             {
+               "id": 1,
+               "name": "Ajo 1",
+               "invitations": [
+                 {
+                   "id": 1,
+                   "email": "example@example.com",
+                   "status": "pending"
+                 }
+               ]
+             }
+           ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+           "success": false,
+           "message": "Internal server error"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/admin/ajo-withdrawals
+    metadata:
+      title: 'Get all Ajo Withdrawals.'
+      description: |-
+        This endpoint returns a paginated list of Ajo withdrawals.
+        You can specify the number of results per page using the `per_page` query parameter.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Defaults to 10.'
+        required: false
+        example: 20
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": [
+             {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/admin/group-withdrawals
+    metadata:
+      title: 'Get all Group Withdrawals.'
+      description: |-
+        This endpoint returns a paginated list of group withdrawals.
+        You can specify the number of results per page using the `per_page` query parameter.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Defaults to 10.'
+        required: false
+        example: 20
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": [
+             {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/admin/business-withdrawals
+    metadata:
+      title: 'Get all Business Withdrawals.'
+      description: |-
+        This endpoint returns a paginated list of business withdrawals.
+        You can specify the number of results per page using the `per_page` query parameter.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Defaults to 10.'
+        required: false
+        example: 15
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": [
+             {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/admin/expense-withdrawals
+    metadata:
+      title: 'Get all Expense Withdrawals.'
+      description: |-
+        This endpoint returns a paginated list of expense withdrawals.
+        You can specify the number of results per page using the `per_page` query parameter.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      per_page:
+        name: per_page
+        description: 'The number of results per page. Defaults to 10.'
+        required: false
+        example: 10
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": [
+             {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/admin/ajo-withdrawals/{id}'
+    metadata:
+      title: 'Get Ajo Withdrawal by ID.'
+      description: |-
+        This endpoint returns a specific Ajo withdrawal by its ID.
+        If the withdrawal is not found, it returns a 404 error.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the Ajo withdrawal.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/admin/expense-withdrawals/{id}'
+    metadata:
+      title: 'Get Expense Withdrawal by ID.'
+      description: |-
+        This endpoint returns a specific Expense withdrawal by its ID.
+        If the withdrawal is not found, it returns a 404 error.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the Expense withdrawal.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Expense withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/admin/group-withdrawals/{id}'
+    metadata:
+      title: 'Get Group Withdrawal by ID.'
+      description: |-
+        This endpoint returns a specific Group withdrawal by its ID.
+        If the withdrawal is not found, it returns a 404 error.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the Group withdrawal.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": {
+           "id": 21,
+           "beneficiary_id": 43,
+           "account_name": null,
+           "bank": "ACCESS BANK",
+           "account_number": "0783289405",
+           "description": null,
+           "amount": 100,
+           "recordDateTime": "12/29/2023 9:10:04 PM",
+           "paymentAmount": 130,
+           "transactionReference": "20231229090308564968941598586",
+           "created_at": "2023-12-29 20:55:04",
+           "updated_at": "2023-12-29 21:17:00",
+           "charges": 30,
+           "uniqueId": "510AdiJoX5",
+           "minus_residual": null,
+           "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "success": false,
+           "message": "Business withdrawal not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/user/update/status/{complain_reference_code}'
+    metadata:
+      title: 'Update the status of an issue.'
+      description: |-
+        This endpoint allows updating the status of a complaint based on the provided complain reference code.
+        If the reference code is found, the status is updated, and a success message is returned.
+        Otherwise, an error message is returned indicating that the reference code was not found.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      complain_reference_code:
+        name: complain_reference_code
+        description: 'The complain reference code for the issue to be updated.'
+        required: false
+        example: '"ABCD1234"'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      status:
+        name: status
+        description: 'The new status for the issue.'
+        required: false
+        example: '"resolved"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+           "message": "Status updated to successfully",
+           "data": {
+             "complain_reference_code": "ABCD1234",
+             "status": "resolved"
+           }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+           "message": "Reference code not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []

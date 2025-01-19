@@ -1,0 +1,817 @@
+name: Ajo
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-ajo-by-id/{ajoId}'
+    metadata:
+      title: |-
+        Retrieve Ajo data by Ajo ID.
+
+        This endpoint retrieves details of an Ajo entry based on the provided Ajo ID. If the data is found, it returns the details along with a success message. If no data is found, it returns a not found message.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      ajoId:
+        name: ajoId
+        description: 'The unique ID of the Ajo entry.'
+        required: true
+        example: AJO123456
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "message": "successful",
+              "data": [
+                  {
+                      "ajo_id": "AJO123456",
+                      "transactionReference": "TXN123456",
+                      "email": "user@example.com",
+                      "amount": 500,
+                      "status": "active",
+                      "created_at": "2024-08-18T00:00:00.000000Z",
+                      "updated_at": "2024-08-18T00:00:00.000000Z"
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "data not found"
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Unsuccessful"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/invitation/{ajoId}'
+    metadata:
+      title: |-
+        Invite users to an Ajo.
+
+        This endpoint allows authenticated users to invite other users to join a specific Ajo group. It performs the following actions:
+        1. Validates if the number of invitations does not exceed the allowed member count for the Ajo.
+        2. Creates invitations for the provided users.
+        3. Calculates the payment schedules for the invited users based on the Ajo's frequency.
+        4. Interacts with an external API to create a product and get a product ID.
+        5. Generates invitation links for the users and sends them via email if they are not the authenticated user.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      ajoId:
+        name: ajoId
+        description: ''
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      users:
+        name: users
+        description: 'A list of users to invite.'
+        required: true
+        example:
+          - explicabo
+        type: 'string[]'
+        custom: []
+      users.email:
+        name: users.email
+        description: 'The email address of the user to invite.'
+        required: true
+        example: '"johndoe@example.com"'
+        type: string
+        custom: []
+      users.name:
+        name: users.name
+        description: 'optional The name of the user.'
+        required: false
+        example: '"John Doe"'
+        type: string
+        custom: []
+      users.phone_number:
+        name: users.phone_number
+        description: 'optional The phone number of the user.'
+        required: false
+        example: '"+1234567890"'
+        type: string
+        custom: []
+      users.position:
+        name: users.position
+        description: 'optional The position of the user within the Ajo group.'
+        required: false
+        example: '"Member"'
+        type: string
+        custom: []
+      productName:
+        name: productName
+        description: 'The name of the product.'
+        required: true
+        example: '"Monthly Subscription"'
+        type: string
+        custom: []
+      productDescription:
+        name: productDescription
+        description: 'A description of the product.'
+        required: true
+        example: '"A subscription for monthly services."'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "status": 200,
+              "message": "Invitations sent successfully",
+              "links": [
+                  "https://www.azatme.com/login?invitee_name=JohnDoe&email=johndoe@example.com&inviter_token=abc123&position=Member&productId=12345&ajoId=1&frequency=Monthly&productName=ProductName"
+              ]
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "Members cannot be more than X"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "Invalid user data"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Error in response from API"
+          }
+        headers: []
+        description: '500'
+      -
+        status: 500
+        content: |-
+          {
+              "message": "API request failed"
+          }
+        headers: []
+        description: '500'
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Error creating DirectDebitProduct"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/create-ajo
+    metadata:
+      title: |-
+        Create a new Ajo.
+
+        This endpoint allows authenticated users to create a new Ajo. It requires various details about the Ajo, including its name, account number, description, frequency, member count, starting date, cycle, and the amount per member. Upon successful creation, a unique code is generated for the Ajo. The user ID of the authenticated user is associated with the newly created Ajo.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the Ajo.'
+        required: true
+        example: '"Weekly Savings Club"'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The account number associated with the Ajo.'
+        required: true
+        example: '"1234567890"'
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'A brief description of the Ajo.'
+        required: true
+        example: '"Ajo for weekly savings with community participation."'
+        type: string
+        custom: []
+      frequency:
+        name: frequency
+        description: 'How often the Ajo cycle occurs.'
+        required: true
+        example: '"weekly"'
+        type: string
+        custom: []
+      member_count:
+        name: member_count
+        description: 'The total number of members in the Ajo.'
+        required: true
+        example: 20
+        type: integer
+        custom: []
+      starting_date:
+        name: starting_date
+        description: 'The start date of the Ajo. Format: YYYY-MM-DD.'
+        required: true
+        example: '"2024-08-01"'
+        type: string
+        custom: []
+      cycle:
+        name: cycle
+        description: 'The duration of one complete cycle.'
+        required: true
+        example: '"4 weeks"'
+        type: string
+        custom: []
+      amount_per_member:
+        name: amount_per_member
+        description: 'The amount each member contributes per cycle.'
+        required: true
+        example: 5000.0
+        type: number
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+              "id": 1,
+              "name": "Weekly Savings Club",
+              "account_number": "1234567890",
+              "description": "Ajo for weekly savings with community participation.",
+              "unique_code": "A1B2C3D4E5",
+              "frequency": "weekly",
+              "member_count": 20,
+              "starting_date": "2024-08-01",
+              "cycle": "4 weeks",
+              "amount_per_member": 5000.00,
+              "user_id": 1,
+              "created_at": "2024-08-18T00:00:00.000000Z",
+              "updated_at": "2024-08-18T00:00:00.000000Z"
+          }
+        headers: []
+        description: '201'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "Validation Error",
+              "errors": {
+                  "name": ["The name field is required."],
+                  "account_number": ["The account number field is required."],
+                  "description": ["The description field is required."],
+                  "frequency": ["The frequency field is required."],
+                  "member_count": ["The member count field is required."],
+                  "starting_date": ["The starting date field is required."],
+                  "cycle": ["The cycle field is required."],
+                  "amount_per_member": ["The amount per member field is required."]
+              }
+          }
+        headers: []
+        description: '422'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Unsuccessful"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-ajo-per-user
+    metadata:
+      title: |-
+        Get all Ajo created by the authenticated user.
+
+        This endpoint retrieves all Ajo records created by the currently authenticated user. It supports pagination through the `per_page` query parameter, allowing clients to specify the number of records per page.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of items to return per page. Default is 10.'
+        required: false
+        example: 15
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "current_page": 1,
+              "data": [
+                  {
+                      "id": 1,
+                      "name": "Weekly Savings Club",
+                      "account_number": "1234567890",
+                      "description": "Ajo for weekly savings with community participation.",
+                      "unique_code": "A1B2C3D4E5",
+                      "frequency": "weekly",
+                      "member_count": 20,
+                      "starting_date": "2024-08-01",
+                      "cycle": "4 weeks",
+                      "amount_per_member": 5000.00,
+                      "user_id": 1,
+                      "created_at": "2024-08-18T00:00:00.000000Z",
+                      "updated_at": "2024-08-18T00:00:00.000000Z"
+                  }
+              ],
+              "first_page_url": "http://example.com/api/ajo?per_page=10&page=1",
+              "last_page": 1,
+              "last_page_url": "http://example.com/api/ajo?per_page=10&page=1",
+              "next_page_url": null,
+              "path": "http://example.com/api/ajo",
+              "per_page": 10,
+              "prev_page_url": null,
+              "to": 1,
+              "total": 1
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-invitation
+    metadata:
+      title: |-
+        Get all Ajo invitations created by the authenticated user and invitations they have been added to.
+
+        This endpoint retrieves:
+        1. A list of Ajo records where the authenticated user is the inviter, including details and total paid amounts.
+        2. A list of invitations where the authenticated user has been invited, including the details of the Ajo and invitation.
+
+        Both lists are paginated through the `per_page` query parameter.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'The number of items to return per page. Default is 10.'
+        required: false
+        example: 15
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "getAuthUserInvitationCreated": {
+                  "current_page": 1,
+                  "data": [
+                      {
+                          "id": 1,
+                          "name": "Weekly Savings Club",
+                          "description": "Ajo for weekly savings with community participation.",
+                          "starting_date": "2024-08-01",
+                          "frequency": "weekly",
+                          "amount_per_member": 5000.00,
+                          "cycle": "4 weeks",
+                          "member_count": 20,
+                          "total_paid": 50000.00
+                      }
+                  ],
+                  "first_page_url": "http://example.com/api/ajo/invitations/created?per_page=10&page=1",
+                  "last_page": 1,
+                  "last_page_url": "http://example.com/api/ajo/invitations/created?per_page=10&page=1",
+                  "next_page_url": null,
+                  "path": "http://example.com/api/ajo/invitations/created",
+                  "per_page": 10,
+                  "prev_page_url": null,
+                  "to": 1,
+                  "total": 1
+              },
+              "getInvitationInvitedTo": {
+                  "current_page": 1,
+                  "data": [
+                      {
+                          "id": 1,
+                          "ajo_id": 1,
+                          "email": "johndoe@example.com",
+                          "name": "John Doe",
+                          "phone_number": "+1234567890",
+                          "position": "Member",
+                          "inviter_id": 1,
+                          "amount": 5000.00,
+                          "created_at": "2024-08-18T00:00:00.000000Z",
+                          "updated_at": "2024-08-18T00:00:00.000000Z",
+                          "members": 20,
+                          "startDate": "2024-08-01",
+                          "freq": "weekly",
+                          "cycle": "4 weeks",
+                          "Ajo_Name": "Weekly Savings Club",
+                          "Descrip": "Ajo for weekly savings with community participation."
+                      }
+                  ],
+                  "first_page_url": "http://example.com/api/ajo/invitations/invited-to?per_page=10&page=1",
+                  "last_page": 1,
+                  "last_page_url": "http://example.com/api/ajo/invitations/invited-to?per_page=10&page=1",
+                  "next_page_url": null,
+                  "path": "http://example.com/api/ajo/invitations/invited-to",
+                  "per_page": 10,
+                  "prev_page_url": null,
+                  "to": 1,
+                  "total": 1
+              }
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-unpaid-users/{id}'
+    metadata:
+      title: |-
+        Retrieve users who have accepted the Ajo invitation but have not made a payment.
+
+        This endpoint retrieves a list of users who have accepted an invitation to an Ajo but have not made a payment. It filters users based on their invitation status and checks if their payment date is in the future.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The unique identifier of the Ajo to retrieve unpaid users for.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+              {
+                  "id": 1,
+                  "ajo_id": 1,
+                  "email": "user@example.com",
+                  "status": "accept",
+                  "residualAmount": null,
+                  "created_at": "2024-08-18T00:00:00.000000Z",
+                  "updated_at": "2024-08-18T00:00:00.000000Z"
+              },
+              ...
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No unpaid users found for the specified Ajo."
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/ajo-payout
+    metadata:
+      title: |-
+        Process a payout request for an Ajo account.
+
+        This endpoint allows a user to request a payout from their Ajo account. It performs various checks, applies charges, and interacts with an external service to handle the payout request.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      amount:
+        name: amount
+        description: 'The amount to withdraw.'
+        required: true
+        example: 1500.0
+        type: number
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The user''s bank account number.'
+        required: true
+        example: '''1234567890'''
+        type: string
+        custom: []
+      bank:
+        name: bank
+        description: 'The name of the bank.'
+        required: true
+        example: '''Example Bank'''
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'optional A description for the withdrawal.'
+        required: false
+        example: '''Monthly payout'''
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "transactionReference": "abcdef123456",
+              "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "You cannot withdraw an amount less than 100 after commission"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Bank account not found"
+          }
+        headers: []
+        description: '404'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Payout request failed"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-ajo-contributors/{ajo_id}'
+    metadata:
+      title: |-
+        Retrieve Ajo contributors by Ajo ID.
+
+        This endpoint retrieves Ajo contributors for a specified Ajo ID. It first checks if there are invitations associated with the given Ajo ID. For each invitation, it retrieves Ajo contributors linked by `merchantReference`, groups them by `transactionReference`, and includes the associated email. It returns the grouped data along with a success message. If no data is found for the specified Ajo ID, it returns a not found message.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      ajo_id:
+        name: ajo_id
+        description: 'The unique ID of the Ajo entry.'
+        required: true
+        example: AJO123456
+        type: string
+        custom: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'optional The number of items per page. Default is 10.'
+        required: false
+        example: 15
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "message": "AjoContributors retrieved successfully",
+              "data": {
+                  "MERCHANT_REF_1": {
+                      "transactionReference": "MERCHANT_REF_1",
+                      "email": "user1@example.com",
+                      "ajoContributors": [
+                          {
+                              "id": 1,
+                              "transactionReference": "MERCHANT_REF_1",
+                              "contributorEmail": "contributor1@example.com",
+                              "amount": 100,
+                              "created_at": "2024-08-18T00:00:00.000000Z",
+                              "updated_at": "2024-08-18T00:00:00.000000Z"
+                          },
+                          ...
+                      ]
+                  },
+                  ...
+              }
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No data found for the specified ajo_id"
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "Unsuccessful"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-ajo-withdrawal
+    metadata:
+      title: |-
+        Retrieve the list of withdrawal transactions for the authenticated user.
+
+        This endpoint retrieves all withdrawal transactions where the authenticated user is the beneficiary. The transactions are ordered by creation date in descending order.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "account_number": "1234567890",
+              "description": "Monthly payout",
+              "beneficiary_id": 1,
+              "amount": 1500.00,
+              "bank": "Example Bank",
+              "charges": 50.00,
+              "uniqueId": "abcdef123456",
+              "transactionReference": "tx123456789",
+              "status": "success",
+              "created_at": "2024-08-18T12:34:56Z",
+              "updated_at": "2024-08-18T12:34:56Z"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Transaction not found for this user"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get-ajo-contributor/{transactionReference}/{email}'
+    metadata:
+      title: |-
+        API endpoints for ajo functionalities.
+
+        Retrieve transaction data for an Ajo contributor.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      transactionReference:
+        name: transactionReference
+        description: 'The transaction reference.'
+        required: true
+        example: '"ABC123"'
+        type: string
+        custom: []
+      email:
+        name: email
+        description: 'The email of the contributor.'
+        required: true
+        example: '"user@example.com"'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "data": {
+              "transaction_id": "TX123",
+              "amount": 1000,
+              "status": "completed"
+            },
+            "message": "Transaction data retrieved successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "status": "error",
+            "message": "Transaction or contributor not found."
+          }
+        headers: []
+        description: '404'
+      -
+        status: 500
+        content: |-
+          {
+            "status": "error",
+            "message": "Server error. Please try again later."
+          }
+        headers: []
+        description: '500'
+    responseFields: []

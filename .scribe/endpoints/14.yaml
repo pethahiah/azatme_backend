@@ -1,0 +1,993 @@
+name: RefundMe
+description: 'This endpoint allows authenticated users to invite others to contribute to an expense.'
+endpoints:
+  -
+    httpMethods:
+      - POST
+    uri: api/updateStatus
+    metadata:
+      title: 'Handle incoming webhook notifications for payments and withdrawals.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      notificationType:
+        name: notificationType
+        description: 'The type of notification: 1 for payment, 2 for withdrawal.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+      transactionDetails:
+        name: transactionDetails
+        description: 'Details of the transaction. See below for detailed structure.'
+        required: false
+        example: []
+        type: object
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "message": "Request processed successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 500
+        content: |-
+          {
+              "error": "An error occurred"
+          }
+        headers: []
+        description: '500'
+    responseFields:
+      notificationType:
+        name: notificationType
+        description: 'The type of notification.'
+        type: integer
+      transactionDetails:
+        name: transactionDetails
+        description: |-
+          The details of the transaction, including:
+              @responseField transactionDetails.paymentReference string The payment reference.
+              @responseField transactionDetails.payThruReference string The payThru reference.
+              @responseField transactionDetails.fiName string The financial institution name.
+              @responseField transactionDetails.status string The status of the transaction.
+              @responseField transactionDetails.amount number The amount of the transaction.
+              @responseField transactionDetails.responseCode string The response code from the transaction.
+              @responseField transactionDetails.paymentMethod string The method of payment.
+              @responseField transactionDetails.commission number The commission amount.
+              @responseField transactionDetails.residualAmount number The residual amount.
+              @responseField transactionDetails.resultCode string The result code of the transaction.
+              @responseField transactionDetails.responseDescription string The response description.
+              @responseField transactionDetails.customerInfo object The customer information:
+                  @responseField customerInfo.providedEmail string The email provided by the customer.
+                  @responseField customerInfo.providedName string The name provided by the customer.
+                  @responseField customerInfo.remarks string Any remarks provided by the customer.
+        type: object
+  -
+    httpMethods:
+      - POST
+    uri: api/createExpense
+    metadata:
+      title: |-
+        API endpoints for user expense management.
+        Create a new expense.
+
+        This endpoint allows authenticated users to create a new expense.
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the expense.'
+        required: true
+        example: '"Office Supplies"'
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'optional A description of the expense.'
+        required: false
+        example: '"Printer ink and paper"'
+        type: string
+        custom: []
+      amount:
+        name: amount
+        description: 'The reported amount of the expense.'
+        required: true
+        example: 100.0
+        type: number
+        custom: []
+      category_id:
+        name: category_id
+        description: 'The ID of the expense category.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+      subcategory_id:
+        name: subcategory_id
+        description: 'optional The ID of the expense subcategory.'
+        required: false
+        example: 2
+        type: integer
+        custom: []
+      actual_amount:
+        name: actual_amount
+        description: 'The actual amount spent.'
+        required: true
+        example: 100.0
+        type: number
+        custom: []
+    responses:
+      -
+        status: 201
+        content: |-
+          {
+            "id": 1,
+            "name": "Office Supplies",
+            "description": "Printer ink and paper",
+            "uique_code": "abcd1234ef",
+            "category_id": 1,
+            "subcategory_id": 2,
+            "actual_amount": 100.00,
+            "amount": 100.00,
+            "user_id": 1,
+            "created_at": "2024-08-20T12:00:00.000000Z",
+            "updated_at": "2024-08-20T12:00:00.000000Z"
+          }
+        headers: []
+        description: '201'
+      -
+        status: 422
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {
+              "name": ["The name field is required."],
+              "category_id": ["The category_id field is required."],
+              "actual_amount": ["The actual_amount field is required."],
+              "amount": ["The amount field is required."]
+            }
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-refund-withdrawal-response
+    metadata:
+      title: 'Retrieve all withdrawal transactions for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "beneficiary_id": 1,
+              "transactionReferences": "abc123",
+              "paymentAmount": 100.00,
+              "recordDateTime": "2024-08-20T12:00:00",
+              "status": "success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Transaction not found for this user"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/updateExpense/{id}'
+    metadata:
+      title: 'Update an expense if the authenticated user is the owner.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the updateExpense.'
+        required: true
+        example: sit
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "amount": 500.00,
+              "updated_at": "2024-08-20T12:00:00"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "You don't have edit rights over this expense"
+          }
+        headers: []
+        description: '422'
+      -
+        status: 404
+        content: |-
+          {
+              "error": "Expense not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getAllExpenses
+    metadata:
+      title: 'Retrieve all expenses in the system (Admin only).'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+              {
+                  "id": 1,
+                  "amount": 500.00,
+                  "created_at": "2024-08-20T12:00:00"
+              }
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "message": "Auth user is not an admin"
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getRandomUserExpense/{email}'
+    metadata:
+      title: 'Retrieve user expenses for a specific email address.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      email:
+        name: email
+        description: |-
+          The email address of the user.
+          The email address of the user.
+        required: true
+        example: est
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+              {
+                  "id": 1,
+                  "amount": 500.00,
+                  "created_at": "2024-08-20T12:00:00"
+              }
+          ]
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/getUserExpense
+    metadata:
+      title: 'Retrieve user expenses and transactions the user has been invited to.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'Number of items per page. Defaults to 10.'
+        required: false
+        example: 10
+        type: integer
+        custom: []
+      page:
+        name: page
+        description: 'Page number for pagination. Defaults to 1.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "getAuthUserExpensesCreated": [
+                  {
+                      "id": 1,
+                      "amount": 500.00,
+                      "created_at": "2024-08-20T12:00:00",
+                      "total_paid": 250.00
+                  }
+              ],
+              "getExpensesInvitedTo": [
+                  {
+                      "id": 1,
+                      "amount": 1000.00,
+                      "created_at": "2024-08-20T12:00:00"
+                  }
+              ]
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAllMemebersOfAnExpense/{expenseId}'
+    metadata:
+      title: 'Get all members of a specific expense.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      expenseId:
+        name: expenseId
+        description: 'The ID of the expense.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+              {
+                  "email": "user@example.com"
+              },
+              {
+                  "email": "anotheruser@example.com"
+              }
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Expense not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/getAmountsPaidPerExpense/{expenseId}'
+    metadata:
+      title: 'Get the amounts paid by the user per expense.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      expenseId:
+        name: expenseId
+        description: 'The ID of the expense.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+              {
+                  "id": 1,
+                  "amount": 50.00
+              },
+              {
+                  "id": 2,
+                  "amount": 75.00
+              }
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Expense not found"
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: api/collection
+    metadata:
+      title: 'Process an individual collection request.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters:
+      amount:
+        name: amount
+        description: 'The amount to withdraw.'
+        required: true
+        example: 150.0
+        type: number
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The bank account number to withdraw to.'
+        required: true
+        example: '"1234567890"'
+        type: string
+        custom: []
+      description:
+        name: description
+        description: 'The description of the withdrawal.'
+        required: false
+        example: '"Refund"'
+        type: string
+        custom: []
+      bank:
+        name: bank
+        description: 'The bank name.'
+        required: false
+        example: '"Example Bank"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "transactionReferences": "TRX123456",
+              "status": "Success"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+              "message": "You cannot withdraw an amount less than 100 after commission"
+          }
+        headers: []
+        description: '400'
+      -
+        status: 404
+        content: |-
+          {
+              "message": "Bank account not found"
+          }
+        headers: []
+        description: '404'
+      -
+        status: 403
+        content: |-
+          {
+              "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Settlement request failed"
+          }
+        headers: []
+        description: '500'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/recreate-underpaid-transactions/{expenseId}/{id}'
+    metadata:
+      title: 'Reinitiate a transaction for an expense.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      expenseId:
+        name: expenseId
+        description: 'The ID of the expense.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+      id:
+        name: id
+        description: 'The ID of the user expense record.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      split_method_id:
+        name: split_method_id
+        description: 'The ID of the split method used.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+      bankName:
+        name: bankName
+        description: 'The name of the bank.'
+        required: false
+        example: '"Example Bank"'
+        type: string
+        custom: []
+      account_name:
+        name: account_name
+        description: 'The account holder''s name.'
+        required: false
+        example: '"John Doe"'
+        type: string
+        custom: []
+      bankCode:
+        name: bankCode
+        description: 'The bank code.'
+        required: false
+        example: '"XYZ123"'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'The bank account number.'
+        required: false
+        example: '"1234567890"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "payLink": "https://paymentgateway.com/link/to/transaction"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 403
+        content: |-
+          {
+              "message": "You are not authorized to perform this action."
+          }
+        headers: []
+        description: '403'
+      -
+        status: 422
+        content: |-
+          {
+              "message": "Whoops! [Error details]"
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/allExpensesPerUser
+    metadata:
+      title: 'Retrieve all expenses for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'Number of items per page. Defaults to 10.'
+        required: false
+        example: 10
+        type: integer
+        custom: []
+      page:
+        name: page
+        description: 'Page number for pagination. Defaults to 1.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "id": 1,
+              "amount": 500.00,
+              "created_at": "2024-08-20T12:00:00"
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/countExpensesPerUser
+    metadata:
+      title: 'Count the number of expenses for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+              "count": 10
+          }
+        headers: []
+        description: '200'
+    responseFields: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/userExpense/{expenseUniqueCode}'
+    metadata:
+      title: 'Invite a user to contribute to an expense.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      expenseUniqueCode:
+        name: expenseUniqueCode
+        description: 'The unique code of the expense.'
+        required: true
+        example: '"abcd1234ef"'
+        type: string
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The email address of the invited user.'
+        required: true
+        example: '"example@example.com"'
+        type: string
+        custom: []
+      split_method_id:
+        name: split_method_id
+        description: 'The method used to split the expense.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+      percentage:
+        name: percentage
+        description: 'optional Percentage of the expense amount to be contributed by the user.'
+        required: false
+        example: 25
+        type: integer
+        custom: []
+      percentage_per_user:
+        name: percentage_per_user
+        description: 'optional JSON object with percentage split for each user.'
+        required: false
+        example: '{"user1@example.com": 50, "user2@example.com": 50}'
+        type: json
+        custom: []
+      bankName:
+        name: bankName
+        description: 'optional The name of the bank.'
+        required: false
+        example: '"Bank of Example"'
+        type: string
+        custom: []
+      account_name:
+        name: account_name
+        description: 'optional The account name.'
+        required: false
+        example: '"John Doe"'
+        type: string
+        custom: []
+      bankCode:
+        name: bankCode
+        description: 'optional The bank code.'
+        required: false
+        example: '"123456"'
+        type: string
+        custom: []
+      account_number:
+        name: account_number
+        description: 'optional The account number.'
+        required: false
+        example: '"1234567890"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "transactionId": 1,
+            "payLink": "https://apps.paythru.ng/services/cardfree/pay/1234567890",
+            "message": "Invite sent successfully."
+          }
+        headers: []
+        description: '200'
+      -
+        status: 400
+        content: |-
+          {
+            "message": "Whoops! Error message."
+          }
+        headers: []
+        description: '400'
+      -
+        status: 403
+        content: |-
+          {
+            "error": "Access denied. You do not have permission to access this resource."
+          }
+        headers: []
+        description: '403'
+    responseFields: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/update-payback-transaction/{transactionId}'
+    metadata:
+      title: 'Update a transaction request.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      transactionId:
+        name: transactionId
+        description: 'The ID of the transaction request to update.'
+        required: true
+        example: 1
+        type: integer
+        custom: []
+    queryParameters: []
+    bodyParameters:
+      email:
+        name: email
+        description: 'The new email address for the transaction.'
+        required: true
+        example: '"newemail@example.com"'
+        type: string
+        custom: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "message": "successful"
+          }
+        headers: []
+        description: '200'
+      -
+        status: 422
+        content: |-
+          {
+            "message": "You cannot edit this transaction anymore"
+          }
+        headers: []
+        description: '422'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-invited-users
+    metadata:
+      title: 'Get all invited users for the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          [
+            {
+              "id": 1,
+              "type": "participant",
+              "email": "example@example.com",
+              "first_name": "John",
+              "last_name": "Doe",
+              "auth_id": 1,
+              "created_at": "2024-08-20T12:00:00.000000Z",
+              "updated_at": "2024-08-20T12:00:00.000000Z"
+            }
+            // More invited user objects
+          ]
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No invited users found."
+          }
+        headers: []
+        description: '404'
+    responseFields: []
+  -
+    httpMethods:
+      - GET
+    uri: api/get-draft-refundme
+    metadata:
+      title: 'Get all refund requests created by the authenticated user.'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'optional Number of items per page. Defaults to 10.'
+        required: false
+        example: 10
+        type: integer
+        custom: []
+      page:
+        name: page
+        description: 'optional The page number to retrieve. Defaults to 1.'
+        required: false
+        example: 1
+        type: integer
+        custom: []
+    bodyParameters: []
+    responses:
+      -
+        status: 200
+        content: |-
+          {
+            "current_page": 1,
+            "data": [
+              {
+                "id": 1,
+                "name": "Office Supplies",
+                "amount": 100.00,
+                "status": "pending",
+                "created_at": "2024-08-20T12:00:00.000000Z",
+                "updated_at": "2024-08-20T12:00:00.000000Z"
+              }
+              // More refund request objects
+            ],
+            "first_page_url": "http://example.com/api/get-draft-refundme?page=1",
+            "last_page_url": "http://example.com/api/get-draft-refundme?page=2",
+            "total": 20
+          }
+        headers: []
+        description: '200'
+      -
+        status: 404
+        content: |-
+          {
+            "message": "No refund requests found."
+          }
+        headers: []
+        description: '404'
+    responseFields: []
