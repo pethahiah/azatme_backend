@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/azatme_backend.iml" filepath="$PROJECT_DIR$/.idea/azatme_backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Azat_pay.iml" filepath="$PROJECT_DIR$/.idea/Azat_pay.iml" />
     </modules>
   </component>
 </project>

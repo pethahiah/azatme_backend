@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Services\Referrals;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Requests\LoginRequest;
 use Carbon\Carbon;
 use App\User;
 use Mail;
-use Log;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\BusinessRequest;
 use App\Business;
@@ -28,35 +29,57 @@ use Illuminate\Support\Facades\DB;
 class AuthController extends Controller
 {
 
+
+
+
+    public $referral;
+
+    public function __construct(Referrals $referral)
+    {
+        $this->referral = $referral;
+    }
+
+
      //Register
-
-
-     public function register(Request $request){
+    public function register(Request $request): \Illuminate\Http\JsonResponse
+    {
         $this->validate($request, [
-        'name' => 'required|min:3|max:50',
-        'email' => 'required|email|unique:users',
-        'usertype' => 'required|string',
-        'company_name' => 'string',
-        'phone' => 'string|unique:users|required',
-        'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
-        'password_confirmation' => 'required|same:password',
-    ]);
+            'name' => 'required|min:3|max:50',
+            'email' => 'required|email|unique:users',
+            'usertype' => 'required|string',
+            'company_name' => 'string',
+            'phone' => 'string|unique:users|required',
+            'password' => 'required|confirmed|min:8|regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{6,}$/',
+            'password_confirmation' => 'required|same:password',
+        ]);
 
-        $user = new User([
+        $uniqueCode = $request->unique_code;
+
+        $result = $this->referral->processReferral($uniqueCode, $request->name, $request->email);
+
+        if ($result['success']) {
+            Log::info($result['message']);
+        } else {
+            Log::error($result['error']);
+        }
+
+             $user = new User([
             'name' => $request->name,
             'email' => $request->email,
             'usertype' => $request->usertype,
             'company_name' => $request->company_name,
-            'phone'=> $request->phone,
-            'password' => Hash::make($request->password)
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'unique_code' => $uniqueCode, // Save unique_code in the user table
+
         ]);
         $user->save();
-        return response()->json(['message' => 'user has been registered', 'data'=>$user], 200);
-}
+        return response()->json(['message' => 'User has been registered', 'data' => $user], 200);
+    }
 
     //login function
 
-public function getRequesterIP()
+private function getRequesterIP(): ?string
 {
     return request()->ip();
 }
@@ -163,10 +186,10 @@ public function loginViaOtp(Request $request)
     }
 }
 
-
     //logout function
 
-    public function logout() {
+    public function logout(): \Illuminate\Http\JsonResponse
+    {
 
         if(Auth::check()) {
         Auth::user()->token()->revoke();
@@ -186,9 +209,11 @@ public function loginViaOtp(Request $request)
                 'bvn' => 'string|min:11|max:11',
                 'country' => 'string',
                 'state' => 'string',
-		'age' => 'string',
-		'gender' => 'string',
-		'lga_of_origin' => 'string',
+		        'age' => 'string',
+		        'gender' => 'string',
+                'dob' => 'string',
+		        'lga_of_origin' => 'string',
+		        'maiden'=> 'string',
             ]);
 
 
@@ -209,8 +234,9 @@ public function loginViaOtp(Request $request)
                     $user->age = $request->age;
                     $user->gender = $request->gender;
                     $user->lga_of_origin = $request->lga_of_origin;
-                    // $user->image = $request->image;
-                   //return $user;
+                    $user->dob = $request->dob;
+                    $user->maiden = $request->maiden_name;
+
                             $user->update();
                              return response()->json(['status'=>'true', 'message'=>"profile updated suuccessfully", 'data'=>$user]);
 
@@ -332,8 +358,8 @@ public function uploadImage(Request $request)
 
 public function updateUserEmailStatus(Request $request)
     {
-        $email = $request->input('email');
 
+        $email = $request->input('email');
         if ($email === 'adunola.adeyemi@gmail.com' || $email === 'akm@mailinator.com' || $email === 'sunday4oged@yahoo.com' || $email === 'ade_adun@yahoo.com'|| $email === 'azatme@mailinator.com' || $email === 'lumiged4u@gmail.com') {
             $user = User::where('email', $email)->first();
 
@@ -347,10 +373,6 @@ public function updateUserEmailStatus(Request $request)
              return response()->json(['message' => 'Access denied'], 403);
 }
     }
-
-
-
-
 
 
 public function getBVNDetails(Request $request)
@@ -395,20 +417,29 @@ public function getBVNDetails(Request $request)
 
 
 
-private function areUserDetailsMatching($user, $validationData)
-{
-    return (
-        isset($validationData['surname']) &&
-        isset($validationData['first_name']) &&
-        strtoupper($user->last_name) === $validationData['surname'] &&
-        strtoupper($user->first_name) === $validationData['first_name'] &&
-        ucfirst($user->gender) === $validationData['gender']
-    );
-}
 
+    private function areUserDetailsMatching($user, $validationData): bool
+    {
+        $surnameMatch = strtoupper($user->last_name) === $validationData['surname'];
 
+        if (!$surnameMatch && isset($user->maiden)) {
+            $maidenMatch = strtoupper($user->maiden) === $validationData['surname'];
+            if ($maidenMatch) {
+                $surnameMatch = true;
+            }
+        }
 
+        $dobMatch = isset($validationData['dateOfBirth']) &&
+            date('Y-m-d', strtotime($user->dob)) === date('Y-m-d', strtotime($validationData['dateOfBirth']));
 
+        return (
+            $surnameMatch &&
+            isset($validationData['first_name']) &&
+            strtoupper($user->first_name) === $validationData['first_name'] &&
+            ucfirst($user->gender) === $validationData['gender'] &&
+            $dobMatch
+        );
+    }
 
    public function updateUsertype(Request $request)
 {
@@ -504,6 +535,11 @@ private function areUserDetailsMatching($user, $validationData)
             ], 500);
         }
     }
+
+
+
+
+
 
 
 

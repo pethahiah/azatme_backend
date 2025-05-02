@@ -226,4 +226,6 @@ public function getAllComplains(Request $request)
             $getAllComplains = Feedback::paginate($perPage);
             return $getAllComplains;
         }
+
+
 }

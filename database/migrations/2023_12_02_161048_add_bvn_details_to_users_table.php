@@ -20,6 +20,7 @@ class AddBvnDetailsToUsersTable extends Migration
             $table->longText('accessToken')->nullable();
             $table->string('face_image')->nullable();
             $table->string('lga_of_origin')->nullable();
+
         });
     }
 

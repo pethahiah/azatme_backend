@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\API\BusinessTransactionController;
+use App\Http\Controllers\API\DirectDebitController;
 use App\Http\Controllers\API\ReferralSettingController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ReferralController;
 use App\Http\Controllers\API\AdminController;
+use App\Http\Controllers\API\ChargesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,6 +43,8 @@ Route::namespace('API')->group(function () {
     Route::get('get-ajo-user-bank-details/{id}', 'AjoController@getUsersWithBankInfo');
     Route::get('get-ajo-by-id/{ajoId}', 'AjoController@getAjoByIdd');
 
+    Route::post('/process-data', 'SurveyController@handle');
+    Route::get('/get-lastUpdated-charges', [ChargesController::class, 'getLastUpdatedCharge']);
 
 
     //Complain
@@ -52,6 +56,7 @@ Route::namespace('API')->group(function () {
 
 
 Route::middleware(['auth:api'])->group(function () {
+
         Route::get('getProfile', 'AuthController@getProfile');
         Route::get('logout', 'AuthController@logout');
         Route::put('updateProfile', 'AuthController@updateProfile');
@@ -61,6 +66,17 @@ Route::middleware(['auth:api'])->group(function () {
 	Route::put('get-verifiedd', 'AuthController@getBVNDetails');
 	Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
 	Route::post('makeComplain', 'ComplainController@makeComplain');
+
+    Route::get('getProfile', 'AuthController@getProfile');
+    Route::get('logout', 'AuthController@logout');
+    Route::put('updateProfile', 'AuthController@updateProfile');
+    Route::post('image', 'AuthController@uploadImage');
+    Route::put('updateUsertype', 'AuthController@updateUsertype');
+    Route::get('/getBvnConsent', 'AuthController@getBvnConsent');
+    Route::put('get-verifiedd', 'AuthController@getBVNDetails');
+    Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
+    Route::post('makeComplain', 'ComplainController@makeComplain');
+
 	      // Comment
     Route::post('create/comment/{feedbackId}', 'ComplainController@storeComment');
     Route::get('/feedback-by-id/{feedbackId}', 'ComplainController@getFeedbackById');
@@ -72,6 +88,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('create/reply/{commentId}', 'ComplainController@storeReply');
     Route::put('update/reply/{replyId}/{commentId}', 'ComplainController@updateReply');
     Route::delete('/delete/comment/{replyId}/{commentId}', 'ComplainController@destroyReply');
+
+    Route::get('get-referred-count', [ReferralController::class, 'countReferralPerUser']);
+
     });
 
 Route::middleware(['auth:api', 'admin'])->group(function () {
@@ -101,14 +120,21 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::get('count-all-added-users-kontribute', 'AdminController@countUserAddedToKontribute');
     Route::get('count-all-active-users-kontributes', 'AdminController@countActiveKontribtes');
     Route::put('/admin/update-feedback/{complain_reference_code}', 'AdminController@updateIssue');
+
+    });
+
+
     Route::post('/set-ref', [ReferralSettingController::class, 'createReferral']);
     Route::put('/update-ref/{referralId}', [ReferralSettingController::class, 'updateReferral']);
     Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
     Route::get('/all-users', [AdminController::class, 'getAllUsers']);
-    Route::get('/users/{id}', [AdminController::class, 'getUserById']);
+    Route::get('/users/{email}', [AdminController::class, 'getUserById']);
+    Route::post('/create-charges', [ChargesController::class, 'createCharges']);
+    Route::get('/charges', [ChargesController::class, 'readCharges']);
+    Route::put('/charges/{id}', [ChargesController::class, 'updateCharge']);
+    Route::delete('/charges/{id}', [ChargesController::class, 'deleteCharge']);
+    Route::put('/admin/update-complain/{complainId}', [AdminController::class,'markAsCompleted']);
     });
-
-
 
 Route::middleware(['auth:api', 'user.status'])->group(function () {
     // User Update
@@ -125,7 +151,7 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
 
 
 
-     //Buisness
+     //Business
     Route::post('createBusiness', 'BusinessController@createBusiness');
     Route::get('list-all-business-users', 'AuthController@listAllBusinessUsers');
     Route::put('update-business/{id}', 'BusinessController@updateBusiness');
@@ -134,6 +160,11 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     Route::get('get-a-single-business-under-owner/{business_code}', 'BusinessController@getABusiness');
     Route::delete('delete-a-business/{id}', 'BusinessController@deleteABusiness');
     Route::get('gac-under-a-specific-business/{customer_code}', 'BusinessController@getAllCustomersUnderABusiness');
+    Route::post('/mpos-payment/{business_code}', [BusinessTransactionController::class, 'mposPay']);
+    Route::post('/mpos-payment-option', [BusinessTransactionController::class, 'mposOneTimePay']);
+
+    Route::get('/get-mpos-payment-history/{business_code}', [BusinessTransactionController::class, 'getMposPerBusiness']);
+    Route::get('/get-mpos-payment-byReference/{paymentReference}', [BusinessTransactionController::class, 'getMposPerPaymentReference']);
 
 
 
@@ -307,7 +338,19 @@ Route::middleware(['auth:api', 'user.status'])->group(function () {
     // Referrals
     Route::get('/generate-link', [ReferralController::class, 'generateReferralUrl']);
     Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
-       });
 
-    });
+    // Direct Debit
+   // Route::post('/create-mandate-product', 'DirectDebitController@addProduct');
+
+    Route::post('/create-mandate-product', [DirectDebitController::class, 'addProduct']);
+    Route::post('/create-dd-mandate/{ajoId}', [DirectDebitController::class, 'createMandate']);
+    Route::get('/get-dd-bankList', [DirectDebitController::class, 'getDDBankList']);
+    Route::get('/get-product-list', [DirectDebitController::class, 'productList']);
+    Route::post('/update-mandate', [DirectDebitController::class, 'updateMandate']);
+
+
+});
+
+
+
 
