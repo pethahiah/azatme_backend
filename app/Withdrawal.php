@@ -15,6 +15,10 @@ class Withdrawal extends Model
         'expense_id',
         'beneficiary_id',
         'amount',
-        'bank'
+        'bank',
+	'charges',
+	'uniqueId',
+	'minus_residual',
+	'status'
     ];
 }

@@ -3,10 +3,17 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+
 
 class BusinessTransaction extends Model
 {
     //
+    
+    use SoftDeletes;
+    
+    protected $dates = ['deleted_at'];
 
     protected $fillable = [
         //
@@ -44,10 +51,13 @@ class BusinessTransaction extends Model
                 'commission',
                 'residualAmount',
                 'resultCode',
-                'responseDescription'
-        
-    
-        
-    
+                'responseDescription',
+        		'minus_residual',
+        		'stat',
+        		'product_code',
+        		'providedEmail',
+        		'providedName',
+        		'remarks',
+        		'negative_amount'
         ];
 }

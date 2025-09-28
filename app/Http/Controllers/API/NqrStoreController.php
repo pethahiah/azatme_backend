@@ -22,7 +22,7 @@ class NqrStoreController extends Controller
 
   public function storeGenerateDyanmicQrCode(Request $request)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $token = $this->paythruService->handle();
   $endpoint = $testUrl.'/Nqr/transaction/GenerateDynamicQrCode';
 
@@ -50,7 +50,7 @@ return response()->json($storeGenerateDyanmicQrCode);
 
 public function getStoreTransactionReport(Request $request)
   {
-      $testUrl = env('PayThru_Base_Test_Url');
+      $testUrl = "https://services.paythru.ng";
       $token = $this->paythruService->handle();
       $endpoint = $testUrl.'/Nqr/transaction/reports';
 
@@ -78,7 +78,7 @@ public function getStoreTransactionReport(Request $request)
 
 public function storeTransactionStatus(Request $request)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $token = $this->paythruService->handle();
   $endpoint = $testUrl.'/Nqr/transaction/TransactionStatus';
 
@@ -104,7 +104,7 @@ return response()->json($storeTransactionStatus);
 
 public function getStore()
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl.'/Nqr/manage/stores';
   $token = $this->paythruService->handle();
 $response = Http::withHeaders([
@@ -122,7 +122,7 @@ return response()->json($getStore);
 
 public function createStore(Request $request)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl.'/Nqr/manage/stores';
   $token = $this->paythruService->handle();
 //return $endpoint;
@@ -151,7 +151,7 @@ return response()->json($createStore);
 
 public function getListSpecificSubMerchantInStore($id)
 {
-  $testUrl = env('PayThru_Base_Test_Url');
+  $testUrl = "https://services.paythru.ng";
   $endpoint = $testUrl."/Nqr/manage/stores/$d/SubMerchants";
   $token = $this->paythruService->handle();
 $response = Http::withHeaders([

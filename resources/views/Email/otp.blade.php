@@ -335,7 +335,7 @@
             <!-- START CENTERED WHITE CONTAINER -->
             <table role="presentation" class="main">
 
-              <!-- START MAIN CONTENT AREA Dear awonusi olajide (FrancollimAssociates),
+              <!-- START MAIN CONTENT AREA,
 -->
               <tr>
                 <td class="wrapper">

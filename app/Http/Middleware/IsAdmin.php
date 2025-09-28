@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Auth;
+
 
 class IsAdmin
 {
@@ -15,6 +17,12 @@ class IsAdmin
      */
     public function handle($request, Closure $next)
     {
-        return $next($request);
+        $user = Auth::user();
+
+        if ($user && $user->usertype === 'admin') {
+            return $next($request);
+        }
+
+        return response()->json(['error' => 'Unauthorized. Admin access required.'], 403);
     }
 }

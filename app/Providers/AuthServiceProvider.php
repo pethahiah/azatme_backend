@@ -29,5 +29,13 @@ class AuthServiceProvider extends ServiceProvider
 
          Passport::routes();
         //
+ 	Gate::define('viewTelescope', function ($user) {
+        // Define your access logic here.
+        return $user->admin(); // Change this condition according to your needs.
+    });
+
+
+
+
     }
 }

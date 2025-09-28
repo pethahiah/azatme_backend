@@ -49,6 +49,7 @@ class CreateBusinessTransactionsTable extends Migration
             $table->decimal('residualAmount')->nullable();
             $table->string('customerName')->nullable();
             $table->string('resultCode')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -98,7 +98,12 @@
         <p class="m-0 pt-5 text-bold w-100">Due Days - <span class="gray-color">{{$invoice->due_days}}</span></p>
     </div>
      <div class="w-20 float-left logo mt-20">
-      <a href = "www.azatme.eduland.ng">  <img src={{$getLogo->business_logo}}/>   </a>
+    // <a href = "www.azatme.eduland.ng">  <img src={{$getLogo->business_logo}}/>   </a>
+        @if ($business->business_logo)
+    <img src="{{ asset('storage/profiles/' . $business->business_logo) }}" alt="Business logo">
+@else
+    <p>No image to display.</p>
+@endif
       
       
       <!--<p>AzatMe</p>-->

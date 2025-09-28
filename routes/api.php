@@ -1,7 +1,18 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\API\BusinessTransactionController;
+use App\Http\Controllers\API\DirectDebitController;
+use App\Http\Controllers\API\ReferralSettingController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\ReferralController;
+use App\Http\Controllers\API\AdminController;
+use App\Http\Controllers\API\ChargesController;
+use App\Http\Controllers\API\KycController;
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\SponsorController;
+use App\Http\Controllers\API\VoucherController;
+use App\Http\Controllers\API\BusinessController;
+use App\Http\Controllers\API\ExpenseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +25,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Route::get('/test-slack-log', function () {
+//     throw new \Exception("Testing Slack log from aatme");
+// });
+
 
 Route::namespace('API')->group(function () {
     Route::post('AttemptLogin', 'AuthController@AttemptLogin');
@@ -22,196 +37,398 @@ Route::namespace('API')->group(function () {
     Route::post('forgot', 'ForgotController@forgot');
     Route::post('reset', 'ForgotController@reset');
     Route::get('getAllUser', 'AuthController@getAllUser');
+    Route::get('allMerchants', 'AdminController@getAllMerchants');
     Route::get('getBanks', 'BankController@ngnBanksApiList');
     Route::get('getToken', 'AuthController@signin');
     Route::post('createparam', 'SettingController@param');
     Route::get('token', 'SettingController@returnToken');
+    Route::put('/update-user-email-status-to-unverfiy', 'AuthController@updateUserEmailStatusToUnverify');
     Route::post('/updateStatus', 'ExpenseController@webhookExpenseResponse');
     Route::post('/kontributewebhook', 'GroupController@webhookGroupResponse');
     Route::post('/businesswebhook', 'BusinessTransactionController@webhookBusinessResponse');
-   // Route::post('/kontributewebhook', 'GroupController@groupSettlementWebhookResponse');
-  //  Route::post('/businesswebhook', 'BusinessTransactionController@businessSettlementWebhookResponse');
-//    Route::post('/updateStatus', 'ExpenseController@refundmeSettlementWebhookResponse');
     Route::post('/contact-us', 'SheetController@externalContentPostMethod');
-Route::get('get-all-customers', 'CustomerController@getAllCustomers');
+    Route::get('get-all-customers', 'CustomerController@getAllCustomers');
+    Route::post('decline-ajo', 'AjoController@declineInvitation');
+    Route::post('accept-ajo-invite', 'AjoController@acceptInvitation');
+    Route::put('/update-user-email-status', 'AuthController@updateUserEmailStatus');
+    Route::post('/agowebhook', 'AjoController@webhookAjoResponse');
+    Route::post('/handlewebhook', 'SponsorController@sponsorWebhookPayment');
+    Route::get('get-ajo-user-bank-details/{id}', 'AjoController@getUsersWithBankInfo');
+    Route::get('get-ajo-by-id/{ajoId}', 'AjoController@getAjoByIdd');
+    Route::get('/get-lastUpdated-charges', [ChargesController::class, 'getLastUpdatedCharge']);
+    //Complain
+    Route::get('/auth', 'AuthController@initiateBvnConsent');
+    Route::get('getAllComplains', 'ComplainController@getAllComplains');
+    Route::post('makeInquiry', 'ComplainController@makeInquiry');
+    Route::get('/inquiry', 'ComplainController@getAllInquiry');
+    Route::get('/all/vouchers', [VoucherController::class, 'getAllVouchers']);
+    Route::get('/get/auth/token', [ExpenseController::class, 'handle']);
     
     
-     //NQR  Aggr Merchant Services
-    Route::post('nqr-merchant-registration', 'NQRController@NqrMerchantRegistration');
-    Route::post('create-merchant-collection-account', 'NQRController@merchantCollectionAccount');
-    Route::get('get-merchant-number/{merchantNumber}', 'NQRController@getMerchantNumber');
-    Route::post('create-sub-merchant', 'NQRController@createSubMerchant');
-    Route::get('get-all-submerchant-under-merchant/{id}', 'NQRController@getSubMerchantUnderAllMerchant');
-    Route::post('get-specific-submerchnat-under-merchant/{id}', 'NQRController@getSpecificSubMerchantUnderAMerchant');
-    Route::get('get-specific-merchant-info/{merchantNumber}', 'NQRController@getSpecificSubMerchantInfo');
-    Route::post('get-merchant-trans-report/{merchantNumber}', 'NQRController@getMerchantTransactionReport');
-    Route::post('generate-dynamic-qrcode/{merchantNumber}', 'NQRController@generateDynamicQrCode');
-    Route::post('get-merchant-transaction-status', 'NQRController@merchantTransactionStatus');
+    
 
-    //NQR  Store Merchant Services
-    Route::post('store-generate-dyanmic-qrcode', 'NqrStoreController@storeGenerateDyanmicQrCode');
-    Route::post('get-store-trans-report', 'NqrStoreController@getStoreTransactionReport');
-    Route::post('get-store-trans-status', 'NqrStoreController@storeTransactionStatus');
-    Route::get('get-store', 'NqrStoreController@getStore');
-    Route::post('create-store', 'NqrStoreController@createStore');
-    Route::get('get-specific-submerchant-list-Instore/{id}', 'NqrStoreController@getListSpecificSubMerchantInStore');
-    
 
 Route::middleware(['auth:api'])->group(function () {
+        Route::get('getProfile', 'AuthController@getProfile');
+        Route::get('logout', 'AuthController@logout');
+        Route::post('updateProfile', 'AuthController@updateProfile');
+        Route::post('image', 'AuthController@uploadImage');
+        Route::put('updateUsertype', 'AuthController@updateUsertype');
+    	Route::get('/getBvnConsent', 'AuthController@getBvnConsent');
+    	Route::put('get-verifiedd', 'AuthController@getBVNDetails');
+    	Route::get('get-complains-per-user', 'ComplainController@getComplainsPerUser');
+    	Route::post('makeComplain', 'ComplainController@makeComplain');
+    	Route::post('/kyc/update', [KycController::class, 'updateKYC']);
+    	Route::get('/sponsor/data', [AuthController::class, 'getAuthSponsorDetails']);
+    	Route::get('/merchant/data', [AuthController::class, 'getAuthMerchantDetails']);
+	      // Comment
+        Route::post('create/comment/{feedbackId}', 'ComplainController@storeComment');
+        Route::get('/feedback-by-id/{feedbackId}', 'ComplainController@getFeedbackById');
+        Route::get('show/comment/{feedbackId}/{commentId}', 'ComplainController@showComment');
+        Route::put('update/comment/{feedbackId}/{commentId}', 'ComplainController@updateComment');
+        Route::get('/delete/comment/{feedbackId}/{commentId}', 'ComplainController@destroyComment');
+
+ //Bank
+        Route::put('updateBank/{bankid}', 'BankController@updateBank');
+        Route::post('addBank', 'BankController@addBank');
+        Route::get('getBankPerUser', 'BankController@getBankPerUser');
+        Route::delete('bank/{id}', 'BankController@bank');
+        Route::post('verify-account', 'ExpenseController@accountVerification');
+
+// Wallet
+        Route::get('get-ledger', 'WalletController@createWallet');
+
+
+// Referrals
+        Route::get('/generate-link', [ReferralController::class, 'generateReferralUrl']);
+        Route::get('/get-refPoint-per-user', [ReferralController::class, 'getAllReferral']);
+        Route::post('vouchers/redeem', [VoucherController::class, 'redeem']);
+    
+             // Reply
+        Route::post('create/reply/{commentId}', 'ComplainController@storeReply');
+        Route::put('update/reply/{replyId}/{commentId}', 'ComplainController@updateReply');
+        Route::delete('/delete/comment/{replyId}/{commentId}', 'ComplainController@destroyReply');
+    
+    	// OTP-FOR-WIthdarwal
+        Route::post('send-otp', 'MobileVerificationController@EmailVerification');
+        Route::put('confirm-email', 'MobileVerificationController@ConfirmEmailViaOtp');
+        // referral
+         Route::get('get-referred-count', [ReferralController::class, 'countReferralPerUser']);
+         Route::get('getAllMerchants', 'AuthController@getAllMerchants');
+         Route::get('getAllSponsors', 'AuthController@getAllSponsors');
+         Route::get('getMerchantById/{id}', 'AuthController@getMerchantById');
+    
+       Route::get('/voucher-with-businesses', [VoucherController::class, 'getVoucherWithBusinesses']);
+       Route::get('/vouchers/used/summary', [VoucherController::class, 'getUsedVouchersSummary']);
+       Route::get('/vouchers/{voucherCode}', [VoucherController::class, 'getASingleVoucherByCode']);
+       Route::post('/filter/vouchers', [VoucherController::class, 'getVouchers']);
+       Route::post('/businesses/state', [BusinessController::class, 'getBusinessesByState']);
+       Route::post('/vouchers/claim', [VoucherController::class, 'claim']);
+        });
+    
+    
+    Route::middleware(['auth:api', 'admin'])->group(function () {
+            //Admin
+        Route::post('/admin/register', 'AdminController@adminRegister');
+    //    Route::get('allExpenses', 'AdminController@getAllExpenses');
+        Route::get('getAllBusiness', 'AdminController@getAllBusiness');
+        Route::post('/vouchers/{id}/status', [AdminController::class, 'updateVoucherStatus']);
+        Route::get('allMerchants', 'AdminController@getAllMerchants');
+        Route::get('allKontributes', 'AdminController@getAllKontribute');
+        Route::get('getAllExpensesByUserEmail/{email}', 'AdminController@getAllExpensesByUserEmail');
+        Route::get('getAllKontributeByUserEmail/{email}', 'AdminController@getAllKontributeByUserEmail');
+        Route::get('getAllBusinessByUserEmail/{email}', 'AdminController@getAllBusinessByUserEmail');
+        Route::get('getAllAjoByUserEmail/{email}', 'AdminController@getAllAjoByUserEmail');
+        Route::get('countAllAjo', 'AdminController@countAllAjo');
+        Route::get('countAllBusiness', 'AdminController@countAllBusiness');
+        Route::get('countAllExpenses', 'AdminController@countAllExpenses');
+        Route::post('getAllExpenseWithDate', 'ReportingController@getUserExpenseWithDate');
+        Route::post('getAllGroupWithDate', 'ReportingController@getUserGroupWithDate');
+        Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
+        Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
+        Route::get('get-all-AddedUser-Expenses/{refundmeId}', 'AdminController@getUserAddedToExpense}');
+        Route::get('get-all-active-expense/{refundmeId}', 'AdminController@getActiveExpenses');
+        Route::get('get-all-AddedUser-Kontribute/{kontributeId}', 'AdminController@getUserAddedToKontribute}');
+        Route::get('get-all-active-kontribute/{kontributeId}', 'AdminController@getActiveKontribute');
+        Route::get('count-all-added-users-refundme', 'AdminController@countUserAddedToExpense');
+        Route::get('count-all-active-users-refundme', 'AdminController@countActiveExpenses');
+        Route::get('countAllKontributes', 'AdminController@countAllKontributes');
+        Route::get('count-all-added-users-kontribute', 'AdminController@countUserAddedToKontribute');
+        Route::get('count-all-active-users-kontributes', 'AdminController@countActiveKontribtes');
+        Route::put('/admin/update-feedback/{complain_reference_code}', 'AdminController@updateIssue');
+        Route::post('/set-ref', [ReferralSettingController::class, 'createReferral']);
+        Route::put('/update-ref/{referralId}', [ReferralSettingController::class, 'updateReferral']);
+        Route::get('/get-ref-settings/perAdmin', [ReferralSettingController::class, 'getAllReferralSettings']);
+        Route::get('/all-users', [AdminController::class, 'getAllUsers']);
+        Route::get('/users/{email}', [AdminController::class, 'getUserById']);
+        Route::post('/create-charges', [ChargesController::class, 'createCharges']);
+        Route::get('/charges', [ChargesController::class, 'readCharges']);
+        Route::put('/charges/{id}', [ChargesController::class, 'updateCharge']);
+        Route::delete('/charges/{id}', [ChargesController::class, 'deleteCharge']);
+        Route::get('/ajos', [AdminController::class, 'getAllAjo']);
+        Route::get('/admin/ajo-withdrawals', [AdminController::class, 'getAjoWithdrawals']);
+        Route::get('/admin/group-withdrawals', [AdminController::class, 'getGroupWithdrawals']);
+        Route::get('/admin/business-withdrawals', [AdminController::class, 'getBusinessWithdrawals']);
+        Route::get('/admin/expense-withdrawals', [AdminController::class, 'getExpenseWithdrawals']);
+        Route::get('admin/ajo-withdrawals/{id}', [AdminController::class, 'getAjoWithdrawalById']);
+        Route::get('admin/group-withdrawals/{id}', [AdminController::class, 'getGroupWithdrawalById']);
+        Route::get('admin/business-withdrawals/{id}', [AdminController::class, 'getBusinessWithdrawalById']);
+        Route::get('admin/expense-withdrawals/{id}', [AdminController::class, 'getExpenseWithdrawalById']);
+        Route::put('/kyc/update-status/{userId}', [KycController::class, 'updateStatus']);
+        Route::get('/users/with/kyc', [KycController::class, 'getAllUsersWithKyc']);
+        Route::get('/users/kyc/{identifier}', [KycController::class, 'getUserByIdOrEmail']);
+        Route::post('/set-limits', [AdminController::class, 'setSponsorLimits']);
+        Route::put('/sponsor-limits/{id}', [AdminController::class, 'updateSponsorLimit']);
+        Route::get('sponsor-limits', [AdminController::class, 'listSponsorLimits']);
+        Route::get('/payments-and-wallets', [AdminController::class, 'getAllPaymentsAndSponsorWallets']);
+        Route::post('/users/{userId}/update-status', [AdminController::class, 'updateUserStat']);
+    
+    
+        });
+    
+    
+    Route::middleware(['auth:api', 'merchant.sponsor'])->group(function () {
+       //Buisness
+        Route::post('createBusiness', 'BusinessController@createBusiness');
+        Route::get('get/all/business/merchants', 'BusinessController@getAllBusinesses');
+        Route::get('list-all-business-users', 'AuthController@listAllBusinessUsers');
+        Route::post('update-business/{id}', 'BusinessController@updateBusiness');
+        Route::post('create-business', 'BusinessController@createBusiness');
+        Route::get('get-business-under-a-owner/{owner_id}', 'BusinessController@getAllBusiness');
+        Route::get('get-a-single-business-under-owner/{business_code}', 'BusinessController@getABusiness');
+        Route::delete('delete-a-business/{id}', 'BusinessController@deleteABusiness');
+        Route::get('gac-under-a-specific-business/{customer_code}', 'BusinessController@getAllCustomersUnderABusiness');
+        Route::delete('/business/transactions/{id}', [BusinessTransactionController::class, 'deleteBusinessTransaction']);
+        Route::post('/mpos-payment/{business_code}', [BusinessTransactionController::class, 'mposPay']);
+        Route::post('/mpos-payment-option/{business_code}', [BusinessTransactionController::class, 'mposOneTimePay']);
+        Route::get('/get-mpos-payment-history/{business_code}', [BusinessTransactionController::class, 'getMposPerBusiness']);
+        Route::get('/get-mpos-payment-byReference/{paymentReference}', [BusinessTransactionController::class, 'getMposPerPaymentReference']);
+       //Add Kyc
+        Route::post('add/kyc', [KycController::class, 'saveKyc']);
+        Route::get('/kyc/with-merchants', [KycController::class, 'getKycWithMerchants']);
+    
+        Route::get('/business/vouchers/{business_id}', [VoucherController::class, 'getRedeemableVouchers']);
+        Route::get('/vouchers/code/{voucher_code}/{business_id}', [VoucherController::class, 'getVoucherByCode']);
+        Route::get('/sponsors/voucher', [VoucherController::class, 'getVoucherBySponsor']);
+        Route::get('/vouchers/by-sponsors', [SponsorController::class, 'getBySponsor']);
+    
+    
+        //B2B Transactions
+        Route::post('create-product', 'BusinessTransactionController@creatProduct');
+        Route::put('/products/{id}', 'BusinessTransactionController@updateProduct');
+        Route::delete('/products/{id}', 'BusinessTransactionController@deleteProduct');
+        Route::get('all-product', 'BusinessTransactionController@getAllProductsPerBusinessMerchant');
+        Route::get('product-per-business/{businessCode}', 'BusinessTransactionController@getProductsPerBusiness');
+    //    Route::post('initiate-business-transaction/{product_id}/{business_code}', 'BusinessTransactionController@startBusinessTransaction');
+        Route::post('initiate-business-transaction/{business_code}', 'BusinessTransactionController@startBusinessTransaction');
+        Route::post('create-option', 'MotoController@moto');
+        Route::get('get-option', 'MotoController@getMotoMethod');
+        Route::post('create-vat', 'VatController@createVat');
+        Route::get('all-invoices-created-by-business-owner', 'BusinessTransactionController@getAllInvoiceByABusinessOwner');
+        Route::get('count-all-invoices-created-by-business-owner', 'BusinessTransactionController@countAllInvoiceByABusinessOwner');
+        Route::get('get-all-invoices-received-by-customer', 'BusinessTransactionController@getAllInvoiceRecievedByACutomer');
+        Route::get('count-all-invoices-recieved-by-business', 'BusinessTransactionController@countAllInvoiceRecievedByACutomer');
+        Route::post('business-settlements', 'BusinessTransactionController@AzatBusinessCollection');
+        Route::get('customer-invoice/{customerEmail}', 'BusinessTransactionController@getAllInvoiceSentToAParticularCustomer');
+        Route::get('get-all-transactions-created-by-a-specific-business/{business_code}', 'BusinessTransactionController@getAllTransactionsByASpecificBusiness');
+        Route::get('get-all-customers-under-a-specific-business/{business_code}', 'BusinessTransactionController@getAllCustomersUnderASpecificBusiness');
+        Route::get('get-withdrawal-response', 'BusinessTransactionController@getBusinessWithdrawalTransaction');
+        Route::get('get-invoice/{businessCode}', 'BusinessTransactionController@getAllInvoiceByBusiness');
+        Route::get('get-link/{businessCode}', 'BusinessTransactionController@getAllIinkByBusiness');
+        Route::get('getBusinessReport/{businessCode}', 'ReportingController@getBusinessReport');
+        //Email Template for Business
+    
+        Route::post('send-notification/{id}', 'MailTemplateController@mailNotification');
+        Route::get('get-customer-mails', 'MailTemplateController@getAllMails');
+    
+    
+        //Customer
+        Route::post('create-customer/{business_code}', 'CustomerController@createCustomer');
+        Route::put('update-customer/{id}', 'CustomerController@updateCustomer');
+        Route::get('get-customers-under-a business/{owner_id}', 'CustomerController@listAllCustomer');
+        Route::delete('delete-a-customer/{id}', 'CustomerController@deleteACustomer');
+        Route::get('gac-under-a-specific-business/{customer_code}', 'CustomerController@getAllCustomersUnderABusiness');
+
+
+// AATME_VOUCHE
+        Route::post('vouchers', [VoucherController::class, 'store']);
+        Route::post('update/{VoucherId}/voucher', [VoucherController::class, 'update']);
+        Route::post('revoke/{VoucherId}', [VoucherController::class, 'revoke']);
+        Route::post('delete-voucher/{VoucherId}', [VoucherController::class, 'destroy']);
+   	    Route::get('/vouchers/used/{sponsorId}', [VoucherController::class, 'getUsedVouchersBySponsor']);
+    	Route::get('/vouchers/used', [VoucherController::class, 'getUsedVouchersByOwner']);
+        Route::get('/vouchers/redeemed', [VoucherController::class, 'getRedeemedVouchers']);
+        Route::get('/beneficiaries/redeemed', [VoucherController::class, 'getBeneficiariesWithRedeemedVouchersByOwner']);
+	    Route::get('/sponsor/{sponsorId}/beneficiaries/redeemed', [VoucherController::class, 'getBeneficiariesWithRedeemedVouchersBySponsor']);
+
+    // Route to fetch all vouchers yet to be redeemed
+       Route::get('/vouchers/yet-to-be-redeemed', [VoucherController::class, 'getVouchersYetToBeRedeemed']);
+       Route::get('/voucher-search/date-range', [VoucherController::class, 'getVouchersByDateRange']);
+       Route::get('/sponsors', [SponsorController::class, 'getAllSponsors']);
+    // Fetch a specific sponsor account by ID
+       Route::get('/sponsors/{sponsorId}', [SponsorController::class, 'getSponsorById']);
+    // Update a sponsor account
+       Route::put('/sponsors/{sponsorId}', [SponsorController::class, 'updateSponsor']);
+    // Delete a sponsor account
+       Route::delete('/sponsors/{sponsorId}', [SponsorController::class, 'deleteSponsor']);
+       Route::post('create/sponsors', [SponsorController::class, 'createSponsor']);
+       Route::post('sponsor/fund/wallet', [SponsorController::class, 'fundSponsorsWallet']);
+       Route::get('/sponsor/payments-and-wallet', [SponsorController::class, 'getUserPaymentsAndSponsorWallet']);
+       Route::get('sponsor/wallet/balance', [SponsorController::class, 'getWalletBalance']);
+       
+
+//NQR  Aggr Merchant Services
+        Route::post('nqr-merchant-registration', 'NQRController@NqrMerchantRegistration');
+        Route::post('create-merchant-collection-account', 'NQRController@merchantCollectionAccount');
+        Route::get('get-merchant-number/{merchantNumber}', 'NQRController@getMerchantNumber');
+        Route::post('create-sub-merchant', 'NQRController@createSubMerchant');
+        Route::get('get-all-submerchant-under-merchant/{id}', 'NQRController@getSubMerchantUnderAllMerchant');
+        Route::post('get-specific-submerchnat-under-merchant/{id}', 'NQRController@getSpecificSubMerchantUnderAMerchant');
+        Route::get('get-specific-merchant-info/{merchantNumber}', 'NQRController@getSpecificSubMerchantInfo');
+        Route::post('get-merchant-trans-report/{merchantNumber}', 'NQRController@getMerchantTransactionReport');
+        Route::post('generate-dynamic-qrcode/{merchantNumber}', 'NQRController@generateDynamicQrCode');
+        Route::post('get-merchant-transaction-status', 'NQRController@merchantTransactionStatus');
+        Route::get('get-all-merchants', 'NQRController@getAllMerchant');
+    
+        //NQR  Store Merchant Services
+        Route::post('store-generate-dyanmic-qrcode', 'NqrStoreController@storeGenerateDyanmicQrCode');
+        Route::post('get-store-trans-report', 'NqrStoreController@getStoreTransactionReport');
+        Route::post('get-store-trans-status', 'NqrStoreController@storeTransactionStatus');
+        Route::get('get-store', 'NqrStoreController@getStore');
+        Route::post('create-store', 'NqrStoreController@createStore');
+        Route::get('get-specific-submerchant-list-Instore/{id}', 'NqrStoreController@getListSpecificSubMerchantInStore');
+   });
+
+
+
+
+
+Route::middleware(['auth:api', 'user.status'])->group(function () {
     // User Update
-    Route::get('getProfile', 'AuthController@getProfile');
-    Route::get('logout', 'AuthController@logout');
-    Route::put('updateProfile', 'AuthController@updateProfile');
-    Route::post('image', 'AuthController@uploadImage');
-    Route::put('updateUsertype', 'AuthController@updateUsertype');
-    Route::post('category', 'ExpenseCategoryController@category');
-    
-    
+        Route::post('category', 'ExpenseCategoryController@category');
+
+
      //Mobile Verification
-    Route::post('verify-phone-number', 'MobileVerificationController@verifyPhone');
-    Route::post('check-mobile-number', 'MobileVerificationController@checkOtp');
-    Route::post('send-otp', 'MobileVerificationController@EmailVerification');
-    Route::put('confirm-email', 'MobileVerificationController@ConfirmEmailViaOtp');
-    Route::get('send-otp-mobile/{username}', 'ExpenseController@sendSmsMessage');
+        Route::post('verify-phone-number', 'MobileVerificationController@verifyPhone');
+        Route::post('check-mobile-number', 'MobileVerificationController@checkOtp');
+        Route::get('send-otp-mobile/{username}', 'ExpenseController@sendSmsMessage');
     
     
     
+    	Route::put('user/update/status/{complain_reference_code}', 'AuthController@updateIssues');
+        //Expense
     
-     //Buisness
-    Route::post('createBusiness', 'BusinessController@createBusiness');
-    Route::get('list-all-business-users', 'AuthController@listAllBusinessUsers');
-    Route::put('update-business/{id}', 'BusinessController@updateBusiness');
-    Route::post('create-business', 'BusinessController@createBusiness');
-    Route::get('get-business-under-a-owner/{owner_id}', 'BusinessController@getAllBusiness');
-    Route::get('get-a-single-business-under-owner/{business_code}', 'BusinessController@getABusiness');
-    Route::delete('delete-a-business/{id}', 'BusinessController@deleteABusiness');
-    Route::get('gac-under-a-specific-business/{customer_code}', 'BusinessController@getAllCustomersUnderABusiness');
+        Route::post('createExpense', 'ExpenseController@createExpense');
+        Route::post('userExpense/{expenseUniqueCode}', 'ExpenseController@inviteUserToExpense');
+        Route::put('updateExpense/{id}', 'ExpenseController@updateExpense');
+        Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
+        Route::get('getRandomUserExpense/{email}', 'ExpenseController@getRandomUserExpense');
+        Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
+        Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
+        Route::get('getUserExpense', 'ExpenseController@getUserExpense');
+        Route::get('getUserDeletedExpenseInvite', 'ExpenseController@getUserDeletedExpenseInvite');
+        Route::get('getAllMemebersOfAnExpense/{expenseId}', 'ExpenseController@getAllMemebersOfAnExpense');
+        Route::get('getAmountsPaidPerExpense/{expenseId}', 'ExpenseController@getUserAmountsPaidPerExpense');
+        Route::get('getTotalNumberOfPaidUsersPerExpense/{expenseId}', 'ExpenseController@getTotalNumberOfPaidUsersPerExpense');
+        Route::post('/export-excel', 'ExpenseController@exportExpenseToExcel');
+        Route::post('/export-csv', 'ExpenseController@exportExpenseToCsv');
+        Route::post('collection', 'ExpenseController@AzatIndividualCollection');
+        Route::get('get-transaction-status', 'ExpenseController@getStatus');
+        Route::get('getResponse', 'ExpenseController@getStatus');
+        Route::put('update-payback-transaction/{transactionId}', 'ExpenseController@UpdateTransactionRequest');
+        Route::get('get-invited-users', 'ExpenseController@getInvitedUsers');
+        Route::get('recreate-underpaid-transactions/{expenseId}/{id}', 'ExpenseController@reinitiateTransaction');
+        Route::get('get-unpaid-balance/{expenseId}', 'ExpenseController@checkResidual');
+        Route::get('get-refund-withdrawal-response', 'ExpenseController@getExpenseWithdrawalTransaction');
+        Route::get('get-draft-refundme', 'ExpenseController@getAllRefundMeCreatedt');
+        // User Group
+        Route::post('createGroup', 'GroupController@createGroup');
+        Route::put('updateGroup/{id}', 'GroupController@updateGroup');
+        Route::post('inviteUsersToGroup/{groupId}', 'GroupController@inviteUsersToGroup');
+        Route::get('countAllGroupsPerUser', 'GroupController@countAllGroupsPerUser');
+        Route::get('getAllGroupsPerUser', 'GroupController@getAllGroupsPerUser');
+        Route::get('getRandomUserGroup/{email}', 'GroupController@getRandomUserGroup');
+        Route::delete('deleteInvitedGoupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
+        Route::delete('deleteGroup/{id}', 'GroupController@deleteGroup');
+        Route::get('getAllMemebersOfAGroup/{groupId}', 'GroupController@getAllMemebersOfAGroup');
+        Route::get('list-users-per-Group/{groupId}', 'GroupController@getUserAmountsPaidPerGroup');
+        Route::get('getUserGroup', 'GroupController@getUserGroup');
+        Route::post('group-settlement', 'GroupController@AzatGroupCollection');
+        Route::put('update-kontribute-transaction/{transactionId}', 'GroupController@UpdateTransactionGroupRequest');
+        Route::get('re-initiate-transaction/{groupId}/{id}', 'GroupController@reinitiateTransactionToGroup');
+        Route::get('get-kontribute-withdrawal-response', 'GroupController@getWithdrawalTransaction');
+        Route::get('get-openLink-transactions', 'GroupController@getOpenKontributions');
+        Route::get('get-openLink-transactions-by-id/{id}', 'GroupController@getOpenKontributionsById');
+        Route::get('get-draft-kontribute', 'GroupController@getAllKontributeCreatedt');
+        Route::get('get-donor/{transactionReference}', 'GroupController@getFundDonor');
+        Route::get('get-funds', 'GroupController@getFunds');
+        Route::get('get-fundss', 'GroupController@getFundss');
     
     
-    
-
-    //B2B Transactions
-    Route::post('create-product', 'BusinessTransactionController@creatProduct');
-    Route::get('all-product', 'BusinessTransactionController@getAllProductsPerBusinessMerchant');
-    Route::get('product-per-business/{businessCode}', 'BusinessTransactionController@getProductsPerBusiness');
-    Route::post('initiate-business-transaction/{product_id}', 'BusinessTransactionController@startBusinessTransaction');
-    Route::post('create-option', 'MotoController@moto');
-    Route::get('get-option', 'MotoController@getMotoMethod');
-    Route::post('create-vat', 'VatController@createVat');
-    Route::get('all-invoices-created-by-business-owner', 'BusinessTransactionController@getAllInvoiceByABusinessOwner');
-    Route::get('count-all-invoices-created-by-business-owner', 'BusinessTransactionController@countAllInvoiceByABusinessOwner');
-     Route::get('get-all-invoices-received-by-customer', 'BusinessTransactionController@getAllInvoiceRecievedByACutomer');
-      Route::get('count-all-invoices-recieved-by-business', 'BusinessTransactionController@countAllInvoiceRecievedByACutomer');
-      Route::post('business-settlements/{BusinessTransactionId}', 'BusinessTransactionController@AzatBusinessCollection');
-       Route::get('customer-invoice/{customerEmail}', 'BusinessTransactionController@getAllInvoiceSentToAParticularCustomer');
-       Route::get('get-all-transactions-created-by-a-specific-business/{business_code}', 'BusinessTransactionController@getAllTransactionsByASpecificBusiness');
-       Route::get('get-all-customers-under-a-specific-business/{business_code}', 'BusinessTransactionController@getAllCustomersUnderASpecificBusiness');
-       
-      
-    
-    //Email Template for Business
-    
-     Route::post('send-notification/{id}', 'MailTemplateController@mailNotification');
-    Route::get('get-customer-mails', 'MailTemplateController@getAllMails');
-    
-
-    //Customer
-    Route::post('create-customer/{business_code}', 'CustomerController@createCustomer');
-    Route::put('update-customer/{id}', 'CustomerController@updateCustomer');
-    Route::get('get-customers-under-a business/{owner_id}', 'CustomerController@listAllCustomer');
-    Route::delete('delete-a-customer/{id}', 'CustomerController@deleteACustomer');
-    Route::get('gac-under-a-specific-business/{customer_code}', 'CustomerController@getAllCustomersUnderABusiness');
-    
-    //Expense
-    
-    Route::post('createExpense', 'ExpenseController@createExpense');
-    Route::post('userExpense/{expenseUniqueCode}', 'ExpenseController@inviteUserToExpense');
-    Route::put('updateExpense/{id}', 'ExpenseController@updateExpense');
-    Route::get('getAllExpenses', 'ExpenseController@getAllExpenses');
-    Route::get('getRandomUserExpense/{email}', 'ExpenseController@getRandomUserExpense');
-    Route::delete('deleteInvitedExpenseUser/{user_id}', 'ExpenseController@deleteInvitedExpenseUser');
-    Route::delete('deleteExpense/{id}', 'ExpenseController@deleteExpense');
-    Route::get('getUserDeletedExpense', 'ExpenseController@getUserDeletedExpense');
-    Route::get('getUserExpense', 'ExpenseController@getUserExpense');
-    Route::get('getUserDeletedExpenseInvite', 'ExpenseController@getUserDeletedExpenseInvite');
-    Route::get('getAllMemebersOfAnExpense/{expenseId}', 'ExpenseController@getAllMemebersOfAnExpense');
-    Route::get('getAmountsPaidPerExpense/{expenseId}', 'ExpenseController@getUserAmountsPaidPerExpense');
-    Route::get('getTotalNumberOfPaidUsersPerExpense/{expenseId}', 'ExpenseController@getTotalNumberOfPaidUsersPerExpense');
-    Route::post('/export-excel', 'ExpenseController@exportExpenseToExcel');
-    Route::post('/export-csv', 'ExpenseController@exportExpenseToCsv');
-    Route::post('collection/{transactionId}', 'ExpenseController@AzatIndividualCollection');
-    Route::get('get-transaction-status', 'ExpenseController@getStatus');
-    Route::post('verify-account', 'ExpenseController@accountVerification');
-    Route::get('getResponse', 'ExpenseController@getStatus');
-    Route::put('update-payback-transaction/{transactionId}', 'ExpenseController@UpdateTransactionRequest');
+        //Sub Category
+        Route::put('updateSubCategory/{id}', 'ExpenseSubCategoryController@updateSubCategory');
+        Route::post('SubCategory', 'ExpenseSubCategoryController@SubCategory');
+        Route::get('getSubCateListPerCategory/{category_id}', 'ExpenseSubCategoryController@getSubCateListPerCategory');
+        Route::delete('deleteExpenseSubCategory/{id}', 'ExpenseSubCategoryController@deleteExpenseSubCategory');
     
     
     
-    // User Group
-    Route::post('createGroup', 'GroupController@createGroup');
-    Route::put('updateGroup/{id}', 'GroupController@updateGroup');
-    Route::post('inviteUsersToGroup/{groupId}', 'GroupController@inviteUsersToGroup');
-    Route::get('countAllGroupsPerUser', 'GroupController@countAllGroupsPerUser');
-    Route::get('getAllGroupsPerUser', 'GroupController@getAllGroupsPerUser');
-    Route::get('getRandomUserGroup/{email}', 'GroupController@getRandomUserGroup');
-    Route::delete('deleteInvitedGoupUser/{user_id}', 'GroupController@deleteInvitedGroupUser');
-    Route::delete('deleteGroup/{id}', 'GroupController@deleteGroup');
-    Route::get('getAllMemebersOfAGroup/{groupId}', 'GroupController@getAllMemebersOfAGroup');
-    Route::get('list-users-per-Group/{groupId}', 'GroupController@getUserAmountsPaidPerGroup');
-    Route::get('getUserGroup', 'GroupController@getUserGroup');
-    Route::post('group-settlement/{transactionId}', 'GroupController@AzatGroupCollection');
-    Route::put('update-kontribute-transaction/{transactionId}', 'GroupController@UpdateTransactionGroupRequest');
+        //Category
+        Route::put('updateCategory/{id}', 'ExpenseCategoryController@updateCategory');
+        Route::get('allCategoriesPerUser', 'ExpenseCategoryController@allCategoriesPerUser');
+        Route::get('getCateList', 'ExpenseCategoryController@getCateList');
+        Route::delete('deleteExpenseCategory/{id}', 'ExpenseCategoryController@deleteExpenseCategory');
     
-   
+        //Reporting
+        Route::get('allExpensesPerUser', 'ExpenseController@allExpensesPerUser');
+        Route::get('countExpensesPerUser', 'ExpenseController@countExpensesPerUser');
+        Route::post('getUserExpenseWithDate', 'ReportingController@getUserExpenseWithDate');
+        Route::post('getUserGroupWithDate', 'ReportingController@getUserGroupWithDate');
+        Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
+        Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
+        Route::get('getExpenseReport', 'ReportingController@getExpenseReport');
+        Route::get('getKontributeReport', 'ReportingController@getKontributeReport');
+        //Splitting Methods
+        Route::post('splitingMethod', 'PaymentSplittingController@splitingMethod');
+        Route::get('getSplittingMethods', 'PaymentSplittingController@getSplittingMethods');
     
+       //Invited users
+        Route::post('add-users', 'ExpenseController@add');
+    //   Route::get('update-balance-residual', 'BalanceUpdateController@updateBalanceResidual');
     
-    
-    //Bank
-    Route::put('updateBank/{bankid}', 'BankController@updateBank');
-    Route::post('addBank', 'BankController@addBank');
-    Route::get('getBankPerUser', 'BankController@getBankPerUser');
-    Route::delete('bank/{id}', 'BankController@bank');
-    
-   
-    
-    
-    //Sub Category
-    Route::put('updateSubCategory/{id}', 'ExpenseSubCategoryController@updateSubCategory');
-    Route::post('SubCategory', 'ExpenseSubCategoryController@SubCategory');
-    Route::get('getSubCateListPerCategory/{category_id}', 'ExpenseSubCategoryController@getSubCateListPerCategory');
-    Route::delete('deleteExpenseSubCategory/{id}', 'ExpenseSubCategoryController@deleteExpenseSubCategory');
-    
-    
-    
-    //Category
-    Route::put('updateCategory/{id}', 'ExpenseCategoryController@updateCategory');
-    Route::get('allCategoriesPerUser', 'ExpenseCategoryController@allCategoriesPerUser');
-    Route::get('getCateList', 'ExpenseCategoryController@getCateList');
-    Route::delete('deleteExpenseCategory/{id}', 'ExpenseCategoryController@deleteExpenseCategory');
-    
-    
-    // Wallet
-    Route::get('get-ledger', 'WalletController@createWallet');
-     
-    //Reporting
-    Route::get('allExpensesPerUser', 'ExpenseController@allExpensesPerUser');
-    Route::get('countExpensesPerUser', 'ExpenseController@countExpensesPerUser');
-    Route::post('getUserExpenseWithDate', 'ExpenseController@getUserExpenseWithDate');
-    Route::post('getUserGroupWithDate', 'ExpenseController@getUserGroupWithDate');
-    Route::post('getUserExpenseWithCategory/{categoryId}', 'ReportingController@getUserExpenseWithCategory');
-    Route::post('getUserExpenseWithSubCategory/{sub_categoryId}', 'ReportingController@getUserExpenseWithSubCategory');
-    
-    //Splitting Methods
-    Route::post('splitingMethod', 'PaymentSplittingController@splitingMethod');
-    Route::get('getSplittingMethods', 'PaymentSplittingController@getSplittingMethods');
-
-    //Complain 
-    Route::post('makeComplain', 'ComplainController@makeComplain');
-    Route::get('getAllComplains', 'ComplainController@getAllComplains');
-
-   
-    
+       // Ajo
+        Route::post('/create-ajo', 'AjoController@createAjo');
+        Route::post('invitation/{ajoId}', 'AjoController@inviteUserToAjo');
+        Route::post('invitations/{ajoId}', 'AjoController@inviteUserToAjoh');
+        Route::get('get-ajo-per-user', 'AjoController@getAllAjoCreatedPerUser');
+        Route::get('get-invitation', 'AjoController@getAllAjoInvitationCreatedPerUser');
+        Route::get('get-ajo-by-id/{id}', 'AjoController@getAjoById');
+        Route::get('get-unpaid-users/{id}', 'AjoController@getUnpaidAjoUsers');
+        Route::post('ajo-payout', 'AjoController@AjoPayout');
+        Route::get('/ajo/collector/{ajoId}/{invitationId?}/{currentPosition?}', 'AjoController@getAjoCollector');
+      //  Route::get('get-ajo-by-id/{ajoId}', 'AjoController@getAjoByIdd');
+        Route::post('request-manual-paylink/{ajo_id}', 'AjoController@isPaylink');
+        Route::get('get-ajo-contributors/{ajo_id}', 'AjoController@getAjoContributors');
+        Route::get('get-ajo-contributor/{transactionReference}/{email}', 'AjoController@getTransactionData');
+        Route::get('get-ajo-withdrawal', 'AjoController@getAjoWithdrawalTransaction');
+        Route::post('test-auto', 'AjoController@sendPaymentLinkToUsers');
+        
+          // Direct Debit
+        Route::post('/create-dd-mandate', [DirectDebitController::class, 'createMandate']);
+        Route::post('/update-dd-mandate', [DirectDebitController::class, 'updateMandate']);
+        Route::get('/get-dd-bankList', [DirectDebitController::class, 'getDDBankList']);
+    	Route::get('/get-product-list', [DirectDebitController::class, 'productList']);
+        Route::post('/update-mandate', [DirectDebitController::class, 'updateMandate']);
+        Route::post('/listMandates', [DirectDebitController::class, 'listMandates']);
+        Route::post('/getMandateDetails', [DirectDebitController::class, 'getMandateDetails']);
+        Route::post('/getMandateTransactions', [DirectDebitController::class, 'getMandateTransactions']);
+        Route::post('/getMandateSettlements', [DirectDebitController::class, 'getMandateSettlements']);
+        Route::get('/getMandateStatus/{mandateId}/{ajoId}', [DirectDebitController::class, 'getMandateStatus']);
+     	Route::get('/user/mandates', [DirectDebitController::class, 'getAllMandatesByUser']);
+        Route::post('/getMandateSchedules', [DirectDebitController::class, 'getMandateSchedules']);
+        Route::post('/initiateDirectDebitRequest', [DirectDebitController::class, 'initiateDirectDebitRequest']);
+        Route::get('/getAllMandatesPerUser', [DirectDebitController::class, 'getAllMandatesPerUser']);
+        Route::get('/getUserProducts', [DirectDebitController::class, 'getUserProducts']);
        });
+    });
 
-    }); 
-       

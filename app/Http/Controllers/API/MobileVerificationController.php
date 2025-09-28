@@ -63,7 +63,7 @@ class MobileVerificationController extends Controller
  }
 
 // CHECK EMAIL VALIDITY
- public function EmailVerification(Request $request)
+ public function EmailVerificationzz(Request $request)
     {
 
         $otp = random_int(0, 999999);
@@ -112,6 +112,74 @@ class MobileVerificationController extends Controller
         ], 404);
   }        
         }
+
+
+
+
+public function EmailVerification(Request $request)
+{
+    $otp = random_int(0, 999999);
+    $otp = str_pad($otp, 6, 0, STR_PAD_LEFT);
+    Log::info("otp = " . $otp);
+
+    $checkAuth = Auth::user()->id;
+    $checkAuths = Auth::user()->email;
+    $email = request()->get('email');
+    $medium = request()->get('medium');
+    $otp_expires_time = Carbon::now()->addMinutes(15);
+
+    $userWithEmail = User::where('email', '=', $email)->first();
+
+    if ($userWithEmail) {
+        if ($userWithEmail->email != $checkAuths) {
+            return response([
+                'message' => 'You are not authorized'
+            ], 403);
+        } else {
+            $userWithEmail->update(['otp' => $otp]);
+            $toks = Verifysms::create([
+                'email' => $request->email,
+                'otp' => $otp,
+                'medium' => $medium,
+                'otp_expires_time' => $otp_expires_time,
+                'user_id' => Auth::user()->id,
+            ]);
+
+            $data = [
+                'otp' => $otp,
+                'email' => $request->email
+            ];
+
+            $subject = 'AzatMe: Email Verification';
+            Mail::send('Email.verifictaion', $data, function ($message) use ($request, $subject) {
+                $message->to($request->email)->subject($subject);
+            });
+
+            return response(["status" => 200, "message" => "OTP has been sent to your mail"]);
+        }
+    } else {
+        return response()->json([
+            'message' => 'Record not found.'
+        ], 404);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // VERIFY EMAIL VALIDITY
     public function ConfirmEmailViaOtp(Request $request)
